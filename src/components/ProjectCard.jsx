@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
 
-export default function ProjectCard({ title, description, role, tags = [], href, index = 0 }) {
+export default function ProjectCard({ title, description, role, tags = [], href, badge, index = 0 }) {
   return (
     <motion.article
-      className="bg-surface border border-border rounded-lg p-6 flex flex-col gap-5 cursor-default"
+      className="bg-surface border border-border rounded-lg p-6 flex flex-col gap-5 h-full"
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -14,6 +14,13 @@ export default function ProjectCard({ title, description, role, tags = [], href,
         transition: { type: 'spring', stiffness: 400, damping: 25 },
       }}
     >
+      {/* Badge */}
+      {badge && (
+        <span className="self-start text-xs px-2.5 py-0.5 rounded-full border border-amber-500/30 text-amber-400 bg-amber-500/10">
+          {badge}
+        </span>
+      )}
+
       {/* Top row */}
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-4">
@@ -26,7 +33,7 @@ export default function ProjectCard({ title, description, role, tags = [], href,
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 text-muted hover:text-foreground transition-colors duration-200"
-              aria-label={`View ${title}`}
+              aria-label={`Ver ${title}`}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M1 13L13 1M13 1H5M13 1V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
