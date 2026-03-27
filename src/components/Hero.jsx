@@ -19,7 +19,7 @@ export default function Hero() {
   const { t } = useLanguage()
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center pt-16 overflow-hidden">
+    <section className="relative min-h-screen flex flex-col justify-start md:justify-center pt-16 overflow-hidden">
       {/* Subtle radial glow */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -29,7 +29,7 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative max-w-content mx-auto px-6 py-24 md:py-32">
+      <div className="relative max-w-content mx-auto px-6 pt-12 pb-20 md:py-32">
         <motion.div
           variants={containerVariants}
           initial="hidden"
