@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useLanguage } from '../context/LanguageContext'
 
 const containerVariants = {
   hidden: {},
@@ -8,13 +9,15 @@ const containerVariants = {
 }
 
 const itemVariants = {
-  hidden:   { opacity: 0, y: 20 },
-  visible:  { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
 }
 
 const stack = ['React', 'Python', 'FastAPI', 'PostgreSQL']
 
 export default function Hero() {
+  const { t } = useLanguage()
+
   return (
     <section className="relative min-h-screen flex flex-col justify-center pt-16 overflow-hidden">
       {/* Subtle radial glow */}
@@ -37,7 +40,7 @@ export default function Hero() {
           <motion.div variants={itemVariants}>
             <span className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted font-medium">
               <span className="inline-block w-4 h-px bg-muted" />
-              Full-Stack Software Engineer
+              {t.hero.eyebrow}
             </span>
           </motion.div>
 
@@ -46,7 +49,7 @@ export default function Hero() {
             variants={itemVariants}
             className="text-display font-semibold text-foreground gradient-text max-w-4xl"
           >
-            Building Scalable Digital Systems for Business Growth
+            {t.hero.headline}
           </motion.h1>
 
           {/* Subtitle */}
@@ -54,9 +57,7 @@ export default function Hero() {
             variants={itemVariants}
             className="text-subhead text-foreground-muted max-w-xl leading-relaxed"
           >
-            I design and ship full-stack products end-to-end — from pixel-perfect
-            React interfaces to robust Python/FastAPI backends — built to scale,
-            automate, and perform.
+            {t.hero.subtitle}
           </motion.p>
 
           {/* Stack badges */}
@@ -74,16 +75,15 @@ export default function Hero() {
           {/* CTAs */}
           <motion.div variants={itemVariants} className="flex flex-wrap gap-4 pt-2">
             <a href="#projects" className="btn-primary">
-              View Projects
+              {t.hero.cta1}
             </a>
             <a href="#contact" className="btn-ghost">
-              Get in Touch
+              {t.hero.cta2}
             </a>
           </motion.div>
         </motion.div>
       </div>
 
-      {/* Bottom divider */}
       <div className="divider" />
     </section>
   )

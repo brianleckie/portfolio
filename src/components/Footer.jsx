@@ -1,17 +1,16 @@
 import { motion } from 'framer-motion'
+import { useLanguage } from '../context/LanguageContext'
 
-const links = [
-  {
-    label: 'LinkedIn',
-    href:  'https://linkedin.com/in/brianleckie',
-  },
-  {
-    label: 'GitHub',
-    href:  'https://github.com/brianleckie',
-  },
+const socials = [
+  { label: 'WhatsApp', href: 'https://wa.me/595983763890' },
+  { label: 'LinkedIn', href: 'https://linkedin.com/in/brianleckie' },
+  { label: 'GitHub',   href: 'https://github.com/brianleckie' },
 ]
 
 export default function Footer() {
+  const { t } = useLanguage()
+  const { eyebrow, headline, cta, copyright } = t.footer
+
   return (
     <footer id="contact" className="border-t border-border">
       {/* CTA block */}
@@ -23,16 +22,16 @@ export default function Footer() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
         <p className="text-xs uppercase tracking-widest text-muted mb-6">
-          Get in touch
+          {eyebrow}
         </p>
         <h2 className="text-heading font-semibold text-foreground mb-10 max-w-xl mx-auto">
-          Let's build something scalable.
+          {headline}
         </h2>
         <div className="flex flex-wrap justify-center gap-4">
           <a href="mailto:brian@brianleckie.dev" className="btn-primary">
-            Send a message
+            {cta}
           </a>
-          {links.map(({ label, href }) => (
+          {socials.map(({ label, href }) => (
             <a
               key={label}
               href={href}
@@ -51,7 +50,7 @@ export default function Footer() {
         <div className="max-w-content mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-center gap-2">
           <span className="text-xs text-muted">Brian Leckie</span>
           <span className="text-xs text-muted">
-            © {new Date().getFullYear()} — Software Engineer
+            © {new Date().getFullYear()} — {copyright}
           </span>
         </div>
       </div>
