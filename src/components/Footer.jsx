@@ -28,7 +28,7 @@ export default function Footer() {
           {headline}
         </h2>
         <div className="flex flex-wrap justify-center gap-4">
-          <a href="mailto:brian@brianleckie.dev" className="btn-primary">
+          <a href="mailto:leckiebrian19@gmail.com" className="btn-primary">
             {cta}
           </a>
           {socials.map(({ label, href }) => (
