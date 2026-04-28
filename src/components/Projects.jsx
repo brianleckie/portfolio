@@ -14,12 +14,7 @@ export default function Projects() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {items.map((project, i) => (
-          <div
-            key={project.title}
-            className={i === items.length - 1 ? 'md:col-span-2 md:max-w-xl' : ''}
-          >
-            <ProjectCard {...project} index={i} />
-          </div>
+          <ProjectCard key={project.title} {...project} index={i} />
         ))}
       </div>
     </section>

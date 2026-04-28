@@ -28,8 +28,8 @@ export const translations = {
           title:       'Estación Carretera',
           description: 'Marketplace B2B/C2C para artesanos del sector público — conecta artesanos con compradores a través de una plataforma estructurada con dashboards para vendedores y gestión de pedidos.',
           role:        'Project Lead',
-          badge:       'Próximo lanzamiento — 20 abr',
-          href:        null,
+          badge:       null,
+          href:        'https://www.estaciondecarretera.store',
           tags:        ['React', 'Python', 'REST API', 'PostgreSQL'],
         },
         {
@@ -106,8 +106,8 @@ export const translations = {
           title:       'Estación Carretera',
           description: 'B2B/C2C Marketplace for Public Sector Artisans — connecting artisans with buyers through a structured marketplace with vendor dashboards and order management.',
           role:        'Project Lead',
-          badge:       'Launching soon — Apr 20',
-          href:        null,
+          badge:       null,
+          href:        'https://www.estaciondecarretera.store',
           tags:        ['React', 'Python', 'REST API', 'PostgreSQL'],
         },
         {
