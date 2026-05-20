@@ -17,7 +17,7 @@ export const translations = {
       description: 'Productos construidos desde cero hasta producción — arquitectura, diseño y entrega end-to-end.',
       items: [
         {
-          title:       'Mbarete SaaS',
+          title:       'Mbarete',
           description: 'Sistema integral de gestión y automatización para gimnasios — desde seguimiento de membresías y facturación automatizada hasta programación de clases y reportes de asistencia en tiempo real.',
           role:        'Fundador & Lead Developer',
           badge:       null,
