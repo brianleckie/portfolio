@@ -21,7 +21,7 @@ export const translations = {
           description: 'Sistema integral de gestión y automatización para gimnasios — desde seguimiento de membresías y facturación automatizada hasta programación de clases y reportes de asistencia en tiempo real.',
           role:        'Fundador & Lead Developer',
           badge:       null,
-          href:        'https://mbarete-saas.vercel.app/',
+          href:        'https://www.mbarete.fit',
           tags:        ['React', 'FastAPI', 'PostgreSQL', 'Python'],
         },
         {
