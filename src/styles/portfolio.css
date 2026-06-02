@@ -17,7 +17,7 @@
   --maxw:          1120px;
   --pad:           clamp(28px, 6vw, 80px);
 
-  --block-gap:     128px;
+  --block-gap:     168px;
   font-synthesis: none;
 }
 
@@ -120,11 +120,13 @@ section[id], main[id], header[id] { scroll-margin-top: 100px; }
 /* ── shared project bits ── */
 .proj { position: relative; scroll-margin-top: 100px; }
 .proj-glow {
-  position: absolute; inset: -20% -12% auto -12%; height: 78%;
+  position: absolute; inset: 0 -8% auto -8%; height: 82%;
   background:
-    radial-gradient(65% 80% at 22% 0%, var(--accent-soft), transparent 60%),
-    radial-gradient(38% 50% at 80% 20%, var(--accent-soft), transparent 68%);
-  pointer-events: none; z-index: 0; opacity: var(--glow-op, 1);
+    radial-gradient(65% 80% at 22% 30%, var(--accent-soft), transparent 62%),
+    radial-gradient(38% 50% at 78% 16%, var(--accent-soft), transparent 68%);
+  pointer-events: none; z-index: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 14%, black 30%, black 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 14%, black 30%, black 72%, transparent 100%);
 }
 .proj-index { font-size: 13px; color: var(--accent); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; font-weight: 600; }
 .proj-name { font-size: clamp(1.7rem, 3.2vw, 2.45rem); font-weight: 700; letter-spacing: -0.035em; line-height: 1.03; margin: 0; }
@@ -242,12 +244,16 @@ section[id], main[id], header[id] { scroll-margin-top: 100px; }
 
 /* ── Brand case ── */
 .brandcase {
-  position: relative; z-index: 1; border: 1px solid var(--border); border-radius: 22px; overflow: hidden;
+  position: relative; z-index: 1; border: 1px solid var(--border-soft); border-radius: 22px; overflow: hidden;
   background:
-    radial-gradient(120% 80% at 12% 0%, rgba(207,84,64,0.14), transparent 52%),
-    radial-gradient(120% 80% at 88% 100%, rgba(43,165,150,0.14), transparent 52%),
+    radial-gradient(110% 65% at 10% 0%, rgba(207,84,64,0.16), transparent 50%),
+    radial-gradient(110% 65% at 90% 100%, rgba(43,165,150,0.16), transparent 50%),
     var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
+/* suprimir glows internos — el card ya tiene su propio gradiente de fondo */
+.brandcase .proj-glow { display: none; }
+.brandcase .bigproj-visual::after { opacity: 0.5; }
 .brandcase-head { padding: 46px 44px 0; }
 .brandcase-eyebrow {
   font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--fg-muted);
@@ -262,7 +268,7 @@ section[id], main[id], header[id] { scroll-margin-top: 100px; }
 /* ── About ── */
 .about { padding: 48px var(--pad) 124px; }
 .about-grid { display: grid; grid-template-columns: 220px 1fr; gap: 56px; align-items: start; margin-top: 36px; }
-.about-photo { width: 200px; height: 244px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-soft); display: block; }
+.about-photo { width: 200px; height: 244px; border-radius: 24px; border: 1px solid var(--border-soft); display: block; object-fit: cover; }
 .about-text { display: flex; flex-direction: column; gap: 16px; }
 .about-name { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
 .about-role { font-size: 13px; color: var(--fg-muted); margin: 0; letter-spacing: 0.01em; }
