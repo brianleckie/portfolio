@@ -2,8 +2,8 @@
 // Composición de todo el rediseño. Montá este componente (o copiá su contenido
 // dentro de tu App.jsx, entre <Navbar/> y donde corresponda).
 import React from 'react';
-import { useReveal } from '../../hooks/useReveal';
 import * as data from '../../data/projects';
+import { Reveal } from './Reveal';
 
 import Hero from './Hero';
 import Showcase from './Showcase';
@@ -16,8 +16,6 @@ import Footer from './Footer';
 import '../../styles/portfolio.css';
 
 export default function Portfolio() {
-  useReveal();
-
   // 'monitor' | 'navegador' | 'flotante' — en el prototipo era un Tweak.
   const treatment = 'monitor';
   const showMobile = true;
@@ -28,11 +26,13 @@ export default function Portfolio() {
 
       <main className="projects wrap" id="proyectos">
         <div className="sec-head">
-          <div data-reveal><span className="eyebrow">Trabajo selecto</span></div>
-          <h2 className="sec-title" data-reveal style={{ transitionDelay: '60ms' }}>Proyectos</h2>
-          <p className="sec-desc" data-reveal style={{ transitionDelay: '120ms' }}>
-            Productos construidos de cero a producción — arquitectura, diseño y entrega end-to-end.
-          </p>
+          <Reveal><span className="eyebrow">Trabajo selecto</span></Reveal>
+          <Reveal delay={0.06}><h2 className="sec-title">Proyectos</h2></Reveal>
+          <Reveal delay={0.12}>
+            <p className="sec-desc">
+              Productos construidos de cero a producción — arquitectura, diseño y entrega end-to-end.
+            </p>
+          </Reveal>
         </div>
 
         <div className="proj-stack">

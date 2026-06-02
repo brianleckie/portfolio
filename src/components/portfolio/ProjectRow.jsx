@@ -1,7 +1,11 @@
 // src/components/portfolio/ProjectRow.jsx
 // Proyecto en fila estándar (solo desktop) — Mercado Jopoi.
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Desktop, Tags, ProjLink } from './Devices';
+import { Reveal, VIEWPORT } from './Reveal';
+
+const EASE = [0.22, 0.61, 0.36, 1];
 
 export default function ProjectRow({ data, treatment = 'monitor', reverse = true }) {
   const d = data;
@@ -14,22 +18,34 @@ export default function ProjectRow({ data, treatment = 'monitor', reverse = true
       <div className="proj-glow" />
       <div className={`row-grid ${reverse ? 'reverse' : ''}`}>
         <div className="row-text">
-          <div className="bigproj-top" data-reveal>
-            <span className="proj-index">{d.index}</span>
-            <h3 className="proj-name">{d.name}</h3>
-          </div>
-          <div data-reveal style={{ transitionDelay: '60ms' }}>
+          <Reveal>
+            <div className="bigproj-top">
+              <span className="proj-index">{d.index}</span>
+              <h3 className="proj-name">{d.name}</h3>
+            </div>
+          </Reveal>
+          <Reveal delay={0.06}>
             <span className="proj-role">{d.role}</span>
-          </div>
-          <p className="proj-desc" data-reveal style={{ transitionDelay: '110ms' }}>{d.desc}</p>
-          <div data-reveal style={{ transitionDelay: '160ms' }}><Tags items={d.tags} /></div>
-          <div data-reveal style={{ transitionDelay: '210ms' }}>
+          </Reveal>
+          <Reveal delay={0.11}>
+            <p className="proj-desc">{d.desc}</p>
+          </Reveal>
+          <Reveal delay={0.16}>
+            <Tags items={d.tags} />
+          </Reveal>
+          <Reveal delay={0.21} style={{ alignSelf: 'flex-start' }}>
             <ProjLink href={d.href} label={d.hrefLabel} />
-          </div>
+          </Reveal>
         </div>
-        <div className="row-visual" data-reveal style={{ transitionDelay: '120ms' }}>
+        <motion.div
+          className="row-visual"
+          initial={{ opacity: 0, y: 32, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={VIEWPORT}
+          transition={{ duration: 0.9, ease: EASE, delay: 0.12 }}
+        >
           <Desktop src={d.desktop} alt={d.name} url={d.desktopUrl} treatment={treatment} />
-        </div>
+        </motion.div>
       </div>
     </section>
   );
