@@ -21,13 +21,19 @@ export default function Navbar() {
 
         <div className="flex items-center gap-6">
           <a
-            href="#projects"
+            href="#proyectos"
             className="text-foreground-muted text-sm hover:text-foreground transition-colors duration-200"
           >
             {t.nav.projects}
           </a>
           <a
-            href="#contact"
+            href="#marca"
+            className="text-foreground-muted text-sm hover:text-foreground transition-colors duration-200"
+          >
+            Marca
+          </a>
+          <a
+            href="#contacto"
             className="text-foreground-muted text-sm hover:text-foreground transition-colors duration-200"
           >
             {t.nav.contact}
