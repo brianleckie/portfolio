@@ -1,27 +1,31 @@
 // src/components/portfolio/About.jsx
 import React from 'react';
+import { Reveal } from './Reveal';
 
 export default function About({ data }) {
   const d = data;
   return (
     <section className="about wrap" id="about">
-      <div data-reveal><span className="eyebrow">Sobre mí</span></div>
+      <Reveal>
+        <span className="eyebrow">Sobre mí</span>
+      </Reveal>
       <div className="about-grid">
-        <div data-reveal>
-          {/* Reemplazá por tu foto. En el prototipo HTML esto es un drop-slot. */}
+        <Reveal delay={0.05}>
           <img className="about-photo" src={d.photo} alt={d.name} />
-        </div>
+        </Reveal>
         <div className="about-text">
-          <h3 className="about-name" data-reveal>{d.name}</h3>
-          <p className="about-role" data-reveal style={{ transitionDelay: '50ms' }}>{d.role}</p>
-          <p className="about-bio" data-reveal style={{ transitionDelay: '110ms' }}>{d.bio}</p>
-          <div className="about-links" data-reveal style={{ transitionDelay: '170ms' }}>
-            {d.links.map((l) => (
-              <a className="proj-link" key={l.label} href={l.href} target="_blank" rel="noopener noreferrer">
-                {l.label}
-              </a>
-            ))}
-          </div>
+          <Reveal><h3 className="about-name">{d.name}</h3></Reveal>
+          <Reveal delay={0.05}><p className="about-role">{d.role}</p></Reveal>
+          <Reveal delay={0.11}><p className="about-bio">{d.bio}</p></Reveal>
+          <Reveal delay={0.17}>
+            <div className="about-links">
+              {d.links.map((l) => (
+                <a className="proj-link" key={l.label} href={l.href} target="_blank" rel="noopener noreferrer">
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 // src/components/portfolio/BrandCase.jsx
 // Caso "Presencia digital de marca": header + dos Showcase a ancho completo.
 import React from 'react';
+import { Reveal } from './Reveal';
 import Showcase from './Showcase';
 
 export default function BrandCase({ data, treatment = 'monitor', showMobile = true }) {
@@ -8,11 +9,17 @@ export default function BrandCase({ data, treatment = 'monitor', showMobile = tr
   return (
     <section className="brandcase" id="marca">
       <div className="brandcase-head">
-        <span className="brandcase-eyebrow" data-reveal>
-          <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}>03</span> · {d.eyebrow}
-        </span>
-        <h3 className="brandcase-title" data-reveal style={{ transitionDelay: '60ms' }}>{d.title}</h3>
-        <p className="brandcase-sub" data-reveal style={{ transitionDelay: '110ms' }}>{d.sub}</p>
+        <Reveal>
+          <span className="brandcase-eyebrow">
+            <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}>03</span> · {d.eyebrow}
+          </span>
+        </Reveal>
+        <Reveal delay={0.06}>
+          <h3 className="brandcase-title">{d.title}</h3>
+        </Reveal>
+        <Reveal delay={0.11}>
+          <p className="brandcase-sub">{d.sub}</p>
+        </Reveal>
       </div>
 
       <div className="brandcase-stack">

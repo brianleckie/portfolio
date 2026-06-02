@@ -1,6 +1,8 @@
-// src/components/portfolio/Hero.jsx
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Arrow } from './Devices';
+
+const EASE = [0.22, 0.61, 0.36, 1];
 
 export default function Hero({ data }) {
   return (
@@ -8,22 +10,53 @@ export default function Hero({ data }) {
       <div className="hero-glow" />
       <div className="hero-inner">
         <div className="hero-stack-line">
-          <span className="hero-eyebrow" data-reveal>{data.eyebrow}</span>
-          <h1 className="hero-h1" data-reveal style={{ transitionDelay: '60ms' }}>
+          <motion.span
+            className="hero-eyebrow"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65, ease: EASE, delay: 0.1 }}
+          >
+            {data.eyebrow}
+          </motion.span>
+
+          <motion.h1
+            className="hero-h1"
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: EASE, delay: 0.22 }}
+          >
             {data.headline}
-          </h1>
-          <p className="hero-sub" data-reveal style={{ transitionDelay: '120ms' }}>
+          </motion.h1>
+
+          <motion.p
+            className="hero-sub"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, ease: EASE, delay: 0.52 }}
+          >
             {data.subtitle}
-          </p>
-          <div className="hero-tags" data-reveal style={{ transitionDelay: '180ms' }}>
+          </motion.p>
+
+          <motion.div
+            className="hero-tags"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: EASE, delay: 0.68 }}
+          >
             {data.tags.map((tech) => (
               <span className="tag" key={tech}>{tech}</span>
             ))}
-          </div>
-          <div className="hero-cta" data-reveal style={{ transitionDelay: '240ms' }}>
+          </motion.div>
+
+          <motion.div
+            className="hero-cta"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: EASE, delay: 0.82 }}
+          >
             <a className="btn-primary" href="#proyectos">Ver proyectos <Arrow /></a>
             <a className="btn-ghost" href="#contacto">Contactar</a>
-          </div>
+          </motion.div>
         </div>
       </div>
     </header>

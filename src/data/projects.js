@@ -15,7 +15,7 @@ export const projects = [
   {
     key: 'estacion',
     accent: '#3aa64a',
-    accentSoft: 'rgba(58,166,74,0.13)',
+    accentSoft: 'rgba(58,166,74,0.22)',
     index: '01',
     name: 'Estación de Carretera',
     role: 'Project Lead',
@@ -33,7 +33,7 @@ export const projects = [
   {
     key: 'mbarete',
     accent: '#ef4136',
-    accentSoft: 'rgba(239,65,54,0.12)',
+    accentSoft: 'rgba(239,65,54,0.20)',
     index: '02',
     name: 'Mbarete',
     role: 'Fundador & Lead Developer',
@@ -59,7 +59,7 @@ export const brandcase = {
     {
       key: 'kevjer',
       accent: '#d8624c',
-      accentSoft: 'rgba(216,98,76,0.12)',
+      accentSoft: 'rgba(216,98,76,0.20)',
       name: 'KEVJER.',
       tagline: 'Archivo · Second hand',
       desc: 'Dealer atemporal de piezas de archivo, originales y second hand. Catálogo con carrito multi-producto, modal de detalle por prenda, checkout directo a WhatsApp y panel admin con autenticación.',
@@ -72,7 +72,7 @@ export const brandcase = {
     {
       key: 'felinas',
       accent: '#2ba596',
-      accentSoft: 'rgba(43,165,150,0.12)',
+      accentSoft: 'rgba(43,165,150,0.20)',
       name: 'felinas.',
       tagline: 'Hecho a pedido',
       desc: 'Accesorios de satén, ropa y detalles hechos con cariño en Paraguay. Catálogo por categorías, productos disponibles y bajo pedido, y pedido fácil por WhatsApp con envíos a todo el país.',
@@ -89,7 +89,7 @@ export const brandcase = {
 export const row = {
   key: 'jopoi',
   accent: '#3b82f6',
-  accentSoft: 'rgba(59,130,246,0.13)',
+  accentSoft: 'rgba(59,130,246,0.20)',
   index: '04',
   name: 'Mercado Jopoi',
   role: 'Full-Stack Developer',

@@ -2,7 +2,11 @@
 // Bloque de proyecto grande: monitor (desktop) + iPhone superpuesto.
 // Se usa para Estación, Mbarete y cada marca del caso de marca.
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Desktop, Phone, Tags, ProjLink } from './Devices';
+import { Reveal, VIEWPORT } from './Reveal';
+
+const EASE = [0.22, 0.61, 0.36, 1];
 
 export default function Showcase({ data, treatment = 'monitor', showMobile = true }) {
   const d = data;
@@ -15,47 +19,62 @@ export default function Showcase({ data, treatment = 'monitor', showMobile = tru
       <div className="proj-glow" />
 
       <div className="bigproj-head">
-        <div className="bigproj-top" data-reveal>
-          {d.index && <span className="proj-index">{d.index}</span>}
-          <h3 className="proj-name">{d.nameNode || d.name}</h3>
-          {d.role && <span className="proj-role">{d.role}</span>}
-        </div>
+        <Reveal>
+          <div className="bigproj-top">
+            {d.index && <span className="proj-index">{d.index}</span>}
+            <h3 className="proj-name">{d.nameNode || d.name}</h3>
+            {d.role && <span className="proj-role">{d.role}</span>}
+          </div>
+        </Reveal>
 
         {d.badge && (
-          <div data-reveal style={{ transitionDelay: '60ms' }}>
+          <Reveal delay={0.06} style={{ alignSelf: 'flex-start' }}>
             <span className="badge"><span className="dot" />{d.badge}</span>
-          </div>
+          </Reveal>
         )}
 
-        <p className="proj-desc" data-reveal style={{ transitionDelay: '100ms' }}>{d.desc}</p>
+        <Reveal delay={0.1}>
+          <p className="proj-desc">{d.desc}</p>
+        </Reveal>
+
         {d.note && (
-          <p className="proj-note" data-reveal style={{ transitionDelay: '130ms' }}>{d.note}</p>
+          <Reveal delay={0.13}>
+            <p className="proj-note">{d.note}</p>
+          </Reveal>
         )}
 
-        <div className="bigproj-meta" data-reveal style={{ transitionDelay: '170ms' }}>
-          {d.metrics &&
-            d.metrics.map((m) => (
-              <div className="metric" key={m.label}>
-                <span className="metric-num">{m.num}</span>
-                <span className="metric-label">{m.label}</span>
-              </div>
-            ))}
-          <Tags items={d.tags} />
-        </div>
+        <Reveal delay={0.17}>
+          <div className="bigproj-meta">
+            {d.metrics &&
+              d.metrics.map((m) => (
+                <div className="metric" key={m.label}>
+                  <span className="metric-num">{m.num}</span>
+                  <span className="metric-label">{m.label}</span>
+                </div>
+              ))}
+            <Tags items={d.tags} />
+          </div>
+        </Reveal>
 
-        <div data-reveal style={{ transitionDelay: '220ms' }}>
+        <Reveal delay={0.22} style={{ alignSelf: 'flex-start' }}>
           <ProjLink href={d.href} label={d.hrefLabel} />
-        </div>
+        </Reveal>
       </div>
 
-      <div className="bigproj-visual" data-reveal style={{ transitionDelay: '120ms' }}>
+      <motion.div
+        className="bigproj-visual"
+        initial={{ opacity: 0, y: 36, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={VIEWPORT}
+        transition={{ duration: 0.95, ease: EASE, delay: 0.1 }}
+      >
         <Desktop src={d.desktop} alt={`${d.name} desktop`} url={d.desktopUrl} treatment={treatment} />
         {showMobile && d.mobile && (
           <div className="bigproj-phone">
             <Phone src={d.mobile} alt={`${d.name} mobile`} />
           </div>
         )}
-      </div>
+      </motion.div>
     </section>
   );
 }
