@@ -41,3 +41,27 @@
 - **Keyboard `inViewport` boolean:** `paused = true` al inicio; IO setea `inViewport` y llama `resume()`. `resume()` verifica las 5 condiciones: `paused && inViewport && !pointerActive && !focusedKey && !document.hidden && !prefersReduced.matches`. Elimina la ventana de 1-tick donde animation re-arrancaba antes de que el IO la pausara de nuevo.
 - **Marquee IntersectionObserver:** `cancelAnimationFrame` cuando `.marquee-strip` sale del viewport; rAF se reinicia al volver. Unifica con el `visibilitychange` handler en `startRaf()`/`stopRaf()`.
 - **check:layout fold check:** nuevo check exclusivo de 1440×810 que mide `getBoundingClientRect()` del `#kb-stage` sin scroll y verifica `stageTop + 161 ≤ 810`.
+
+## Cierre de Fase 1 y correcciones de contenido
+
+- **Rama/PR:** el PR #11 ya estaba mergeado; se trabaja en `claude/peaceful-goodall-l3ktv0` y se abre un PR nuevo a `main` (sin mergear). El commit `9ab0d70` (fold + race del IO) estaba solo en la rama vieja: se cherry-pickeó.
+- **Correcciones de contenido del usuario:** Ecodespensa `en-produccion`; Mbarete: resultado = "Usado por gimnasios en Buenos Aires y en distintas partes de Paraguay."; Estación: "intendente" en lugar de "Presidente"; Valuador reescrito (AVM Gran Asunción) sin métricas ni portales.
+- **Datos de los `.md` no respaldados por el original (`34b14eb:src/data/projects.js`):** no se borraron; se listan en el reporte final para que el usuario confirme (Mbarete: avisos de cuotas vencidas, estados de socio, multi-tenant; Kevjer: gestión de inventario, galería; Estación: FastAPI, roles; Jopoi: PostgreSQL). Se quitó solo el rango "50–200 socios" (regla de no inventar métricas).
+- **Marquee:** cada grupo repite la frase hasta ser ≥ ancho del viewport (SPEC §7); sin `role="marquee"` ni `aria-label` (el texto se expone una sola vez).
+- **Sin `!important`:** Header sube especificidad; el reset global de reduced-motion de `base.css` se reemplazó por guards por componente (`scroll-behavior: smooth` solo con `no-preference`).
+- **Anclas del header:** `/#seccion` (sirven desde páginas de proyecto) y `scroll-margin-top` con `--header-h` (64px; 113px en mobile, header de dos filas).
+- **Teclado:** S va por encima del Enter (`z-index`), como pide el SPEC; antes el Enter tapaba la mitad derecha de S y un click ahí abría WhatsApp. El orden del DOM (tabulación) no cambia.
+- **Botones/badges/chips compartidos** en `src/styles/ui.css`; el CSS de cada componente queda scoped.
+
+## Fase 2 — Proyectos
+
+- **Filtro global:** los filtros (chips y teclas) aplican a destacados y a "Más proyectos". Con filtro solo-grid, "Integraciones" quedaba vacío (Ecodespensa es destacado) y el check pedido exige que solo se vean cards de la categoría.
+- **Sin JS** se ven todos los proyectos (la barra de filtros está `hidden` hasta que corre el script). `?cat=` inválido cae en "Todos"; el filtro se refleja con `history.replaceState`.
+- **`kb:filter`:** el teclado y los links de Servicios solo emiten el evento (`src/scripts/filter-links.ts`); `ProjectGrid` aplica el filtro y hace el scroll.
+- **Plugin remark `remark-strip-todo`:** borra del cuerpo los párrafos `TODO:` y los headings que quedan vacíos; así no se editan los `.md` y el visitante nunca ve "TODO". `clean()/cleanList()` hacen lo mismo con el frontmatter.
+- **Resumen en TODO (Ecodespensa):** la card usa el primer highlight (dato real); la meta description usa una frase genérica con título, rol y ubicación.
+- **Imágenes:** `cover`/`coverMobile` del frontmatter ganan; si no hay, se usan `desktop.webp`/`mobile.webp` de `npm run shots` (`import.meta.glob`). `<Picture>` con avif + webp (fallback webp). Sin imagen: placeholder CSS con forma de tecla, el `accent` y las iniciales.
+- **Mobile primero en cards:** <700px, si hay captura mobile se muestra solo el teléfono; con ambas capturas en desktop el teléfono se superpone al navegador.
+- **Página de caso:** prev/next circular entre los 6 destacados; los no destacados muestran "Todos los proyectos". La franja de `results` (hoy solo Mbarete) se muestra resaltada en card y en el caso.
+- **`trailingSlash: 'always'`** para URLs canónicas consistentes (el sitemap y los canonical usan la barra final).
+- **check:layout:** home en 6 viewports + las 15 páginas de caso en 390×844 y 1440×810, animación del teclado (50 ms × 6 s), marquee (translateX × 4 s), reduced-motion, filtros (teclas y chips), links y contenido (sin TODO, sin datos retirados, valuador sin métricas ni portales).

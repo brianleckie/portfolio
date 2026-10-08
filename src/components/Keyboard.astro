@@ -126,6 +126,8 @@ const ENTER = {
     box-shadow: 0 5px 0 #000;
     outline-offset: 4px;
     cursor: pointer;
+    /* Las teclas normales van por encima del Enter: S se superpone a su borde izquierdo (SPEC §6) */
+    z-index: 1;
     /* JS adds pressed class for animation */
   }
 
@@ -173,6 +175,10 @@ const ENTER = {
   }
 
   /* === ENTER === */
+  .key-enter {
+    z-index: 0;
+  }
+
   .key-enter .key-face {
     flex-direction: column;
     align-items: flex-end;
@@ -237,6 +243,8 @@ const ENTER = {
 </style>
 
 <script>
+  import { bindFilterLinks } from '../scripts/filter-links';
+
   (() => {
     const wrapper = document.getElementById('kb-wrapper');
     const stage = document.getElementById('kb-stage');
@@ -355,20 +363,7 @@ const ENTER = {
       io.disconnect();
     });
 
-    // Filter links
-    allKeys.forEach(el => {
-      const anchor = el as HTMLAnchorElement;
-      const filter = anchor.dataset.filter;
-      if (!filter) return;
-      anchor.addEventListener('click', (e) => {
-        e.preventDefault();
-        const target = document.querySelector('#proyectos');
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth' });
-          // dispatch custom event for ProjectGrid to listen on
-          document.dispatchEvent(new CustomEvent('kb:filter', { detail: { filter } }));
-        }
-      });
-    });
+    // Teclas con data-filter: emiten `kb:filter`; ProjectGrid aplica el filtro y hace scroll.
+    bindFilterLinks(wrapper);
   })();
 </script>

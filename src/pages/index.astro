@@ -1,14 +1,9 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
+import ProjectGrid from '../components/ProjectGrid.astro';
 import { site } from '../config/site';
-
-const projects = await getCollection('projects');
-const featured = projects
-  .filter(p => p.data.featured)
-  .sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout
@@ -19,15 +14,7 @@ const featured = projects
   <main>
     <Hero />
 
-    <!-- Fase 2: Proyectos destacados + grid con filtros -->
-    <section id="proyectos" style="padding: 4rem var(--pad-desktop); max-width: var(--max-w); margin: 0 auto;">
-      <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-primary); margin-bottom: 1rem;">
-        Proyectos
-      </h2>
-      <p style="color: var(--color-text-secondary);">
-        {featured.length} proyectos destacados — contenido completo en Fase 2.
-      </p>
-    </section>
+    <ProjectGrid />
 
     <section id="servicios" style="padding: 4rem var(--pad-desktop); background: var(--color-bg-hero-from); max-width: 100%;">
       <div style="max-width: var(--max-w); margin: 0 auto;">
