@@ -1,0 +1,140 @@
+---
+import { site, whatsappHref } from '../config/site';
+import Keyboard from './Keyboard.astro';
+import Marquee from './Marquee.astro';
+
+const waHref = whatsappHref();
+---
+
+<section class="hero" id="hero" aria-label="Presentación">
+  <div class="hero-inner">
+    <h1 class="hero-headline">
+      <span class="line line-1">Hola, soy Brian.</span>
+      <span class="line line-2">Hago webs y sistemas</span>
+      <span class="line line-3">
+        que <em class="accent-word">trabajan</em> para tu negocio.
+      </span>
+    </h1>
+
+    <p class="hero-sub">
+      Desarrollador full-stack en Encarnación, Paraguay.
+      Catálogos con pedido por WhatsApp, sistemas a medida e integraciones.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#proyectos" class="cta cta-secondary">Ver proyectos</a>
+      <a href={waHref} target="_blank" rel="noopener noreferrer" class="cta cta-primary">
+        Escribime por WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <Keyboard />
+  <Marquee />
+</section>
+
+<style>
+  .hero {
+    background: linear-gradient(160deg, var(--color-bg-hero-from) 0%, #ffffff 50%, var(--color-bg-hero-to) 100%);
+    padding-top: var(--space-2xl);
+    overflow: hidden;
+  }
+
+  .hero-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad-desktop);
+    padding-bottom: var(--space-xl);
+  }
+
+  .hero-headline {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.375rem, 5.5vw, 5.5rem);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.05em;
+  }
+
+  .line {
+    display: block;
+  }
+
+  .accent-word {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--color-accent);
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 1.4vw, 1.1875rem);
+    color: var(--color-text-secondary);
+    max-width: 52ch;
+    margin-bottom: var(--space-xl);
+    line-height: 1.6;
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .cta-primary {
+    background-color: var(--color-accent);
+    color: #fff;
+    border: 2px solid var(--color-accent);
+  }
+
+  .cta-primary:hover {
+    background-color: #3d49c4;
+    border-color: #3d49c4;
+  }
+
+  .cta-secondary {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border: 2px solid rgba(0, 0, 0, 0.15);
+  }
+
+  .cta-secondary:hover {
+    border-color: rgba(0, 0, 0, 0.35);
+  }
+
+  @media (max-width: 1024px) {
+    .hero-inner {
+      padding-left: var(--pad-tablet);
+      padding-right: var(--pad-tablet);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .hero {
+      padding-top: var(--space-xl);
+    }
+
+    .hero-inner {
+      padding-left: var(--pad-mobile);
+      padding-right: var(--pad-mobile);
+      padding-bottom: var(--space-lg);
+    }
+  }
+</style>

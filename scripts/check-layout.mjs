@@ -2,12 +2,14 @@
 // Uso: npm run build && npm run check:layout
 // Levanta astro preview en el puerto 4322, recorre los 6 viewports del SPEC,
 // falla si: overflow horizontal, errores de consola, requests 404/fallidas.
+// Fase 1 extra: teclado ≤ contenedor, altura wrapper = 312×scale, Enter click,
+// document.fonts.check Satoshi 900, reducedMotion sin animación.
 // Guarda screenshots full-page en .checks/<viewport>.png
-// Keyboard-specific checks se agregan en Fase 1.
+// Guarda hero-crop en .checks/hero-<viewport>.png para los dos viewports indicados.
 
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
-import { mkdirSync, existsSync } from 'fs';
+import { mkdirSync } from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +27,8 @@ const VIEWPORTS = [
   { name: '390x844',   width: 390,  height: 844  },
   { name: '360x740',   width: 360,  height: 740  },
 ];
+
+const HERO_CROP_VIEWPORTS = ['1440x810', '390x844'];
 
 const PAGES = ['/'];
 
@@ -56,11 +60,87 @@ async function checkPage(page, url, viewport) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto(url, { waitUntil: 'networkidle' });
 
+  // Wait a bit for JS to settle (ResizeObserver, font loading)
+  await sleep(300);
+
   const overflow = await page.evaluate(() =>
     document.documentElement.scrollWidth > window.innerWidth
   );
 
-  return { overflow, errors, failed };
+  // --- Fase 1 keyboard checks ---
+  const kbChecks = await page.evaluate(() => {
+    const wrapper = document.getElementById('kb-wrapper');
+    const stage = document.getElementById('kb-stage');
+    if (!wrapper || !stage) return { skip: true };
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+
+    // 1. Keyboard stage visual width ≤ wrapper width
+    const kbFitsContainer = stageRect.width <= wrapperRect.width + 1; // +1 for rounding
+
+    // 2. Wrapper height ≈ 312 * scale (+ slack)
+    // Derive scale from stage rendered width / 900
+    const scale = stageRect.width / 900;
+    const expectedH = 312 * scale;
+    const actualH = wrapperRect.height;
+    const heightOk = actualH >= expectedH - 1 && actualH <= expectedH + 25; // ±25px slack
+
+    // 3. Enter key clickable via elementFromPoint (scroll into view first)
+    const enterEl = document.getElementById('key-Enter');
+    let enterClickable = false;
+    if (enterEl) {
+      enterEl.scrollIntoView({ behavior: 'instant', block: 'center' });
+      const r = enterEl.getBoundingClientRect();
+      // Hit center of Enter (accounting for S key overlap on left, use right portion)
+      const testX = r.left + r.width * 0.65;
+      const testY = r.top + r.height * 0.5;
+      const hit = document.elementFromPoint(testX, testY);
+      enterClickable = hit === enterEl || (hit !== null && enterEl.contains(hit));
+    }
+
+    // 4. Satoshi 900 loaded
+    const satoshiLoaded = document.fonts.check('900 72px Satoshi');
+
+    return { kbFitsContainer, heightOk, enterClickable, satoshiLoaded, scale, actualH, expectedH };
+  });
+
+  // --- Fase 1 reduced-motion check ---
+  const rmChecks = await page.evaluate(() => {
+    // Check that no animated transform is running on .key-face elements
+    // (reduced motion means CSS transitions are 0.01ms via global rule)
+    const face = document.querySelector('.key-face');
+    if (!face) return { skip: true };
+    const style = window.getComputedStyle(face);
+    const duration = parseFloat(style.transitionDuration);
+    const noAnim = duration < 0.05; // < 50ms means effectively disabled
+    return { noAnim };
+  }, { reducedMotion: 'reduce' }); // note: this arg is ignored by evaluate; see below
+
+  return { overflow, errors, failed, kbChecks, rmChecks };
+}
+
+async function checkReducedMotion(browser, url, viewport) {
+  const ctx = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    reducedMotion: 'reduce',
+  });
+  const page = await ctx.newPage();
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await sleep(300);
+
+  const result = await page.evaluate(() => {
+    const face = document.querySelector('.key-face');
+    if (!face) return { skip: true };
+    const style = window.getComputedStyle(face);
+    const duration = parseFloat(style.transitionDuration);
+    // Also check no is-pressed classes are being added (animation stopped)
+    const pressedKeys = document.querySelectorAll('.is-pressed').length;
+    return { transitionDuration: duration, pressedKeys, noAnim: duration < 0.05 && pressedKeys === 0 };
+  });
+
+  await ctx.close();
+  return result;
 }
 
 async function main() {
@@ -81,9 +161,11 @@ async function main() {
     console.log('✓ Preview server ready\n');
   }
 
-  const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_BROWSERS_PATH
-    ? `${process.env.PLAYWRIGHT_BROWSERS_PATH}/chromium`
-    : undefined });
+  const browser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_BROWSERS_PATH
+      ? `${process.env.PLAYWRIGHT_BROWSERS_PATH}/chromium`
+      : undefined,
+  });
 
   let totalFails = 0;
 
@@ -96,15 +178,33 @@ async function main() {
         });
         const pw = await ctx.newPage();
 
-        const { overflow, errors, failed } = await checkPage(pw, url, viewport);
+        const { overflow, errors, failed, kbChecks } = await checkPage(pw, url, viewport);
 
         const screenshotPath = path.join(CHECKS_DIR, `${viewport.name}.png`);
         await pw.screenshot({ path: screenshotPath, fullPage: true });
+
+        // Hero crop screenshot
+        if (HERO_CROP_VIEWPORTS.includes(viewport.name)) {
+          const heroEl = await pw.$('#hero');
+          if (heroEl) {
+            const heroCropPath = path.join(CHECKS_DIR, `hero-${viewport.name}.png`);
+            await heroEl.screenshot({ path: heroCropPath });
+            console.log(`  📸 Hero crop → .checks/hero-${viewport.name}.png`);
+          }
+        }
 
         const issues = [];
         if (overflow) issues.push('overflow-x detected');
         errors.forEach(e => issues.push(`console.error: ${e}`));
         failed.forEach(f => issues.push(`request failed: ${f}`));
+
+        // Keyboard checks
+        if (kbChecks && !kbChecks.skip) {
+          if (!kbChecks.kbFitsContainer) issues.push(`keyboard wider than container`);
+          if (!kbChecks.heightOk) issues.push(`wrapper height ${kbChecks.actualH?.toFixed(1)}px ≠ 312×${kbChecks.scale?.toFixed(3)}=${kbChecks.expectedH?.toFixed(1)}px`);
+          if (!kbChecks.enterClickable) issues.push(`Enter key not clickable at expected coordinates`);
+          if (!kbChecks.satoshiLoaded) issues.push(`Satoshi 900 not loaded (document.fonts.check failed)`);
+        }
 
         if (issues.length === 0) {
           console.log(`✓ ${viewport.name} — ${pagePath}`);
@@ -117,6 +217,22 @@ async function main() {
         await ctx.close();
       }
     }
+
+    // Reduced-motion check (once, on first viewport)
+    console.log('\n▶ Reduced-motion check (390×844)…');
+    const rmViewport = VIEWPORTS.find(v => v.name === '390x844');
+    if (rmViewport) {
+      const rmResult = await checkReducedMotion(browser, `${BASE_URL}/`, rmViewport);
+      if (rmResult.skip) {
+        console.log('  ⚠ Keyboard not found — skip reduced-motion check');
+      } else if (rmResult.noAnim) {
+        console.log('  ✓ reduced-motion: no animation (transitionDuration < 50ms, no pressed keys)');
+      } else {
+        console.log(`  ✗ reduced-motion: animation still running (transitionDuration=${rmResult.transitionDuration}s, pressedKeys=${rmResult.pressedKeys})`);
+        totalFails++;
+      }
+    }
+
   } finally {
     await browser.close();
     if (previewProc) {

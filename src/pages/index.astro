@@ -1,6 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
 import { site } from '../config/site';
 
 const projects = await getCollection('projects');
@@ -9,9 +11,50 @@ const featured = projects
   .sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title={`${site.name} — ${site.role}`} description={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`}>
-  <!-- Fase 0: shell vacío. Contenido llega en Fase 1 -->
-  <p style="padding: 2rem; font-family: monospace;">
-    Fase 0 — {featured.length} proyectos destacados cargados. Build OK.
-  </p>
+<BaseLayout
+  title={`${site.name} — ${site.role}`}
+  description={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`}
+>
+  <Header />
+  <main>
+    <Hero />
+
+    <!-- Fase 2: Proyectos destacados + grid con filtros -->
+    <section id="proyectos" style="padding: 4rem var(--pad-desktop); max-width: var(--max-w); margin: 0 auto;">
+      <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-primary); margin-bottom: 1rem;">
+        Proyectos
+      </h2>
+      <p style="color: var(--color-text-secondary);">
+        {featured.length} proyectos destacados — contenido completo en Fase 2.
+      </p>
+    </section>
+
+    <section id="servicios" style="padding: 4rem var(--pad-desktop); background: var(--color-bg-hero-from); max-width: 100%;">
+      <div style="max-width: var(--max-w); margin: 0 auto;">
+        <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-primary);">
+          Servicios — Fase 3
+        </h2>
+      </div>
+    </section>
+
+    <section id="proceso" style="padding: 4rem var(--pad-desktop); max-width: var(--max-w); margin: 0 auto;">
+      <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-primary);">
+        Proceso — Fase 3
+      </h2>
+    </section>
+
+    <section id="sobre-mi" style="padding: 4rem var(--pad-desktop); max-width: var(--max-w); margin: 0 auto;">
+      <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-primary);">
+        Sobre mí — Fase 3
+      </h2>
+    </section>
+
+    <section id="contacto" style="padding: 4rem var(--pad-desktop); background: var(--color-bg-contact); width: 100%;">
+      <div style="max-width: var(--max-w); margin: 0 auto;">
+        <h2 style="font-family: 'Satoshi', system-ui, sans-serif; font-weight: 900; font-size: 2rem; color: var(--color-text-contact);">
+          Contacto — Fase 3
+        </h2>
+      </div>
+    </section>
+  </main>
 </BaseLayout>
