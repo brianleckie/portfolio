@@ -118,19 +118,7 @@ async function checkPage(page, url, viewport) {
     });
   }
 
-  // --- Fase 1 reduced-motion check (dead code — actual check is in checkReducedMotion()) ---
-  const rmChecks = await page.evaluate(() => {
-    // Check that no animated transform is running on .key-face elements
-    // (reduced motion means CSS transitions are 0.01ms via global rule)
-    const face = document.querySelector('.key-face');
-    if (!face) return { skip: true };
-    const style = window.getComputedStyle(face);
-    const duration = parseFloat(style.transitionDuration);
-    const noAnim = duration < 0.05; // < 50ms means effectively disabled
-    return { noAnim };
-  }, { reducedMotion: 'reduce' }); // note: this arg is ignored by evaluate; see below
-
-  return { overflow, errors, failed, kbChecks, foldCheck, rmChecks };
+  return { overflow, errors, failed, kbChecks, foldCheck };
 }
 
 async function checkReducedMotion(browser, url, viewport) {

@@ -26,6 +26,11 @@ const KEYS = [
     x: 584, y: 139, w: 146, h: 161, face: '#f4b8ff', base: '#a34cbf' },
 ];
 
+// Nombre accesible = caption en minúscula con excepciones de siglas/tildes
+const LABEL_OVERRIDES: Record<string, string> = { 'IT Y SOPORTE': 'IT y soporte' };
+const labelFor = (caption: string) =>
+  LABEL_OVERRIDES[caption] ?? caption.charAt(0) + caption.slice(1).toLowerCase();
+
 const ENTER = {
   id: 'Enter',
   letter: '↵',
@@ -44,7 +49,7 @@ const ENTER = {
           href={key.href}
           class="key"
           id={`key-${key.id}`}
-          aria-label={key.caption.charAt(0) + key.caption.slice(1).toLowerCase().replace('mÍ', 'mí')}
+          aria-label={labelFor(key.caption)}
           data-filter={key.filter || undefined}
           style={`
             --face: ${key.face};

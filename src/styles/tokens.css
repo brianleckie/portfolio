@@ -42,6 +42,7 @@
   --pad-tablet: 32px;
   --pad-desktop: 48px;
   --max-w: 1440px;
+  --header-h: 64px; /* mobile: ver media query abajo (header en dos filas) */
 
   /* Keyboard geometry */
   --kb-w: 900px;
@@ -50,4 +51,10 @@
   --kb-key-h: 161px;
   --kb-enter-w: 218px;
   --kb-enter-h: 300px;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --header-h: 113px; /* wordmark + CTA (64px) y fila de links scrolleable debajo */
+  }
 }

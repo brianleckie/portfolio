@@ -11,9 +11,9 @@ const waHref = whatsappHref();
     </a>
 
     <nav class="nav-desktop" aria-label="Navegación principal">
-      <a href="#proyectos">Proyectos</a>
-      <a href="#servicios">Servicios</a>
-      <a href="#sobre-mi">Sobre mí</a>
+      <a href="/#proyectos">Proyectos</a>
+      <a href="/#servicios">Servicios</a>
+      <a href="/#sobre-mi">Sobre mí</a>
       <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
         Hablemos ↗
       </a>
@@ -27,9 +27,9 @@ const waHref = whatsappHref();
   </div>
 
   <nav class="nav-mobile" aria-label="Navegación secundaria">
-    <a href="#proyectos">Proyectos</a>
-    <a href="#servicios">Servicios</a>
-    <a href="#sobre-mi">Sobre mí</a>
+    <a href="/#proyectos">Proyectos</a>
+    <a href="/#servicios">Servicios</a>
+    <a href="/#sobre-mi">Sobre mí</a>
   </nav>
 </header>
 
@@ -83,20 +83,22 @@ const waHref = whatsappHref();
     color: var(--color-text-primary);
   }
 
-  .btn-hablemos {
+  .btn-hablemos,
+  .nav-desktop a.btn-hablemos {
     font-size: 0.9375rem;
     font-weight: 600;
     text-decoration: none;
-    color: var(--color-accent) !important;
+    color: var(--color-accent);
     padding: 0.5rem 1rem;
     border: 1.5px solid var(--color-accent);
     border-radius: 8px;
     transition: background-color 0.15s, color 0.15s;
   }
 
-  .btn-hablemos:hover {
+  .btn-hablemos:hover,
+  .nav-desktop a.btn-hablemos:hover {
     background-color: var(--color-accent);
-    color: #fff !important;
+    color: #fff;
   }
 
   .mobile-right {
