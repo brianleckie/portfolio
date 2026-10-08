@@ -14,6 +14,8 @@ highlights:
   - "Avisos automáticos por WhatsApp para cuotas vencidas y comunicados"
   - "Pensado para boxes y estudios que no quieren contratar un administrativo extra"
   - "Reemplaza el Excel y el ERP caro en un solo lugar"
+cover: ../../assets/projects/mbarete/cover.jpeg
+coverMobile: ../../assets/projects/mbarete/coverMobile.jpeg
 demoUrl: "https://www.mbarete.fit"
 results:
   - "3 gimnasios operando en producción"

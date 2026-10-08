@@ -1,8 +1,9 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 const projects = defineCollection({
-  type: 'content',
-  schema: z.object({
+  loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
+  schema: ({ image }) => z.object({
     title: z.string(),
     summary: z.string(),
     category: z.array(z.enum(['web', 'sistemas', 'integraciones', 'it', 'academico'])),
@@ -16,6 +17,8 @@ const projects = defineCollection({
     stack: z.array(z.string()),
     highlights: z.array(z.string()),
     results: z.array(z.string()).optional(),
+    cover: image().optional(),
+    coverMobile: image().optional(),
     demoUrl: z.string().url().optional(),
     repoUrl: z.string().url().optional(),
     year: z.number(),

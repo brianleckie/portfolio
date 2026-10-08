@@ -15,4 +15,12 @@
 - **6 proyectos destacados**, en este orden: floreria-catalogo (1), valuador-inmuebles (2), lhoney (3), estacion-de-carretera (4), mbarete (5), ecodespensa (6). Kevjer: `featured: false`.
 - **REGLA PERMANENTE: Nunca inventar métricas ni resultados en ningún proyecto.** Sin dato real → campo vacío → sección oculta. Aplica a R², MAE, % de precisión, cantidades de usuarios, ingresos, etc.
 - **Stack `["TODO:"]`** para proyectos donde no tenemos el dato — el componente lo ocultará en Fase 2.
-- **`check-layout.mjs`:** skeleton en Fase 0, implementación completa en Fase 4 per SPEC §11.
+- **`check-layout.mjs`:** implementación funcional completada pre-Fase 1. Keyboard-specific checks se agregan en Fase 1.
+
+## Pre-Fase 1 — Correcciones de scaffolding
+
+- **Content Layer API:** migrado a `src/content.config.ts` con glob loader (Astro 5). `entry.id` incluye extensión `.md`; se strip en getStaticPaths. `render()` importado de `astro:content`.
+- **`src/layouts/BaseLayout.astro`:** punto único de `<head>` boilerplate, CSS imports y font loading. Elimina duplicación entre index y [slug].
+- **Imágenes estacion/mbarete/kevjer:** copiadas a `src/assets/projects/<slug>/` con campos `cover`/`coverMobile` en schema usando helper `image()`. Los originales en `public/images/` se mantienen para fases posteriores.
+- **Inter + Instrument Serif:** self-hosted via `@fontsource-variable/inter` y `@fontsource/instrument-serif`.
+- **Satoshi:** Fontshare CDN bloqueado en entorno CI. Se carga desde `api.fontshare.com` (funciona en browsers de producción). **TODO: self-hosting** cuando el entorno permita descargar el WOFF2 (deuda técnica).

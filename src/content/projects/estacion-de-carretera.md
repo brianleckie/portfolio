@@ -14,6 +14,8 @@ highlights:
   - "Dashboard de vendedor para gestión de inventario y pedidos"
   - "Inaugurado en noviembre 2024 con presencia del Pdte. Santiago Peña"
   - "100% construido en Itapúa, Paraguay"
+cover: ../../assets/projects/estacion-de-carretera/cover.jpeg
+coverMobile: ../../assets/projects/estacion-de-carretera/coverMobile.jpeg
 demoUrl: "https://www.estaciondecarretera.store"
 year: 2024
 accent: "#d9f28f"

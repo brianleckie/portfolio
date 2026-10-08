@@ -13,6 +13,8 @@ highlights:
   - "Catálogo con carrito multi-producto y modal de detalle por prenda"
   - "Checkout directo por WhatsApp"
   - "Panel admin con autenticación para gestión de inventario"
+cover: ../../assets/projects/kevjer/cover.jpeg
+coverMobile: ../../assets/projects/kevjer/coverMobile.jpeg
 demoUrl: "https://kevjer.vercel.app/"
 year: 2024
 accent: "#d8624c"

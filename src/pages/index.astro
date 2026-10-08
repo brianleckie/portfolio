@@ -1,8 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../config/site';
-import '../styles/tokens.css';
-import '../styles/base.css';
 
 const projects = await getCollection('projects');
 const featured = projects
@@ -10,23 +9,9 @@ const featured = projects
   .sort((a, b) => a.data.order - b.data.order);
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet" />
-    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,900&display=swap" rel="stylesheet" />
-    <title>{site.name} — {site.role}</title>
-    <meta name="description" content={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`} />
-  </head>
-  <body>
-    <!-- Fase 0: shell vacío. Contenido llega en Fase 1 -->
-    <p style="padding: 2rem; font-family: monospace;">
-      Fase 0 — {featured.length} proyectos destacados cargados. Build OK.
-    </p>
-  </body>
-</html>
+<BaseLayout title={`${site.name} — ${site.role}`} description={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`}>
+  <!-- Fase 0: shell vacío. Contenido llega en Fase 1 -->
+  <p style="padding: 2rem; font-family: monospace;">
+    Fase 0 — {featured.length} proyectos destacados cargados. Build OK.
+  </p>
+</BaseLayout>
