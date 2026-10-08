@@ -23,4 +23,4 @@
 - **`src/layouts/BaseLayout.astro`:** punto único de `<head>` boilerplate, CSS imports y font loading. Elimina duplicación entre index y [slug].
 - **Imágenes estacion/mbarete/kevjer:** copiadas a `src/assets/projects/<slug>/` con campos `cover`/`coverMobile` en schema usando helper `image()`. Los originales en `public/images/` se mantienen para fases posteriores.
 - **Inter + Instrument Serif:** self-hosted via `@fontsource-variable/inter` y `@fontsource/instrument-serif`.
-- **Satoshi:** Fontshare CDN bloqueado en entorno CI. Se carga desde `api.fontshare.com` (funciona en browsers de producción). **TODO: self-hosting** cuando el entorno permita descargar el WOFF2 (deuda técnica).
+- **Satoshi:** Self-hosted en `public/fonts/` — `Satoshi-Bold.woff2` (700) y `Satoshi-Black.woff2` (900), extraídos del zip ITF FFL. Licencia en `public/fonts/Satoshi-LICENSE.txt`. `@font-face` declarado en `base.css`; preload de Black en `BaseLayout.astro`. Sin dependencias externas de fuentes.
