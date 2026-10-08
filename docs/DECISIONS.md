@@ -99,3 +99,12 @@
 - **Lhoney** pasa a `en-produccion` (pedido del usuario).
 - **Estación sin mención a la inauguración** hasta que el cliente confirme "Pdte. Santiago Peña" vs "intendente": se quitó la frase del summary, el highlight y la sección "Resultado". En la captura móvil, la 2ª línea de la tarjeta del hero ("Inaugurada Nov. 2024 · …") está pintada con el color de la propia tarjeta (un recorte puro dejaba una imagen sin proporción de teléfono); se guarda como `mobile.webp`, se eliminó `coverMobile.jpeg` y la copia pública `public/images/estacion-mobile.jpeg`. Reversible con git. `check:layout` prohíbe `inaugur` en cualquier página.
 - **Ecodespensa:** `ApiSource` lee la API de Bistrosoft y `ExcelSource` las exportaciones de Excel de Bistrosoft (confirmado por el usuario); el `.md` lo dice explícitamente.
+
+## Diagramas "Cómo funciona" para proyectos sin interfaz (PR #12)
+
+- **Desvío de SPEC §8.4 pedido por el usuario:** los proyectos sin interfaz (AVM Gran Asunción, Ecodespensa, IT para red de sucursales) muestran un diagrama en lugar del placeholder con iniciales. **La captura siempre gana** si existe.
+- **Nunca parece una captura del producto:** píldora visible "Diagrama", sin imágenes, texto real en una lista ordenada (`<ol>`), números y flechas decorativos con `aria-hidden`.
+- **Nada inventado:** el contenido sale del campo opcional `flow` del `.md`, validado por Zod (3–4 pasos, palabras cortas, sin `TODO` ni `%`). `check:layout` exige que cada número y cada palabra de 5+ letras del diagrama aparezca en el `.md` (sin contar el bloque `flow`).
+- **Diseño responsive por contenedor:** fila de 3–4 nodos (≥560px), serpentina 2×2 solo con nombres en cards angostas (incluida mobile) y columna en la página del caso en mobile; misma caja 16/10 que las capturas para que la grilla quede pareja.
+- **Movimiento:** un punto índigo recorre las flechas (solo `transform`/`opacity`, pausado fuera de pantalla). Con `prefers-reduced-motion` no existe animación (lo verifica el check).
+- **Confirmado por el usuario:** `ApiSource` lee la API de Bistrosoft y `ExcelSource` las exportaciones de Excel de Bistrosoft; "15 sucursales" (IT) es dato confirmado.

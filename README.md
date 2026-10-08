@@ -41,6 +41,23 @@ links:
 
 `preview` elige qué captura va en cada marco cuando el proyecto tiene varios sitios (ver abajo): `preview: { desktop: ornella, mobile: rocio }`.
 
+`flow` es para proyectos **sin interfaz gráfica** (backend, integraciones, modelos): en lugar del placeholder muestra un diagrama "Cómo funciona" (3–4 pasos, con ramas opcionales). Solo se usa si el proyecto no tiene capturas, y todo su texto tiene que salir de datos reales del proyecto (el schema rechaza `TODO` y `%`, y `check:layout` exige que cada palabra y número esté en el `.md`):
+
+```yaml
+flow:
+  steps:
+    - label: "Bistrosoft"
+      detail: "Sistema de gestión del local"
+      icon: sistema        # sistema, datos, codigo, servidor, tienda, mapa, modelo, precio, despliegue, sucursal
+    - label: "Interfaz abstracta"
+      icon: codigo
+      code: true           # las ramas se muestran como código
+      branches:
+        - { label: "ExcelSource", detail: "exportaciones de Excel" }
+        - { label: "ApiSource", detail: "API de Bistrosoft" }
+  note: "Texto corto opcional al pie"
+```
+
 Reglas: el estado se muestra tal cual (nunca se mejora); `results` solo con datos reales; `clientNamePublic: false` hasta tener permiso del cliente. Cualquier campo o párrafo que empiece con `TODO:` se oculta (y un heading que quede vacío también). Los destacados (`featured: true`) se ordenan por `order`.
 
 ## Capturas de las demos (`npm run shots`)

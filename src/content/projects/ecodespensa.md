@@ -13,6 +13,23 @@ highlights:
   - "Integración OAuth con la API de Tiendanube para sincronizar catálogo y stock"
   - "Interfaz ExcelSource/ApiSource que permitió avanzar ~80% del desarrollo antes de tener credenciales reales de la API"
   - "Deploy en Railway con PostgreSQL como base de datos"
+flow:
+  steps:
+    - label: "Bistrosoft"
+      detail: "Sistema de gestión del local"
+      icon: sistema
+    - label: "Interfaz abstracta"
+      icon: codigo
+      code: true
+      branches:
+        - { label: "ExcelSource", detail: "exportaciones de Excel" }
+        - { label: "ApiSource", detail: "API de Bistrosoft" }
+    - label: "Integración"
+      detail: "FastAPI + PostgreSQL, deploy en Railway"
+      icon: servidor
+    - label: "Tiendanube"
+      detail: "Catálogo y stock, con OAuth"
+      icon: tienda
 year: 2024
 accent: "#c8b6ff"
 ---

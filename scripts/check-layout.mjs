@@ -19,7 +19,7 @@
 
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
-import { mkdirSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync } from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -291,6 +291,8 @@ async function checkReducedMotion(browser) {
             moved: Math.abs(new DOMMatrix(getComputedStyle(track).transform).m41 - tx0),
             transition: parseFloat(getComputedStyle(document.querySelector('.key-face')).transitionDuration),
             groups: getComputedStyle(document.getElementById('marquee-g2')).display,
+            packets: [...document.querySelectorAll('[data-diagram] .packet')].filter((p) => getComputedStyle(p).display !== 'none').length,
+            anims: document.getAnimations().filter((a) => a.effect?.target?.closest?.('[data-diagram]')).length,
           });
         }, 1500);
       }),
@@ -299,6 +301,7 @@ async function checkReducedMotion(browser) {
   if (data.moved > 0.5) issues.push(`el marquee se movió ${data.moved.toFixed(1)}px con prefers-reduced-motion`);
   if (data.transition >= 0.05) issues.push(`.key-face conserva transición (${data.transition}s)`);
   if (data.groups !== 'none') issues.push('el marquee duplicado debe ocultarse con reduced-motion');
+  if (data.packets || data.anims) issues.push(`los diagramas se animan con prefers-reduced-motion (${data.packets} paquetes, ${data.anims} animaciones)`);
   await ctx.close();
   return issues;
 }
@@ -632,6 +635,133 @@ function checkContent(slug, html, text) {
 }
 
 
+
+// ---------------------------------------------------------------- diagramas (proyectos sin captura)
+
+const projectRaw = (slug) => readFileSync(path.join(ROOT, 'src/content/projects', `${slug}.md`), 'utf8');
+
+/** Texto del .md SIN el bloque `flow:` (si no, todo lo del diagrama "estaría" en el .md). */
+function factsSource(slug) {
+  let inFlow = false;
+  const kept = [];
+  for (const line of projectRaw(slug).split('\n')) {
+    if (/^flow:/.test(line)) {
+      inFlow = true;
+      continue;
+    }
+    if (inFlow && /^\S/.test(line)) inFlow = false;
+    if (!inFlow) kept.push(line);
+  }
+  return kept.join('\n').toLowerCase();
+}
+
+const hasImages = (slug) => {
+  if (/^cover(Mobile)?:/m.test(projectRaw(slug))) return true;
+  const dir = path.join(ROOT, 'src/assets/projects', slug);
+  return existsSync(dir) && readdirSync(dir).some((f) => /^(desktop|mobile)/.test(f));
+};
+const DIAGRAM_SLUGS = SLUGS.filter((s) => /^flow:/m.test(projectRaw(s)) && !hasImages(s));
+const FEATURED_DIAGRAMS = DIAGRAM_SLUGS.filter((s) => /^featured:\s*true/m.test(projectRaw(s)));
+
+async function checkDiagrams(page, viewport, expected) {
+  const issues = [];
+  const found = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-diagram]')).map((fig) => {
+      const m = fig.closest('.media').getBoundingClientRect();
+      const visible = (el) => !!el && el.getBoundingClientRect().width > 1;
+      const broken = []; // palabras partidas en dos líneas
+      fig.querySelectorAll('.label').forEach((el) => {
+        const node = el.firstChild;
+        if (!node || !visible(el)) return;
+        for (const w of node.data.matchAll(/\S+/g)) {
+          const r = document.createRange();
+          r.setStart(node, w.index);
+          r.setEnd(node, w.index + w[0].length);
+          if (r.getClientRects().length > 1) broken.push(w[0]);
+        }
+      });
+      const href = fig.closest('article')?.querySelector('a[href^="/proyectos/"]')?.getAttribute('href');
+      return {
+        slug: (href ?? location.pathname).split('/').filter(Boolean).pop(),
+        tagOk: fig.querySelector('.tag')?.textContent.trim() === 'Diagrama' && visible(fig.querySelector('.tag')),
+        caption: fig.querySelector('figcaption')?.textContent.trim(),
+        steps: fig.querySelectorAll(':scope > ol > li').length,
+        exposed: [...fig.querySelectorAll('.link, .cap, svg')].filter((e) => e.getAttribute('aria-hidden') !== 'true').length,
+        images: fig.querySelectorAll('img, picture').length,
+        overflowX: fig.scrollWidth > fig.clientWidth + 1,
+        outside: [...fig.querySelectorAll('.step')].filter((s) => {
+          const r = s.getBoundingClientRect();
+          return r.left < m.left || r.right > m.right || r.top < m.top || r.bottom + 4 > m.bottom;
+        }).length,
+        ratio: m.width / m.height,
+        card: fig.dataset.variant === 'card',
+        broken,
+        facts: [...fig.querySelectorAll('.label, .detail, .branches, .note')].map((e) => e.textContent).join(' '),
+        html: fig.outerHTML,
+      };
+    }),
+  );
+  const got = found.map((d) => d.slug).sort().join();
+  if (got !== [...expected].sort().join()) issues.push(`diagramas: [${got}] ≠ esperados [${expected.join()}]`);
+  for (const d of found) {
+    const w = `diagrama ${d.slug}`;
+    if (!d.tagOk || !d.caption) issues.push(`${w}: falta la etiqueta visible "Diagrama"`);
+    if (d.steps < 3 || d.steps > 4) issues.push(`${w}: ${d.steps} pasos`);
+    if (d.exposed) issues.push(`${w}: ${d.exposed} decorativos sin aria-hidden`);
+    if (d.images) issues.push(`${w}: contiene imágenes (debe ser un esquema, no una captura)`);
+    if (d.overflowX || d.outside) issues.push(`${w}: se sale del marco (${d.outside} nodos)`);
+    if (d.broken.length) issues.push(`${w}: palabras cortadas: ${d.broken.join(', ')}`);
+    if (d.card && Math.abs(d.ratio - 1.6) > 0.01) issues.push(`${w}: la media dejó de ser 16/10 (${d.ratio.toFixed(3)})`);
+    if (/TODO/.test(d.html)) issues.push(`${w}: contiene "TODO"`);
+    if (/%/.test(d.facts)) issues.push(`${w}: contiene un porcentaje`);
+    const src = factsSource(d.slug);
+    for (const n of new Set(d.facts.match(/\d+(?:[.,]\d+)?/g) ?? [])) {
+      if (!new RegExp(`(^|\\D)${n.replace(/[.,]/, '\\$&')}(\\D|$)`).test(src)) issues.push(`${w}: el número ${n} no está en el .md`);
+    }
+    for (const word of new Set(d.facts.toLowerCase().match(/\p{L}{5,}/gu) ?? [])) {
+      if (!new RegExp(`(^|[^\\p{L}])${word}([^\\p{L}]|$)`, 'u').test(src)) issues.push(`${w}: "${word}" no aparece en el .md (¿dato inventado?)`);
+    }
+  }
+  return issues;
+}
+
+async function checkDiagramMotion(page) {
+  const issues = [];
+  if (!(await page.$('[data-diagram]'))) return issues;
+  await page.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.querySelector('[data-diagram]').scrollIntoView({ block: 'center', behavior: 'instant' });
+  });
+  await sleep(400);
+  const on = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const fig = document.querySelector('[data-diagram]');
+        const p = fig.querySelector('.packet');
+        const anim = p.getAnimations()[0];
+        const props = anim ? anim.effect.getKeyframes().flatMap(Object.keys) : [];
+        const seen = new Set();
+        const t0 = performance.now();
+        const timer = setInterval(() => {
+          seen.add(getComputedStyle(p).transform);
+          if (performance.now() - t0 > 3800) {
+            clearInterval(timer);
+            resolve({ play: fig.hasAttribute('data-play'), state: anim?.playState, props, distinct: seen.size });
+          }
+        }, 100);
+      }),
+  );
+  if (!on.play || on.state !== 'running') issues.push(`en pantalla no anima (${on.state})`);
+  if (on.distinct < 3) issues.push('los paquetes no se movieron en un ciclo');
+  const bad = [...new Set(on.props)].filter((k) => !['offset', 'computedOffset', 'easing', 'composite', 'transform', 'opacity'].includes(k));
+  if (bad.length) issues.push(`anima propiedades de layout/paint: ${bad.join(', ')}`);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await sleep(400);
+  const off = await page.evaluate(() => document.querySelector('[data-diagram] .packet').getAnimations()[0]?.playState);
+  if (off === 'running') issues.push('fuera del viewport la animación sigue corriendo');
+  return issues;
+}
+
 // ---------------------------------------------------------------- previews de proyectos y links
 
 const FEATURED_BUDGET_390 = 3400; // px de #featured-block a 390×844 (antes de la escena 16/10: ≈3770)
@@ -830,6 +960,8 @@ async function main() {
         });
         if (lhoney !== 'En producción') issues.push(`badge de Lhoney = ${JSON.stringify(lhoney)} (se esperaba "En producción")`);
       }
+      issues.push(...(await checkDiagrams(page, viewport, FEATURED_DIAGRAMS)));
+      if (viewport.name === '1440x810') issues.push(...(await checkDiagramMotion(page)).map((i) => `diagramas: ${i}`));
       // última comprobación de la home: scrollea la página para disparar las imágenes lazy
       issues.push(...(await checkProjectMedia(page, viewport)).map((i) => `previews: ${i}`));
       report(`${viewport.name} — /`, issues);
@@ -853,6 +985,7 @@ async function main() {
           );
         }
         issues.push(...(await checkProjectLinks(page, slug, 'case', 'página del caso')));
+        issues.push(...(await checkDiagrams(page, viewport, DIAGRAM_SLUGS.includes(slug) ? [slug] : [])));
         if (['mbarete', 'estacion-de-carretera', 'kevjer', 'floreria-catalogo', 'lhoney'].includes(slug)) {
           issues.push(...(await checkProjectMedia(page, viewport, { scope: 'main', featured: false })).map((i) => `previews: ${i}`));
         }

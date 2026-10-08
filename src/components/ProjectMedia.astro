@@ -1,6 +1,8 @@
 ---
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+import type { Flow } from '../lib/projects';
+import ProjectDiagram from './ProjectDiagram.astro';
 
 interface Props {
   title: string;
@@ -8,13 +10,15 @@ interface Props {
   initials: string;
   desktop?: ImageMetadata;
   mobile?: ImageMetadata;
+  flow?: Flow;
   eager?: boolean;
   variant?: 'card' | 'case';
 }
 
-const { title, accent, initials, desktop, mobile, eager = false, variant = 'card' } = Astro.props;
+const { title, accent, initials, desktop, mobile, flow, eager = false, variant = 'card' } = Astro.props;
 const loading = eager ? 'eager' : 'lazy';
 const shot = desktop && mobile ? 'both' : desktop ? 'desktop' : mobile ? 'mobile' : undefined;
+const diagram = shot ? undefined : flow; // la captura siempre gana
 // La ventana del teléfono sigue la proporción de la captura (738×1600, 738×1326…), acotada, para no recortar costados
 const phoneRatio = mobile ? Math.min(0.58, Math.max(0.46, mobile.width / mobile.height)) : 9 / 19.5;
 
@@ -30,7 +34,13 @@ const desktopSizes = sizesFor(0.93, shot === 'both' ? 0.74 : 0.93);
 const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
 ---
 
-<div class="media" data-variant={variant} data-shot={shot} style={`--accent: ${accent}`}>
+<div
+  class="media"
+  data-variant={variant}
+  data-shot={shot}
+  data-has-diagram={diagram ? '' : undefined}
+  style={`--accent: ${accent}`}
+>
   {desktop && (
     <div class="frame browser">
       <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -48,7 +58,8 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
       </div>
     </div>
   )}
-  {!shot && <div class="placeholder" aria-hidden="true"><span>{initials}</span></div>}
+  {diagram && <ProjectDiagram flow={diagram} title={title} variant={variant} />}
+  {!shot && !diagram && <div class="placeholder" aria-hidden="true"><span>{initials}</span></div>}
 </div>
 
 <style>
@@ -65,7 +76,7 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
     overflow: hidden;
   }
 
-  /* Misma caja en todas las cards y en todos los anchos (captura o placeholder) */
+  /* Misma caja en todas las cards y en todos los anchos (captura, diagrama o placeholder) */
   .media[data-variant='card'],
   .media[data-shot] {
     aspect-ratio: 16 / 10;
@@ -153,6 +164,21 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
     width: 30cqi;
   }
 
+  /* ---------- Diagrama (proyectos sin interfaz) ---------- */
+  .media[data-has-diagram] {
+    place-items: stretch; /* con container-type, centrado colapsaría el diagrama a ancho 0 */
+    padding: 1rem;
+    overflow: visible; /* si algo no entra (zoom de texto), la caja crece en vez de recortar */
+    background-image:
+      radial-gradient(circle, rgb(17 17 17 / 0.14) 1px, transparent 1.5px),
+      linear-gradient(155deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.05));
+    background-size: 16px 16px, auto;
+  }
+
+  .media[data-variant='case'][data-has-diagram] {
+    padding: 2rem;
+  }
+
   /* ---------- Placeholder: una "tecla" con las iniciales ---------- */
   .placeholder {
     display: grid;
@@ -191,6 +217,10 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
 
     .media[data-variant='card'] .placeholder {
       width: min(36%, 140px);
+    }
+
+    .media[data-variant='case'][data-has-diagram] {
+      padding: 1rem;
     }
   }
 </style>
