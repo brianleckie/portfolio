@@ -65,3 +65,14 @@
 - **Página de caso:** prev/next circular entre los 6 destacados; los no destacados muestran "Todos los proyectos". La franja de `results` (hoy solo Mbarete) se muestra resaltada en card y en el caso.
 - **`trailingSlash: 'always'`** para URLs canónicas consistentes (el sitemap y los canonical usan la barra final).
 - **check:layout:** home en 6 viewports + las 15 páginas de caso en 390×844 y 1440×810, animación del teclado (50 ms × 6 s), marquee (translateX × 4 s), reduced-motion, filtros (teclas y chips), links y contenido (sin TODO, sin datos retirados, valuador sin métricas ni portales).
+
+## Fase 3 — Servicios, proceso, sobre mí, contacto, CTA sticky, footer
+
+- **Primitivas de sección compartidas** (`.section`, `.section-inner`, `.section-title`, `.section-lead`, `.sr-only`) en `src/styles/ui.css`; ProjectGrid también las usa.
+- **Servicios:** contenido en `src/config/services.ts`; `showPrices: false` en `site.ts` y `fromPrice` opcional por servicio (solo se muestra si `showPrices` es true y hay valor). "Ver ejemplos" apunta a `/?cat=…#proyectos` con `data-filter`: sin JS navega con el parámetro, con JS aplica el filtro sin recargar.
+- **Proceso:** el paso 2 ("Te muestro una demo") va en el color de acento, elevado y con la etiqueta "Mi diferencial"; en mobile no se eleva.
+- **Sobre mí:** texto armado solo con hechos del SPEC y de DECISIONS (4º año, full-stack, IT empresarial, Encarnación, negocios de todo Paraguay, Klien IT Systems remoto). "Países Bajos" no se muestra. **Klien IT Systems aparece solo ahí** (lo verifica el check). El texto queda marcado para revisión del usuario.
+- **Tecla K (STACK)** apunta a `#stack` (el bloque de stack dentro de Sobre mí), como pide el SPEC.
+- **Contacto:** el botón de WhatsApp usa el lila de los links (`#a9b4ff`) con texto oscuro: el índigo del acento contra `#151a33` no llega a 3:1 como componente de UI.
+- **CTA sticky:** `data-after`/`data-until` parametrizan la barra (home: tras `#hero` hasta `#contacto`; casos: tras `#caso-hero` hasta `#caso-cta`). Se oculta también cuando la sección final quedó atrás (no reaparece sobre el footer). Una vez que aparece, `body` conserva el padding inferior (evita saltos de scroll al ocultarse) y `html` tiene `scroll-padding-bottom` para que el foco no quede tapado. `viewport-fit=cover` + `env(safe-area-inset-bottom)`.
+- **Footer** compartido por home y casos; GitHub/LinkedIn solo si están cargados.

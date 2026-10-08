@@ -358,6 +358,121 @@ async function checkFilters(browser, viewport) {
   return issues;
 }
 
+
+// ---------------------------------------------------------------- Fase 3: CTA sticky y secciones
+
+const barState = (page) =>
+  page.evaluate(() => {
+    const bar = document.getElementById('sticky-cta');
+    const cs = getComputedStyle(bar);
+    const r = bar.getBoundingClientRect();
+    return {
+      display: cs.display,
+      visibility: cs.visibility,
+      visible: cs.display !== 'none' && cs.visibility === 'visible' && r.top < window.innerHeight && r.bottom > 0,
+      bottomGap: window.innerHeight - r.bottom,
+      height: r.height,
+      bodyPad: parseFloat(getComputedStyle(document.body).paddingBottom),
+      scrollPad: parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) || 0,
+    };
+  });
+
+/** Scrollea con salto instantáneo y espera a que terminen los IntersectionObservers y la transición. */
+async function jumpTo(page, selector, block = 'start') {
+  await page.evaluate(([sel, b]) => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.querySelector(sel).scrollIntoView({ block: b });
+    document.documentElement.style.scrollBehavior = prev;
+  }, [selector, block]);
+  await sleep(500);
+}
+
+async function checkStickyCta(browser, pagePath, afterSel, midSel, untilSel) {
+  const issues = [];
+  const mobile = VIEWPORTS.find((v) => v.name === '390x844');
+  const { ctx, page } = await openPage(browser, mobile, `${BASE_URL}${pagePath}`);
+
+  let st = await barState(page);
+  if (st.visible) issues.push('visible arriba, antes de pasar el hero');
+  await jumpTo(page, midSel, 'center');
+  st = await barState(page);
+  if (!st.visible) issues.push(`no aparece a mitad de página (${midSel})`);
+  else {
+    if (st.bottomGap > 1) issues.push(`la barra no está pegada al borde inferior (gap ${st.bottomGap.toFixed(0)}px)`);
+    if (st.bodyPad < st.height - 1) issues.push(`body sin padding inferior suficiente (${st.bodyPad}px < ${st.height.toFixed(0)}px)`);
+    if (st.scrollPad < st.height - 1) issues.push(`scroll-padding-bottom insuficiente para el foco (${st.scrollPad}px)`);
+  }
+  await jumpTo(page, untilSel, 'center');
+  st = await barState(page);
+  if (st.visible) issues.push(`sigue visible con ${untilSel} en pantalla`);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await sleep(500);
+  st = await barState(page);
+  if (st.visible) issues.push('visible al final de la página');
+  await ctx.close();
+
+  const desktop = VIEWPORTS.find((v) => v.name === '1440x810');
+  const d = await openPage(browser, desktop, `${BASE_URL}${pagePath}`);
+  await jumpTo(d.page, midSel, 'center');
+  st = await barState(d.page);
+  if (st.display !== 'none') issues.push('la barra se muestra en ≥700px');
+  await d.ctx.close();
+  return issues;
+}
+
+async function checkSections(browser) {
+  const issues = [];
+  const viewport = VIEWPORTS.find((v) => v.name === '1440x810');
+  const { ctx, page } = await openPage(browser, viewport, `${BASE_URL}/`);
+  const data = await page.evaluate(() => {
+    const textOutside = Array.from(document.body.children)
+      .map((el) => el.innerText ?? '')
+      .join('\n');
+    const about = document.getElementById('sobre-mi');
+    const mail = document.querySelector('#contacto a[href^="mailto:"]');
+    const stackChips = Array.from(document.querySelectorAll('#stack .chips li')).map((li) => li.textContent.trim());
+    return {
+      ids: ['proyectos', 'servicios', 'proceso', 'sobre-mi', 'contacto', 'stack'].filter((id) => !document.getElementById(id)),
+      klienTotal: (textOutside.match(/Klien IT Systems/g) ?? []).length,
+      klienInAbout: ((about?.innerText ?? '').match(/Klien IT Systems/g) ?? []).length,
+      steps: document.querySelectorAll('#proceso ol > li').length,
+      featuredStep: document.querySelector('#proceso li.featured h3')?.textContent?.trim(),
+      services: document.querySelectorAll('#servicios li').length,
+      serviceFilters: Array.from(document.querySelectorAll('#servicios a[data-filter]')).map((a) => a.dataset.filter),
+      mailWrap: mail ? getComputedStyle(mail).overflowWrap : null,
+      mailDecoration: mail ? getComputedStyle(mail).textDecorationLine : null,
+      contactBg: getComputedStyle(document.getElementById('contacto')).backgroundColor,
+      contactTitle: document.querySelector('#contacto h2')?.textContent?.replace(/\s+/g, ' ').trim(),
+      credit: /ui\.debbie/.test(document.querySelector('footer')?.textContent ?? ''),
+      year: new RegExp(String(new Date().getFullYear())).test(document.querySelector('footer')?.textContent ?? ''),
+      stackGroups: Array.from(document.querySelectorAll('#stack .group h4')).map((h) => h.textContent.trim()),
+      stackChips,
+    };
+  });
+  if (data.ids.length) issues.push(`faltan secciones: ${data.ids.join(', ')}`);
+  if (data.klienTotal !== data.klienInAbout || data.klienInAbout !== 1) {
+    issues.push(`"Klien IT Systems" debe aparecer solo en #sobre-mi (total ${data.klienTotal}, en sobre-mi ${data.klienInAbout})`);
+  }
+  if (data.steps !== 4) issues.push(`el proceso debe tener 4 pasos (hay ${data.steps})`);
+  if (data.featuredStep !== 'Te muestro una demo') issues.push(`el paso destacado debería ser "Te muestro una demo" (es ${data.featuredStep})`);
+  if (data.services !== 4) issues.push(`debe haber 4 servicios (hay ${data.services})`);
+  if (data.serviceFilters.join() !== 'web,sistemas,integraciones,it') issues.push(`filtros de servicios: ${data.serviceFilters.join()}`);
+  if (data.mailWrap !== 'anywhere') issues.push(`el email debería tener overflow-wrap:anywhere (es ${data.mailWrap})`);
+  if (data.mailDecoration !== 'underline') issues.push('el email debería estar subrayado');
+  if (data.contactBg !== 'rgb(21, 26, 51)') issues.push(`fondo de contacto ${data.contactBg} ≠ #151a33`);
+  if (!/Tu próximo proyecto/.test(data.contactTitle ?? '') || !/empieza con un hola/.test(data.contactTitle ?? '')) issues.push(`titular de contacto: ${data.contactTitle}`);
+  if (!data.credit) issues.push('falta el crédito ui.debbie en el footer');
+  if (!data.year) issues.push('el footer no muestra el año actual');
+  if (data.stackGroups.join() !== 'Frontend,Backend,Infra y herramientas,IA') issues.push(`grupos del stack: ${data.stackGroups.join()}`);
+
+  // "Ver ejemplos" de Servicios aplica el filtro
+  await page.locator('#servicios a[data-filter="integraciones"]').click();
+  issues.push(...(await expectFilter(page, 'integraciones', 'servicios → Ver ejemplos')));
+  await ctx.close();
+  return issues;
+}
+
 // ---------------------------------------------------------------- links y contenido
 
 async function collectLinks(page) {
@@ -515,6 +630,11 @@ async function main() {
       const viewport = VIEWPORTS.find((v) => v.name === name);
       report(`filtros (${name})`, await checkFilters(browser, viewport));
     }
+
+    // ---- CTA sticky, secciones de la Fase 3
+    report('CTA sticky — home (390×844)', await checkStickyCta(browser, '/', '#hero', '#servicios', '#contacto'));
+    report('CTA sticky — caso (390×844)', await checkStickyCta(browser, '/proyectos/mbarete/', '#caso-hero', '.prose', '#caso-cta'));
+    report('secciones (servicios, proceso, sobre mí, contacto, footer)', await checkSections(browser));
 
     // ---- links
     const internal = new Set();

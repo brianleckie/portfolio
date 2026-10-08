@@ -1,4 +1,4 @@
-/* Primitivas compartidas: botones, badge de estado y chips de stack. */
+/* Primitivas compartidas: secciones, botones, badge de estado y chips de stack. */
 
 .btn {
   display: inline-flex;
@@ -91,4 +91,52 @@
 .chips .more {
   border-style: dashed;
   color: var(--color-text-secondary);
+}
+
+/* Secciones de la home: padding, ancho máximo y títulos */
+.section {
+  padding: var(--space-2xl) var(--pad-desktop);
+}
+
+.section-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: 'Satoshi', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+}
+
+.section-lead {
+  margin-top: 0.75rem;
+  max-width: 56ch;
+  font-size: clamp(1rem, 1.4vw, 1.1875rem);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding-inline: var(--pad-tablet);
+  }
+}
+
+@media (max-width: 699px) {
+  .section {
+    padding: var(--space-xl) var(--pad-mobile);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

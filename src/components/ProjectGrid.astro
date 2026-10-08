@@ -7,11 +7,11 @@ const featured = await getFeatured();
 const others = await getOthers();
 ---
 
-<section id="proyectos" class="projects" aria-labelledby="proyectos-title">
-  <div class="inner">
+<section id="proyectos" class="section" aria-labelledby="proyectos-title">
+  <div class="section-inner">
     <header class="head">
       <h2 id="proyectos-title" class="section-title">Proyectos</h2>
-      <p class="lead">
+      <p class="section-lead">
         Lo que construí, con su estado real: en producción, entregado, en desarrollo o demo.
       </p>
     </header>
@@ -57,33 +57,8 @@ const others = await getOthers();
 </section>
 
 <style>
-  .projects {
-    padding: var(--space-2xl) var(--pad-desktop);
-  }
-
-  .inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-  }
-
   .head {
     margin-bottom: var(--space-lg);
-  }
-
-  .section-title {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(2.25rem, 5vw, 4rem);
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    color: var(--color-text-primary);
-  }
-
-  .lead {
-    margin-top: 0.75rem;
-    max-width: 56ch;
-    font-size: clamp(1rem, 1.4vw, 1.1875rem);
-    color: var(--color-text-secondary);
   }
 
   /* --- Filtros --- */
@@ -176,31 +151,14 @@ const others = await getOthers();
     cursor: pointer;
   }
 
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
 
   @media (max-width: 1024px) {
-    .projects {
-      padding-inline: var(--pad-tablet);
-    }
-
     .mini-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 699px) {
-    .projects {
-      padding: var(--space-xl) var(--pad-mobile);
-    }
-
     .featured-grid {
       grid-template-columns: minmax(0, 1fr);
     }

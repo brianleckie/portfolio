@@ -1,0 +1,103 @@
+---
+import { whatsappHref } from '../config/site';
+
+interface Props {
+  /** Selector del elemento que, una vez superado (scrolleado), muestra la barra. */
+  after: string;
+  /** Selector de la sección que, al estar en pantalla, oculta la barra. */
+  until: string;
+  message?: string;
+}
+
+const { after, until, message } = Astro.props;
+---
+
+<div class="sticky-cta" id="sticky-cta" data-after={after} data-until={until}>
+  <a class="btn btn-primary" href={whatsappHref(message)} target="_blank" rel="noopener noreferrer">
+    Escribime por WhatsApp
+  </a>
+</div>
+
+<style>
+  .sticky-cta {
+    display: none;
+  }
+
+  @media (max-width: 699px) {
+    .sticky-cta {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 90;
+      display: block;
+      padding: 10px var(--pad-mobile) calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgb(0 0 0 / 0.1);
+      background: rgb(255 255 255 / 0.96);
+      box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+      transform: translateY(110%);
+      visibility: hidden;
+      transition: transform 0.25s ease-out, visibility 0s linear 0.25s;
+    }
+
+    .sticky-cta.is-visible {
+      transform: none;
+      visibility: visible;
+      transition: transform 0.25s ease-out;
+    }
+
+    .sticky-cta .btn {
+      width: 100%;
+    }
+
+    /* La barra no debe tapar contenido ni el foco: espacio reservado cuando aparece */
+    :global(html) {
+      scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom));
+    }
+
+    :global(body.has-sticky-cta) {
+      padding-bottom: calc(68px + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sticky-cta,
+    .sticky-cta.is-visible {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const bar = document.getElementById('sticky-cta');
+    if (!bar) return;
+    const after = document.querySelector(bar.dataset.after ?? '');
+    const until = document.querySelector(bar.dataset.until ?? '');
+    if (!after || !until) return;
+
+    let pastAfter = false;
+    let untilDone = false; // la sección de contacto está en pantalla o ya quedó atrás
+
+    function update() {
+      const show = pastAfter && !untilDone;
+      bar!.classList.toggle('is-visible', show);
+      // Una vez que apareció se mantiene el espacio reservado: así no hay saltos de scroll al ocultarse
+      if (show) document.body.classList.add('has-sticky-cta');
+    }
+
+    const ioAfter = new IntersectionObserver(([entry]) => {
+      pastAfter = !entry.isIntersecting && entry.boundingClientRect.bottom <= 0;
+      update();
+    });
+    const ioUntil = new IntersectionObserver(([entry]) => {
+      untilDone = entry.isIntersecting || entry.boundingClientRect.bottom <= 0;
+      update();
+    });
+    ioAfter.observe(after);
+    ioUntil.observe(until);
+
+    document.addEventListener('astro:before-swap', () => {
+      ioAfter.disconnect();
+      ioUntil.disconnect();
+    });
+  })();
+</script>

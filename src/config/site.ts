@@ -12,6 +12,7 @@ export const site = {
   linkedin: "https://linkedin.com/in/brianleckie",
   instagram: "",
   showDesignCredit: true,
+  showPrices: false,               // true + fromPrice en services.ts para mostrar "desde X"
   url: "TODO:https://dominio-final",
 };
 
