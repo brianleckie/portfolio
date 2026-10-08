@@ -1,0 +1,17 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../config/site';
+
+const projects = await getCollection('projects');
+const featured = projects
+  .filter(p => p.data.featured)
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title={`${site.name} — ${site.role}`} description={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`}>
+  <!-- Fase 0: shell vacío. Contenido llega en Fase 1 -->
+  <p style="padding: 2rem; font-family: monospace;">
+    Fase 0 — {featured.length} proyectos destacados cargados. Build OK.
+  </p>
+</BaseLayout>

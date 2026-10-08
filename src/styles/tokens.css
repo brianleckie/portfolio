@@ -1,0 +1,53 @@
+:root {
+  /* Backgrounds */
+  --color-bg: #ffffff;
+  --color-bg-hero-from: #f7f9ff;
+  --color-bg-hero-to: #f3f0ff;
+  --color-bg-contact: #151a33;
+
+  /* Text */
+  --color-text-primary: #1d2033;
+  --color-text-secondary: #55586b;
+  --color-text-key: #111111;
+  --color-text-contact: #eef0ff;
+  --color-text-contact-link: #a9b4ff;
+
+  /* Accent */
+  --color-accent: #4f5bd5;
+
+  /* Keyboard key colors (face / base) */
+  --key-l-face: #a9ddff;  --key-l-base: #3886c9;
+  --key-e-face: #d9f28f;  --key-e-base: #7aa52d;
+  --key-k-face: #ffb7d5;  --key-k-base: #d94f8a;
+  --key-i-face: #c8b6ff;  --key-i-base: #7153c7;
+  --key-w-face: #ffd98e;  --key-w-base: #d28a24;
+  --key-o-face: #b9f2df;  --key-o-base: #2caa85;
+  --key-r-face: #ffc3a0;  --key-r-base: #d96c44;
+  --key-k2-face: #c6d7ff; --key-k2-base: #5a78c9;
+  --key-s-face: #f4b8ff;  --key-s-base: #a34cbf;
+  --key-enter-face: #9be7a8; --key-enter-base: #25a244;
+
+  /* Marquee */
+  --color-marquee-bg: #ffdfa0;
+  --color-marquee-text: #7a4318;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 96px;
+  --pad-mobile: 20px;
+  --pad-tablet: 32px;
+  --pad-desktop: 48px;
+  --max-w: 1440px;
+
+  /* Keyboard geometry */
+  --kb-w: 900px;
+  --kb-h: 312px;
+  --kb-key-w: 146px;
+  --kb-key-h: 161px;
+  --kb-enter-w: 218px;
+  --kb-enter-h: 300px;
+}
