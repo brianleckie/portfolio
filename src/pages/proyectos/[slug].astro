@@ -1,0 +1,44 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { site } from '../../config/site';
+import '../../styles/tokens.css';
+import '../../styles/base.css';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map(project => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { Content } = await project.render();
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet" />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@700,900&display=swap" rel="stylesheet" />
+    <title>{project.data.title} — {site.name}</title>
+    <meta name="description" content={project.data.summary} />
+  </head>
+  <body>
+    <!-- Fase 0: shell vacío. Contenido llega en Fase 2 -->
+    <article style="padding: 2rem; font-family: monospace; max-width: 800px;">
+      <h1>{project.data.title}</h1>
+      <p>{project.data.summary}</p>
+      <Content />
+    </article>
+  </body>
+</html>
