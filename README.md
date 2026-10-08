@@ -28,8 +28,18 @@ Todo está en **`src/config/site.ts`**: nombre, WhatsApp (formato E.164 sin `+`)
 ## Agregar un proyecto
 
 1. Copiá un archivo de `src/content/projects/` (por ejemplo `lhoney.md`) con el slug nuevo como nombre: la URL será `/proyectos/<slug>/`.
-2. Completá el frontmatter (el schema valida los campos en el build): `title`, `summary`, `category` (`web`, `sistemas`, `integraciones`, `it`, `academico`), `status` (`en-produccion`, `entregado`, `en-desarrollo`, `demo`, `academico`), `featured`, `order`, `clientGeneric`, `role`, `stack`, `highlights`, `year`, `accent`, y opcionalmente `demoUrl`, `repoUrl`, `results`, `cover`/`coverMobile`.
+2. Completá el frontmatter (el schema valida los campos en el build): `title`, `summary`, `category` (`web`, `sistemas`, `integraciones`, `it`, `academico`), `status` (`en-produccion`, `entregado`, `en-desarrollo`, `demo`, `academico`), `featured`, `order`, `clientGeneric`, `role`, `stack`, `highlights`, `year`, `accent`, y opcionalmente `demoUrl`, `repoUrl`, `results`, `cover`/`coverMobile`, `links` y `preview`.
 3. El cuerpo del `.md` es el caso de estudio: Contexto → Problema → Qué construí → Decisiones técnicas → Resultado.
+
+`links` agrega botones "Ver <label> ↗" (se abren en pestaña nueva; nunca se muestra la URL cruda):
+
+```yaml
+links:
+  - label: "Rocío Florería"
+    url: "https://rociofloreria.vercel.app"
+```
+
+`preview` elige qué captura va en cada marco cuando el proyecto tiene varios sitios (ver abajo): `preview: { desktop: ornella, mobile: rocio }`.
 
 Reglas: el estado se muestra tal cual (nunca se mejora); `results` solo con datos reales; `clientNamePublic: false` hasta tener permiso del cliente. Cualquier campo o párrafo que empiece con `TODO:` se oculta (y un heading que quede vacío también). Los destacados (`featured: true`) se ordenan por `order`.
 
@@ -40,7 +50,14 @@ npm run shots                # todos los proyectos con demoUrl
 npm run shots -- mbarete     # solo algunos slugs
 ```
 
-Captura 1440×900 y 390×844 (deviceScaleFactor 2), convierte a WebP con `sharp` y guarda `src/assets/projects/<slug>/desktop.webp` y `mobile.webp`. El sitio las toma solo: no hace falta editar el `.md`. Si el `.md` tiene `cover`/`coverMobile`, esa imagen manual tiene prioridad (borrá esas líneas para usar las automáticas). Sin ninguna imagen, la card muestra un placeholder con el color y las iniciales del proyecto.
+Captura cada sitio (`demoUrl` y cada `links[].url`) a 1440×900 y 390×844 (deviceScaleFactor 2), convierte a WebP con `sharp` y guarda en `src/assets/projects/<slug>/`:
+
+- un solo sitio por proyecto → `desktop.webp` y `mobile.webp` (el sitio las toma solo, sin editar el `.md`);
+- varios sitios por proyecto → `desktop-<clave>.webp` y `mobile-<clave>.webp`, con `<clave>` = primera palabra del label sin tildes y en minúsculas (`Rocío Florería` → `rocio`). El `.md` elige cuál va en cada marco con `preview`; si falta un archivo, ese marco simplemente no se muestra.
+
+Si el `.md` tiene `cover`/`coverMobile`, esa imagen manual tiene prioridad. También podés soltar capturas propias con esos nombres: para que queden parejas, **desktop ≈2,2:1** (ej. 1440×655) y **mobile ≈9:16 a 9:19,5** (ej. 738×1326 o 390×844 a @2x); otra proporción se recorta desde arriba sin deformarse.
+
+La card muestra siempre una escena 16/10 con navegador y teléfono (en mobile, el teléfono asoma recortado por abajo). Sin ninguna imagen, muestra un placeholder con el color y las iniciales del proyecto.
 
 El script necesita salida a internet hacia las demos, así que se corre en tu máquina (en el entorno de cloud de Claude Code las demos están bloqueadas por la política de red).
 

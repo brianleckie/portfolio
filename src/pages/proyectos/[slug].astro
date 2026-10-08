@@ -57,6 +57,7 @@ const highlights = cleanList(data.highlights);
 const results = cleanList(data.results);
 const demoUrl = clean(data.demoUrl);
 const repoUrl = clean(data.repoUrl);
+const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
 ---
 
 <BaseLayout
@@ -88,11 +89,16 @@ const repoUrl = clean(data.repoUrl);
         )}
       </dl>
 
-      {(demoUrl || repoUrl) && (
+      {(demoUrl || repoUrl || links.length > 0) && (
         <div class="links">
           {demoUrl && (
             <a class="btn btn-primary" href={demoUrl} target="_blank" rel="noopener noreferrer">Ver demo ↗</a>
           )}
+          {links.map((l, i) => (
+            <a class:list={['btn', !demoUrl && i === 0 ? 'btn-primary' : 'btn-ghost']} href={l.url} target="_blank" rel="noopener noreferrer">
+              Ver {l.label} ↗
+            </a>
+          ))}
           {repoUrl && (
             <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">Ver código ↗</a>
           )}
@@ -108,6 +114,7 @@ const repoUrl = clean(data.repoUrl);
         desktop={images.desktop}
         mobile={images.mobile}
         variant="case"
+        eager
       />
     </div>
 

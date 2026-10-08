@@ -20,6 +20,9 @@ const projects = defineCollection({
     cover: image().optional(),
     coverMobile: image().optional(),
     demoUrl: z.string().url().optional(),
+    links: z.array(z.object({ label: z.string().min(1), url: z.string().url() })).optional(),
+    // Claves que eligen desktop-<clave>.webp / mobile-<clave>.webp en src/assets/projects/<slug>/
+    preview: z.object({ desktop: z.string().optional(), mobile: z.string().optional() }).optional(),
     repoUrl: z.string().url().optional(),
     year: z.number(),
     accent: z.string(),

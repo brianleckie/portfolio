@@ -2,7 +2,7 @@
 title: "Lhoney — catálogo con carrito y pedido por WhatsApp"
 summary: "Boutique de regalos multi-categoría con catálogo, carrito y checkout por WhatsApp. Contenido centralizado en un solo archivo de datos."
 category: ["web"]
-status: "en-desarrollo"
+status: "en-produccion"
 featured: true
 order: 3
 clientNamePublic: false
@@ -14,6 +14,9 @@ highlights:
   - "Estado de stock por producto (disponible / agotado) visible al instante"
   - "Carrito y checkout directo por WhatsApp: el cliente arma su pedido y lo manda de un clic"
   - "Contenido centralizado en un solo archivo de datos para actualización simple"
+links:
+  - label: "Lhoney"
+    url: "https://lhoney.store"
 year: 2024
 accent: "#b9f2df"
 ---

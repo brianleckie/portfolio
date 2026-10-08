@@ -88,3 +88,14 @@
 - **Lighthouse mobile** (v12.8.2, throttling simulado, `astro preview` local): home 99 / 100 / 100 / 100 y caso (Mbarete) 100 / 100 / 100 / 100 (Performance / Accessibility / Best Practices / SEO).
 - **`npm run shots`:** lee `demoUrl` de los `.md`; las capturas se usan solas (`cover`/`coverMobile` del frontmatter tienen prioridad). En el entorno cloud las demos están bloqueadas por la política de red (CONNECT 403): queda funcionando para correrlo en local.
 - **`prebuild` lista los `TODO:`** pendientes (`scripts/list-todos.mjs`); no falla el build.
+
+## Previews, links y capturas (PR #12, tras la revisión del usuario)
+
+- **Escena de preview 16/10 en todos los anchos** (`ProjectMedia`): navegador + teléfono, medidas en `cqi` (porcentaje del ancho de la media), así se ve igual a 360 y a 1440px. En mobile el navegador va a la izquierda y el teléfono asoma recortado por abajo. `#featured-block` a 390×844: ≈3.770px → 3.324px. Se descartó el carrusel horizontal (esconde proyectos y choca con el filtro `?cat=` y la accesibilidad).
+- **Ventanas de proporción fija** con `object-fit: cover; object-position: 50% 0`: navegador 11/5 (2,2:1); el teléfono toma la proporción de su propia captura acotada a [0,46–0,58] (las capturas nuevas miden 738×1326, no 738×1600), así no se recortan costados.
+- **`links` en el schema**: botones "Ver <label> ↗" (nunca la URL cruda). Florería (Rocío y Ornella) y Lhoney. Los botones publican los nombres de las florerías (pedido expreso del usuario).
+- **`preview: { desktop, mobile }`** elige `desktop-<clave>.webp` / `mobile-<clave>.webp` cuando un proyecto tiene varios sitios; si el archivo no existe no rompe el build (ese marco no se muestra). Florería: Ornella en el navegador (captura desktop pendiente) y Rocío en el teléfono.
+- **`npm run shots`** captura también los `links`. Contra rociofloreria.vercel.app, ornella-floreria.vercel.app y lhoney.store el entorno cloud responde `ERR_TUNNEL_CONNECTION_FAILED` (egress bloqueado): se usan las capturas mobile que subió el usuario. Faltan `floreria-catalogo/desktop-ornella.webp` y `lhoney/desktop.webp`.
+- **Lhoney** pasa a `en-produccion` (pedido del usuario).
+- **Estación sin mención a la inauguración** hasta que el cliente confirme "Pdte. Santiago Peña" vs "intendente": se quitó la frase del summary, el highlight y la sección "Resultado". En la captura móvil, la 2ª línea de la tarjeta del hero ("Inaugurada Nov. 2024 · …") está pintada con el color de la propia tarjeta (un recorte puro dejaba una imagen sin proporción de teléfono); se guarda como `mobile.webp`, se eliminó `coverMobile.jpeg` y la copia pública `public/images/estacion-mobile.jpeg`. Reversible con git. `check:layout` prohíbe `inaugur` en cualquier página.
+- **Ecodespensa:** `ApiSource` lee la API de Bistrosoft y `ExcelSource` las exportaciones de Excel de Bistrosoft (confirmado por el usuario); el `.md` lo dice explícitamente.

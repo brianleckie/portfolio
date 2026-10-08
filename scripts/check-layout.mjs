@@ -612,6 +612,7 @@ const FORBIDDEN_EVERYWHERE = [
   [/TODO/, 'aparece "TODO"'],
   [/Presidente|Pdte\b|Peña/, 'aparece la mención retirada del Presidente'],
   [/3 gimnasios|Tres gimnasios/i, 'aparece el claim retirado de "3 gimnasios"'],
+  [/inaugur/i, 'aparece una mención a la inauguración (pendiente de confirmar con el cliente de Estación)'],
 ];
 const KNOWN_PORTALS = /infocasas|clasipar|mercado ?libre|\bolx\b|encuentra24|remax|marketplace de facebook/i;
 
@@ -626,6 +627,134 @@ function checkContent(slug, html, text) {
   }
   if (slug === 'mbarete' && !text.includes('Usado por gimnasios en Buenos Aires y en distintas partes de Paraguay.')) {
     issues.push('mbarete: falta la frase de resultado');
+  }
+  return issues;
+}
+
+
+// ---------------------------------------------------------------- previews de proyectos y links
+
+const FEATURED_BUDGET_390 = 3400; // px de #featured-block a 390×844 (antes de la escena 16/10: ≈3770)
+
+/** Medias de proyectos: caja uniforme, imágenes cargadas y sin deformar, una descarga por <picture>. */
+async function checkProjectMedia(page, viewport, { scope = '#proyectos', featured = true } = {}) {
+  const issues = [];
+  // Recorre la sección para que bajen las imágenes lazy
+  await page.evaluate(async (sel) => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    for (const m of document.querySelectorAll(`${sel} .media`)) {
+      m.scrollIntoView({ block: 'center', behavior: 'instant' });
+      await new Promise((r) => setTimeout(r, 80));
+    }
+  }, scope);
+  await page
+    .waitForFunction(
+      (sel) => [...document.querySelectorAll(`${sel} .media img`)].every((i) => i.complete),
+      scope,
+      { timeout: 10000 },
+    )
+    .catch(() => issues.push('hay imágenes de proyectos que no terminaron de cargar'));
+
+  const d = await page.evaluate(
+    ([sel, withFeatured]) => {
+      const rect = (e) => e.getBoundingClientRect();
+      const medias = withFeatured ? [...document.querySelectorAll('#featured-block .media')] : [];
+      return {
+        heights: medias.map((m) => rect(m).height),
+        ratios: medias.map((m) => rect(m).width / rect(m).height),
+        featuredH: withFeatured ? rect(document.getElementById('featured-block')).height : 0,
+        pictures: document.querySelectorAll(`${sel} picture`).length,
+        requests: performance
+          .getEntriesByType('resource')
+          .filter((e) => e.initiatorType === 'img' && e.name.includes('/_astro/')).length,
+        imgs: [...document.querySelectorAll(`${sel} .media img`)].map((img) => {
+          const box = rect(img.closest('.screen'));
+          const m = rect(img.closest('.media'));
+          return {
+            name: img.closest('article')?.querySelector('h3')?.textContent ?? document.querySelector('h1')?.textContent ?? '?',
+            kind: img.closest('.phone') ? 'phone' : 'browser',
+            loaded: img.complete && img.naturalWidth > 0,
+            fit: getComputedStyle(img).objectFit,
+            ratio: box.width / box.height,
+            natural: img.naturalWidth / img.naturalHeight,
+            sharp: img.naturalWidth >= box.width * 0.95,
+            visibleW: box.width,
+            inX: box.left >= m.left - 1 && box.right <= m.right + 1,
+          };
+        }),
+      };
+    },
+    [scope, featured],
+  );
+
+  if (featured) {
+    const [min, max] = [Math.min(...d.heights), Math.max(...d.heights)];
+    if (max - min > 1) issues.push(`medias de destacados con alturas distintas (${min.toFixed(0)}–${max.toFixed(0)}px)`);
+    const off = d.ratios.filter((r) => Math.abs(r - 1.6) > 0.01);
+    if (off.length) issues.push(`medias que no son 16/10: ${off.map((r) => r.toFixed(3)).join(', ')}`);
+    if (viewport.width <= 390 && (min < 190 || max > 240)) issues.push(`alto de media fuera de 190–240px (${min.toFixed(0)}–${max.toFixed(0)})`);
+    if (viewport.name === '390x844') {
+      console.log(`   · #featured-block a 390×844: ${d.featuredH.toFixed(0)}px (antes ≈3770, presupuesto ${FEATURED_BUDGET_390})`);
+      if (d.featuredH > FEATURED_BUDGET_390) issues.push(`destacados miden ${d.featuredH.toFixed(0)}px (> ${FEATURED_BUDGET_390})`);
+    }
+  }
+
+  for (const i of d.imgs) {
+    const w = `${i.name.trim()} (${i.kind})`;
+    if (!i.loaded) issues.push(`${w}: imagen no cargada`);
+    if (i.fit !== 'cover') issues.push(`${w}: object-fit ${i.fit} (puede deformar)`);
+    const want = i.kind === 'phone' ? Math.min(0.58, Math.max(0.46, i.natural)) : 11 / 5;
+    if (Math.abs(i.ratio - want) > 0.03) issues.push(`${w}: ventana ${i.ratio.toFixed(2)} ≠ ${want.toFixed(2)}`);
+    if (!i.sharp) issues.push(`${w}: la imagen elegida es más chica que su caja (sizes mal calculado)`);
+    if (i.visibleW < 40 || !i.inX) issues.push(`${w}: marco invisible o fuera de la media`);
+  }
+  if (d.requests > d.pictures) issues.push(`descargas duplicadas: ${d.requests} imágenes para ${d.pictures} <picture>`);
+  return issues;
+}
+
+/** `links:` de un .md → [{ label, url }] (parseo simple del frontmatter). */
+function linksOf(slug) {
+  const front = readFileSync(path.join(ROOT, 'src/content/projects', `${slug}.md`), 'utf8').split(/^---\s*$/m)[1] ?? '';
+  const block = front.match(/^links:\s*\n((?:[ \t]+.*\n?)+)/m);
+  if (!block) return [];
+  return block[1]
+    .split(/^\s*-\s+/m)
+    .slice(1)
+    .map((item) => ({
+      label: item.match(/label:\s*["']?(.+?)["']?\s*$/m)?.[1],
+      url: item.match(/url:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1],
+    }))
+    .filter((l) => l.label && l.url);
+}
+
+/** Cada link del .md debe verse como botón "Ver <label> ↗" (nunca la URL cruda). `where` = selector del contenedor. */
+async function checkProjectLinks(page, slug, where, whereName) {
+  const issues = [];
+  const expected = linksOf(slug);
+  if (expected.length === 0) return issues;
+  const found = await page.evaluate(
+    ([sel, s]) => {
+      const root = sel === 'card'
+        ? [...document.querySelectorAll('#featured-block article')].find((a) => a.querySelector(`a[href="/proyectos/${s}/"]`))
+        : document.querySelector('main');
+      return [...(root?.querySelectorAll('a') ?? [])].map((a) => ({
+        text: a.textContent.replace(/\s+/g, ' ').trim(),
+        href: a.getAttribute('href'),
+        target: a.getAttribute('target'),
+        rel: a.getAttribute('rel') ?? '',
+      }));
+    },
+    [where, slug],
+  );
+  const bodyText = await page.evaluate(() => document.body.innerText);
+  for (const l of expected) {
+    const a = found.find((f) => f.text === `Ver ${l.label} ↗`);
+    if (!a) issues.push(`${slug} (${whereName}): falta el botón "Ver ${l.label} ↗"`);
+    else {
+      if (a.href !== l.url) issues.push(`${slug} (${whereName}): "${l.label}" apunta a ${a.href} (≠ ${l.url})`);
+      if (a.target !== '_blank' || !/\bnoopener\b/.test(a.rel)) issues.push(`${slug} (${whereName}): "${l.label}" sin target=_blank/rel=noopener`);
+    }
+    if (bodyText.includes(new URL(l.url).host)) issues.push(`${slug} (${whereName}): la URL cruda ${new URL(l.url).host} se ve en el texto`);
   }
   return issues;
 }
@@ -693,6 +822,16 @@ async function main() {
         });
         if (eco !== 'En producción') contentIssues.push(`home: badge de Ecodespensa = ${JSON.stringify(eco)} (se esperaba "En producción")`);
       }
+      if (viewport.name === '1440x810' || viewport.name === '390x844') {
+        for (const slug of SLUGS) issues.push(...(await checkProjectLinks(page, slug, 'card', 'card en la home')));
+        const lhoney = await page.evaluate(() => {
+          const card = [...document.querySelectorAll('#featured-block article')].find((a) => a.querySelector('a[href="/proyectos/lhoney/"]'));
+          return card?.querySelector('.badge')?.textContent?.trim() ?? null;
+        });
+        if (lhoney !== 'En producción') issues.push(`badge de Lhoney = ${JSON.stringify(lhoney)} (se esperaba "En producción")`);
+      }
+      // última comprobación de la home: scrollea la página para disparar las imágenes lazy
+      issues.push(...(await checkProjectMedia(page, viewport)).map((i) => `previews: ${i}`));
       report(`${viewport.name} — /`, issues);
       await ctx.close();
     }
@@ -712,6 +851,10 @@ async function main() {
           contentIssues.push(
             ...checkContent(slug, await page.content(), await page.evaluate(() => document.body.innerText)),
           );
+        }
+        issues.push(...(await checkProjectLinks(page, slug, 'case', 'página del caso')));
+        if (['mbarete', 'estacion-de-carretera', 'kevjer', 'floreria-catalogo', 'lhoney'].includes(slug)) {
+          issues.push(...(await checkProjectMedia(page, viewport, { scope: 'main', featured: false })).map((i) => `previews: ${i}`));
         }
         report(`${name} — ${pagePath}`, issues);
         await ctx.close();
