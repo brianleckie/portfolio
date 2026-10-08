@@ -101,22 +101,38 @@ const TEXT = "Catálogos con pedido por WhatsApp. · Sistemas a medida. · Integ
     });
     ro.observe(document.body);
 
+    let marqueeVisible = true;
+
+    function stopRaf() {
+      cancelAnimationFrame(raf);
+      last = null;
+    }
+
+    function startRaf() {
+      if (!marqueeVisible || document.hidden) return;
+      last = null;
+      raf = requestAnimationFrame(step);
+    }
+
     start();
+
+    // Pause when scrolled off-screen
+    const io = new IntersectionObserver(([entry]) => {
+      marqueeVisible = entry.isIntersecting;
+      if (!marqueeVisible) stopRaf(); else startRaf();
+    }, { threshold: 0 });
+    const strip = document.querySelector('.marquee-strip');
+    if (strip) io.observe(strip);
 
     // Pause on tab hidden
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        cancelAnimationFrame(raf);
-        last = null;
-      } else {
-        last = null;
-        raf = requestAnimationFrame(step);
-      }
+      if (document.hidden) stopRaf(); else startRaf();
     });
 
     document.addEventListener('astro:before-swap', () => {
-      cancelAnimationFrame(raf);
+      stopRaf();
       ro.disconnect();
+      io.disconnect();
     });
   })();
 </script>

@@ -91,7 +91,7 @@ const ENTER = {
 
 <style>
   .keyboard-section {
-    padding: var(--space-xl) 0 0;
+    padding: 8px 0 0;
   }
 
   .kb-wrapper {
@@ -266,9 +266,10 @@ const ENTER = {
 
     let animIdx = 0;
     let animTimer: ReturnType<typeof setTimeout> | null = null;
-    let paused = false;
+    let paused = true; // starts paused; IO will call resume() once keyboard enters viewport
     let focusedKey: Element | null = null;
     let pointerActive = false;
+    let inViewport = false;
 
     function getKeyEl(id: string): HTMLElement | null {
       return document.getElementById(`key-${id}`) as HTMLElement | null;
@@ -302,7 +303,7 @@ const ENTER = {
     }
 
     function resume() {
-      if (paused && !pointerActive && !focusedKey && !document.hidden) {
+      if (paused && inViewport && !pointerActive && !focusedKey && !document.hidden && !prefersReduced.matches) {
         paused = false;
         scheduleNext(STEP_INTERVAL);
       }
@@ -326,17 +327,18 @@ const ENTER = {
       if (document.hidden) pause(); else resume();
     });
 
-    // IntersectionObserver — pause when off-screen
+    // IntersectionObserver — pause when off-screen, start/resume when visible
     const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) resume(); else pause();
+      inViewport = entry.isIntersecting;
+      if (inViewport) resume(); else pause();
     }, { threshold: 0.1 });
     if (wrapper) io.observe(wrapper);
 
-    // Reduced motion: never start
+    // Animation starts via IntersectionObserver → resume() when keyboard enters viewport.
+    // resume() guards against reduced-motion, tab-hidden, pointer/focus active.
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!prefersReduced.matches) {
-      scheduleNext(STEP_INTERVAL);
-    }
+    // paused starts false; IO will call resume() once inViewport=true, which starts the loop
+    // (unless prefersReduced or other conditions block it).
     prefersReduced.addEventListener('change', e => {
       if (e.matches) pause(); else resume();
     });
