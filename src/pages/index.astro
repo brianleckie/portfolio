@@ -9,13 +9,30 @@ import About from '../components/About.astro';
 import Contact from '../components/Contact.astro';
 import Footer from '../components/Footer.astro';
 import StickyCta from '../components/StickyCta.astro';
-import { site } from '../config/site';
+import { site, resolveValue } from '../config/site';
+
+const title = `${site.name} — ${site.role} en ${site.location}`;
+const description = `${site.name} (${site.nickname}), ${site.role.toLowerCase()} en ${site.location}. Catálogos con pedido por WhatsApp, sistemas a medida e integraciones.`;
+
+// JSON-LD Person (sin empleador: Klien IT Systems solo aparece en "Sobre mí")
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  alternateName: site.nickname,
+  jobTitle: site.role,
+  description,
+  url: site.url,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: site.location.split(',')[0].trim(),
+    addressCountry: 'PY',
+  },
+  sameAs: [resolveValue(site.github), resolveValue(site.linkedin), resolveValue(site.instagram)].filter(Boolean),
+};
 ---
 
-<BaseLayout
-  title={`${site.name} — ${site.role}`}
-  description={`Portfolio de ${site.name}. ${site.role} en ${site.location}.`}
->
+<BaseLayout title={title} description={description} jsonLd={person}>
   <Header />
   <main>
     <Hero />

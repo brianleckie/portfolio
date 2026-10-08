@@ -76,3 +76,15 @@
 - **Contacto:** el botón de WhatsApp usa el lila de los links (`#a9b4ff`) con texto oscuro: el índigo del acento contra `#151a33` no llega a 3:1 como componente de UI.
 - **CTA sticky:** `data-after`/`data-until` parametrizan la barra (home: tras `#hero` hasta `#contacto`; casos: tras `#caso-hero` hasta `#caso-cta`). Se oculta también cuando la sección final quedó atrás (no reaparece sobre el footer). Una vez que aparece, `body` conserva el padding inferior (evita saltos de scroll al ocultarse) y `html` tiene `scroll-padding-bottom` para que el foco no quede tapado. `viewport-fit=cover` + `env(safe-area-inset-bottom)`.
 - **Footer** compartido por home y casos; GitHub/LinkedIn solo si están cargados.
+
+## Fase 4 — Pulido y entrega
+
+- **URL única:** `site.url` en `src/config/site.ts` (provisorio `https://portfolio-alpha-henna-61.vercel.app`); `astro.config.mjs` la importa, así que cambiar de dominio es una línea. `robots.txt` es un endpoint (no un archivo estático) para no duplicar la URL. `trailingSlash: 'always'` + `vercel.json` `trailingSlash: true` para que canonical, sitemap y rutas coincidan.
+- **OG:** `satori` + `@resvg/resvg-js` en un endpoint de Astro (`/og/[slug].png`), no Playwright: corre en el build de Vercel sin navegador. Fuentes leídas con `fs` desde `process.cwd()` (las rutas relativas a `import.meta.url` se rompen en el bundle de endpoints). Satoshi Black en `src/assets/fonts/` (fuera de `public/`, no se sirve); Inter e Instrument Serif en `woff` desde `@fontsource`. Colores planos: PNG de 40–116 KB (WhatsApp ignora previews pesados). Satoshi no tiene el glifo ↵: el Enter de la imagen usa "HABLEMOS" vertical.
+- **Geometría del teclado** extraída a `src/config/keyboard.ts` (la usan el componente y la imagen OG de la home).
+- **SEO:** title/description/canonical/og/twitter por página con URL absoluta desde `Astro.site`; `@astrojs/sitemap`; JSON-LD `Person` solo en la home y **sin empleador** (Klien IT Systems solo aparece en "Sobre mí"); favicon SVG propio.
+- **CSS inline** (`build.inlineStylesheets: 'always'`): elimina los dos CSS que bloqueaban el render (FCP 1.7 s → 1.5 s en Lighthouse mobile).
+- **Accesibilidad:** el wordmark tiene `aria-label` que contiene el texto visible ("leki. — Brian Leckie, ir al inicio", criterio de etiqueta en el nombre).
+- **Lighthouse mobile** (v12.8.2, throttling simulado, `astro preview` local): home 99 / 100 / 100 / 100 y caso (Mbarete) 100 / 100 / 100 / 100 (Performance / Accessibility / Best Practices / SEO).
+- **`npm run shots`:** lee `demoUrl` de los `.md`; las capturas se usan solas (`cover`/`coverMobile` del frontmatter tienen prioridad). En el entorno cloud las demos están bloqueadas por la política de red (CONNECT 403): queda funcionando para correrlo en local.
+- **`prebuild` lista los `TODO:`** pendientes (`scripts/list-todos.mjs`); no falla el build.

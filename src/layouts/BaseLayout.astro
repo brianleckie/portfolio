@@ -2,13 +2,31 @@
 import '../styles/tokens.css';
 import '../styles/base.css';
 import '../styles/ui.css';
+import { site } from '../config/site';
 
 interface Props {
   title: string;
-  description?: string;
+  description: string;
+  /** Ruta de la imagen OG (1200×630); se convierte en URL absoluta. */
+  ogImage?: string;
+  ogImageAlt?: string;
+  type?: 'website' | 'article';
+  /** Datos estructurados (JSON-LD) de la página. */
+  jsonLd?: Record<string, unknown>;
 }
 
-const { title, description = '' } = Astro.props;
+const {
+  title,
+  description,
+  ogImage = '/og/home.png',
+  ogImageAlt = `${site.name} — ${site.role}`,
+  type = 'website',
+  jsonLd,
+} = Astro.props;
+
+// Todas las URLs absolutas derivan de `site` (astro.config ← src/config/site.ts → site.url)
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const imageUrl = new URL(ogImage, Astro.site).href;
 ---
 
 <!doctype html>
@@ -16,10 +34,32 @@ const { title, description = '' } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <link rel="preload" href="/fonts/Satoshi-Black.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="icon" href="data:," />
     <title>{title}</title>
-    {description && <meta name="description" content={description} />}
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/Satoshi-Black.woff2" as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content="es_PY" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
     <slot />

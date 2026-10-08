@@ -12,11 +12,14 @@
 //   - Filtros: teclas y chips, ?cat= en la URL, carga directa y valores inválidos.
 //   - Links: wa.me con número y text, mailto válido, sin href vacío ni "#", cero 404 internos.
 //   - Contenido: sin "TODO", sin datos retirados, valuador con "precio de oferta" y sin métricas.
+//   - SEO: title/description/canonical/OG/Twitter por página con URL absoluta, imágenes OG (200, PNG 1200×630,
+//     < 300 KB), JSON-LD Person solo en la home, robots.txt y sitemap con todas las páginas.
+//   - CTA sticky (mobile) y secciones de la home.
 // Guarda screenshots full-page en .checks/<viewport>.png (home) y .checks/<viewport>-<slug>.png.
 
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
-import { mkdirSync, readdirSync } from 'fs';
+import { mkdirSync, readFileSync, readdirSync } from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +28,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const BASE_URL = process.env.CHECK_URL ?? 'http://localhost:4322';
 const CHECKS_DIR = path.join(ROOT, '.checks');
+// URL pública del sitio: única fuente en src/config/site.ts
+const SITE_URL = readFileSync(path.join(ROOT, 'src/config/site.ts'), 'utf8').match(/^\s*url:\s*"([^"]+)"/m)[1].replace(/\/$/, '');
 
 const VIEWPORTS = [
   { name: '1440x810', width: 1440, height: 810 },
@@ -388,7 +393,7 @@ async function jumpTo(page, selector, block = 'start') {
   await sleep(500);
 }
 
-async function checkStickyCta(browser, pagePath, afterSel, midSel, untilSel) {
+async function checkStickyCta(browser, pagePath, midSel, untilSel) {
   const issues = [];
   const mobile = VIEWPORTS.find((v) => v.name === '390x844');
   const { ctx, page } = await openPage(browser, mobile, `${BASE_URL}${pagePath}`);
@@ -470,6 +475,94 @@ async function checkSections(browser) {
   await page.locator('#servicios a[data-filter="integraciones"]').click();
   issues.push(...(await expectFilter(page, 'integraciones', 'servicios → Ver ejemplos')));
   await ctx.close();
+  return issues;
+}
+
+
+// ---------------------------------------------------------------- SEO / Open Graph
+
+const collectMeta = (page) =>
+  page.evaluate(() => {
+    const m = (sel) => document.querySelector(sel)?.getAttribute('content') ?? null;
+    return {
+      lang: document.documentElement.lang,
+      title: document.title,
+      description: m('meta[name="description"]'),
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null,
+      ogTitle: m('meta[property="og:title"]'),
+      ogDescription: m('meta[property="og:description"]'),
+      ogUrl: m('meta[property="og:url"]'),
+      ogImage: m('meta[property="og:image"]'),
+      ogWidth: m('meta[property="og:image:width"]'),
+      ogHeight: m('meta[property="og:image:height"]'),
+      twitterCard: m('meta[name="twitter:card"]'),
+      twitterImage: m('meta[name="twitter:image"]'),
+      jsonLd: Array.from(document.querySelectorAll('script[type="application/ld+json"]')).map((s) => s.textContent),
+    };
+  });
+
+async function checkSeo(metas, api) {
+  const issues = [];
+  const titles = new Set();
+  for (const { pagePath, meta } of metas) {
+    const w = pagePath;
+    if (meta.lang !== 'es') issues.push(`${w}: lang="${meta.lang}" (se esperaba es)`);
+    if (!meta.title || meta.title.length > 80) issues.push(`${w}: title vacío o demasiado largo (${meta.title?.length})`);
+    if (titles.has(meta.title)) issues.push(`${w}: title repetido "${meta.title}"`);
+    titles.add(meta.title);
+    if (!meta.description || meta.description.length < 40 || meta.description.length > 320) {
+      issues.push(`${w}: description ausente o de largo raro (${meta.description?.length})`);
+    }
+    if (meta.canonical !== `${SITE_URL}${pagePath}`) issues.push(`${w}: canonical ${meta.canonical} ≠ ${SITE_URL}${pagePath}`);
+    if (meta.ogUrl !== meta.canonical) issues.push(`${w}: og:url ≠ canonical`);
+    if (meta.ogTitle !== meta.title) issues.push(`${w}: og:title ≠ title`);
+    if (!meta.ogDescription) issues.push(`${w}: falta og:description`);
+    if (meta.twitterCard !== 'summary_large_image') issues.push(`${w}: twitter:card = ${meta.twitterCard}`);
+    if (meta.twitterImage !== meta.ogImage) issues.push(`${w}: twitter:image ≠ og:image`);
+    if (meta.ogWidth !== '1200' || meta.ogHeight !== '630') issues.push(`${w}: og:image:width/height ≠ 1200×630`);
+
+    if (!meta.ogImage || !meta.ogImage.startsWith(`${SITE_URL}/og/`) || !meta.ogImage.endsWith('.png')) {
+      issues.push(`${w}: og:image no es una URL absoluta del sitio (${meta.ogImage})`);
+      continue;
+    }
+    const res = await api.request.get(meta.ogImage.replace(SITE_URL, BASE_URL));
+    const body = await res.body();
+    if (res.status() !== 200) issues.push(`${w}: og:image → ${res.status()}`);
+    else {
+      if (res.headers()['content-type'] !== 'image/png') issues.push(`${w}: og:image content-type ${res.headers()['content-type']}`);
+      if (body.length > 300 * 1024) issues.push(`${w}: og:image pesa ${(body.length / 1024).toFixed(0)} KB (> 300 KB, WhatsApp puede ignorarla)`);
+      const [pw, ph] = [body.readUInt32BE(16), body.readUInt32BE(20)];
+      if (pw !== 1200 || ph !== 630) issues.push(`${w}: og:image mide ${pw}×${ph}`);
+    }
+
+    // JSON-LD Person solo en la home
+    if (pagePath === '/') {
+      let ld = null;
+      try {
+        ld = JSON.parse(meta.jsonLd[0] ?? 'null');
+      } catch {
+        /* se reporta abajo */
+      }
+      if (!ld || ld['@type'] !== 'Person' || !ld.name) issues.push('/: falta JSON-LD Person válido');
+      else {
+        if (ld.url !== SITE_URL) issues.push(`/: JSON-LD url ${ld.url} ≠ ${SITE_URL}`);
+        if (/Klien/.test(JSON.stringify(ld))) issues.push('/: el JSON-LD no debe incluir al empleador');
+        for (const link of ld.sameAs ?? []) if (!/^https:\/\//.test(link)) issues.push(`/: sameAs inválido (${link})`);
+      }
+    } else if (meta.jsonLd.length) {
+      issues.push(`${w}: JSON-LD inesperado fuera de la home`);
+    }
+  }
+
+  // robots.txt y sitemap
+  const robots = await (await api.request.get(`${BASE_URL}/robots.txt`)).text();
+  if (!robots.includes(`Sitemap: ${SITE_URL}/sitemap-index.xml`)) issues.push('robots.txt no apunta al sitemap con la URL del sitio');
+  const index = await api.request.get(`${BASE_URL}/sitemap-index.xml`);
+  if (index.status() !== 200) issues.push(`sitemap-index.xml → ${index.status()}`);
+  const sm = await api.request.get(`${BASE_URL}/sitemap-0.xml`);
+  const smText = sm.status() === 200 ? await sm.text() : '';
+  if (!smText) issues.push(`sitemap-0.xml → ${sm.status()}`);
+  for (const { pagePath } of metas) if (!smText.includes(`<loc>${SITE_URL}${pagePath}</loc>`)) issues.push(`el sitemap no incluye ${pagePath}`);
   return issues;
 }
 
@@ -564,6 +657,7 @@ async function main() {
   const links = []; // { pagePath, links }
   const idsByPath = new Map();
   const contentIssues = [];
+  const metas = []; // { pagePath, meta } para el chequeo de SEO
 
   try {
     // ---- Home en los 6 viewports
@@ -588,6 +682,7 @@ async function main() {
 
       if (viewport.name === '1440x810') {
         links.push({ pagePath: '/', links: await collectLinks(page) });
+        metas.push({ pagePath: '/', meta: await collectMeta(page) });
         idsByPath.set('/', new Set(await page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id))));
         contentIssues.push(
           ...checkContent('home', await page.content(), await page.evaluate(() => document.body.innerText)),
@@ -612,6 +707,7 @@ async function main() {
         await shot(page, `${name}-${slug}`);
         if (name === '1440x810') {
           links.push({ pagePath, links: await collectLinks(page) });
+          metas.push({ pagePath, meta: await collectMeta(page) });
           idsByPath.set(pagePath, new Set(await page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id))));
           contentIssues.push(
             ...checkContent(slug, await page.content(), await page.evaluate(() => document.body.innerText)),
@@ -632,8 +728,8 @@ async function main() {
     }
 
     // ---- CTA sticky, secciones de la Fase 3
-    report('CTA sticky — home (390×844)', await checkStickyCta(browser, '/', '#hero', '#servicios', '#contacto'));
-    report('CTA sticky — caso (390×844)', await checkStickyCta(browser, '/proyectos/mbarete/', '#caso-hero', '.prose', '#caso-cta'));
+    report('CTA sticky — home (390×844)', await checkStickyCta(browser, '/', '#servicios', '#contacto'));
+    report('CTA sticky — caso (390×844)', await checkStickyCta(browser, '/proyectos/mbarete/', '.prose', '#caso-cta'));
     report('secciones (servicios, proceso, sobre mí, contacto, footer)', await checkSections(browser));
 
     // ---- links
@@ -648,6 +744,11 @@ async function main() {
     }
     await api.close();
     report(`links (${links.reduce((n, l) => n + l.links.length, 0)} links, ${internal.size} rutas internas)`, linkIssues);
+
+    // ---- SEO / OG / sitemap
+    const seoApi = await browser.newContext();
+    report(`SEO y Open Graph (${metas.length} páginas, ${SITE_URL})`, await checkSeo(metas, seoApi));
+    await seoApi.close();
 
     // ---- contenido
     report('contenido (TODO, datos retirados, valuador, mbarete)', contentIssues);

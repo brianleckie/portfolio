@@ -13,7 +13,7 @@ export const site = {
   instagram: "",
   showDesignCredit: true,
   showPrices: false,               // true + fromPrice en services.ts para mostrar "desde X"
-  url: "TODO:https://dominio-final",
+  url: "https://portfolio-alpha-henna-61.vercel.app", // ÚNICO lugar con la URL del sitio (canonical, OG, sitemap, robots)
 };
 
 export function whatsappHref(message: string = site.whatsappMessage): string {

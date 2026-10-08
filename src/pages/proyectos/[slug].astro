@@ -59,7 +59,13 @@ const demoUrl = clean(data.demoUrl);
 const repoUrl = clean(data.repoUrl);
 ---
 
-<BaseLayout title={`${data.title} — ${site.name}`} description={descriptionOf(entry)}>
+<BaseLayout
+  title={`${shortTitle(entry)} — ${site.name}`}
+  description={descriptionOf(entry)}
+  ogImage={`/og/${slugOf(entry)}.png`}
+  ogImageAlt={`${data.title} — caso de estudio de ${site.name}`}
+  type="article"
+>
   <Header />
   <main class="case" style={`--accent: ${data.accent}`}>
     <section id="caso-hero" class="hero">
