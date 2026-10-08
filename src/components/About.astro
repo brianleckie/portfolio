@@ -1,0 +1,133 @@
+---
+import { site, resolveValue } from '../config/site';
+
+const github = resolveValue(site.github);
+const linkedin = resolveValue(site.linkedin);
+
+const stack = [
+  { group: 'Frontend', items: ['Vue 3', 'Quasar', 'React', 'Vite', 'TypeScript'] },
+  { group: 'Backend', items: ['Python', 'FastAPI', 'PostgreSQL', 'Supabase'] },
+  { group: 'Infra y herramientas', items: ['Railway', 'Vercel', 'Cloudinary', 'GitHub Actions', 'n8n'] },
+  { group: 'IA', items: ['Claude API', 'MCP'] },
+];
+---
+
+<section id="sobre-mi" class="section tint" aria-labelledby="sobre-mi-title">
+  <div class="section-inner layout">
+    <div class="text">
+      <h2 id="sobre-mi-title" class="section-title">Sobre mí</h2>
+      <p>
+        Soy estudiante de 4º año de Ingeniería en Informática y desarrollador full-stack,
+        con base en {site.location}.
+      </p>
+      <p>
+        Tengo experiencia en IT empresarial: hoy trabajo como desarrollador en {site.employer} (remoto)
+        y, por mi cuenta, desarrollo webs, sistemas e integraciones para negocios de todo Paraguay.
+      </p>
+
+      {(github || linkedin) && (
+        <p class="links">
+          {github && <a href={github} target="_blank" rel="noopener noreferrer">GitHub ↗</a>}
+          {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>}
+        </p>
+      )}
+    </div>
+
+    <div id="stack" class="stack" aria-labelledby="stack-title">
+      <h3 id="stack-title">Stack</h3>
+      <div class="groups">
+        {stack.map((g) => (
+          <div class="group">
+            <h4>{g.group}</h4>
+            <ul class="chips">
+              {g.items.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tint {
+    background-color: var(--color-bg-hero-to);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-xl) var(--space-2xl);
+    align-items: start;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .text p {
+    max-width: 52ch;
+    font-size: clamp(1.0625rem, 1.5vw, 1.25rem);
+    line-height: 1.65;
+    color: var(--color-text-primary);
+  }
+
+  .text .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .links {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .links a {
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .stack {
+    scroll-margin-top: calc(var(--header-h) + 8px);
+    padding: var(--space-lg);
+    border: 2px solid #111;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 5px 0 #000;
+  }
+
+  .stack h3 {
+    margin-bottom: var(--space-md);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .groups {
+    display: grid;
+    gap: var(--space-md);
+  }
+
+  .group h4 {
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  @media (max-width: 899px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 699px) {
+    .stack {
+      padding: var(--space-md);
+    }
+  }
+</style>

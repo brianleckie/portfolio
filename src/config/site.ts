@@ -12,7 +12,8 @@ export const site = {
   linkedin: "https://linkedin.com/in/brianleckie",
   instagram: "",
   showDesignCredit: true,
-  url: "TODO:https://dominio-final",
+  showPrices: false,               // true + fromPrice en services.ts para mostrar "desde X"
+  url: "https://portfolio-alpha-henna-61.vercel.app", // ÚNICO lugar con la URL del sitio (canonical, OG, sitemap, robots)
 };
 
 export function whatsappHref(message: string = site.whatsappMessage): string {

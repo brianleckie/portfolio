@@ -1,15 +1,25 @@
-// check-layout.mjs — verificación visual con Playwright (per SPEC §11)
+// check-layout.mjs — verificación con Playwright contra el build (SPEC §11)
 // Uso: npm run build && npm run check:layout
-// Levanta astro preview en el puerto 4322, recorre los 6 viewports del SPEC,
-// falla si: overflow horizontal, errores de consola, requests 404/fallidas.
-// Fase 1 extra: teclado ≤ contenedor, altura wrapper = 312×scale, Enter click,
-// document.fonts.check Satoshi 900, reducedMotion sin animación.
-// Guarda screenshots full-page en .checks/<viewport>.png
-// Guarda hero-crop en .checks/hero-<viewport>.png para los dos viewports indicados.
+//
+// Levanta `astro preview` (puerto 4322) o usa CHECK_URL si ya hay un server.
+// Chequea:
+//   - Home en 6 viewports y todas las páginas de proyecto en 390×844 y 1440×810:
+//     overflow horizontal, errores de consola, requests fallidas/404.
+//   - Teclado: cabe en su contenedor, altura del wrapper, Enter clickeable, Satoshi 900, fold.
+//   - Animación (sin display): teclas presionadas muestreadas cada 50 ms durante ~6 s.
+//   - Marquee: translateX muestreado ~4 s, siempre en [-anchoGrupo, 0], grupo >= viewport.
+//   - reduced-motion: ni teclado ni marquee se mueven.
+//   - Filtros: teclas y chips, ?cat= en la URL, carga directa y valores inválidos.
+//   - Links: wa.me con número y text, mailto válido, sin href vacío ni "#", cero 404 internos.
+//   - Contenido: sin "TODO", sin datos retirados, valuador con "precio de oferta" y sin métricas.
+//   - SEO: title/description/canonical/OG/Twitter por página con URL absoluta, imágenes OG (200, PNG 1200×630,
+//     < 300 KB), JSON-LD Person solo en la home, robots.txt y sitemap con todas las páginas.
+//   - CTA sticky (mobile) y secciones de la home.
+// Guarda screenshots full-page en .checks/<viewport>.png (home) y .checks/<viewport>-<slug>.png.
 
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
-import { mkdirSync } from 'fs';
+import { mkdirSync, readFileSync, readdirSync } from 'fs';
 import { setTimeout as sleep } from 'timers/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,145 +28,622 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const BASE_URL = process.env.CHECK_URL ?? 'http://localhost:4322';
 const CHECKS_DIR = path.join(ROOT, '.checks');
+// URL pública del sitio: única fuente en src/config/site.ts
+const SITE_URL = readFileSync(path.join(ROOT, 'src/config/site.ts'), 'utf8').match(/^\s*url:\s*"([^"]+)"/m)[1].replace(/\/$/, '');
 
 const VIEWPORTS = [
-  { name: '1440x810',  width: 1440, height: 810  },
+  { name: '1440x810', width: 1440, height: 810 },
   { name: '1440x1002', width: 1440, height: 1002 },
-  { name: '1024x768',  width: 1024, height: 768  },
-  { name: '768x1024',  width: 768,  height: 1024 },
-  { name: '390x844',   width: 390,  height: 844  },
-  { name: '360x740',   width: 360,  height: 740  },
+  { name: '1024x768', width: 1024, height: 768 },
+  { name: '768x1024', width: 768, height: 1024 },
+  { name: '390x844', width: 390, height: 844 },
+  { name: '360x740', width: 360, height: 740 },
 ];
+const CASE_VIEWPORTS = ['1440x810', '390x844'];
+const ANIM_VIEWPORTS = ['1440x810', '390x844'];
+const CATEGORIES = ['web', 'sistemas', 'integraciones', 'it', 'academico'];
+const FILTER_KEYS = { W: 'web', O: 'sistemas', R: 'integraciones', S: 'it' };
 
-const HERO_CROP_VIEWPORTS = ['1440x810', '390x844'];
+const SLUGS = readdirSync(path.join(ROOT, 'src/content/projects'))
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => f.replace(/\.md$/, ''));
 
-const PAGES = ['/'];
+// ---------------------------------------------------------------- helpers
 
-async function waitForServer(url, retries = 20, delayMs = 500) {
+const issuesByLabel = new Map();
+let totalFails = 0;
+
+function report(label, issues) {
+  if (issues.length === 0) {
+    console.log(`✓ ${label}`);
+  } else {
+    console.log(`✗ ${label}`);
+    issues.forEach((i) => console.log(`   • ${i}`));
+    totalFails += issues.length;
+  }
+  issuesByLabel.set(label, issues);
+}
+
+async function waitForServer(url, retries = 40, delayMs = 500) {
   for (let i = 0; i < retries; i++) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(1000) });
       if (res.status < 500) return true;
-    } catch { /* not ready yet */ }
+    } catch {
+      /* not ready yet */
+    }
     await sleep(delayMs);
   }
   throw new Error(`Server not reachable at ${url} after ${retries} retries`);
 }
 
-async function checkPage(page, url, viewport) {
+/** Abre una página con listeners de consola/requests; devuelve helpers para leer los errores. */
+async function openPage(browser, viewport, url, contextOptions = {}) {
+  const ctx = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    ...contextOptions,
+  });
+  const page = await ctx.newPage();
   const errors = [];
   const failed = [];
-
-  page.on('console', msg => {
+  page.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(msg.text());
   });
-  page.on('requestfailed', req => {
-    failed.push(`${req.failure()?.errorText} — ${req.url()}`);
+  page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
+  page.on('requestfailed', (req) => failed.push(`${req.failure()?.errorText} — ${req.url()}`));
+  page.on('response', (res) => {
+    if (res.status() >= 400) failed.push(`${res.status()} — ${res.url()}`);
   });
-  page.on('response', res => {
-    if (res.status() === 404) failed.push(`404 — ${res.url()}`);
-  });
-
-  await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await page.goto(url, { waitUntil: 'networkidle' });
+  await sleep(300); // ResizeObserver, fuentes
+  return { ctx, page, errors, failed };
+}
 
-  // Wait a bit for JS to settle (ResizeObserver, font loading)
-  await sleep(300);
+const shot = (page, name) => page.screenshot({ path: path.join(CHECKS_DIR, `${name}.png`), fullPage: true });
 
-  const overflow = await page.evaluate(() =>
-    document.documentElement.scrollWidth > window.innerWidth
-  );
+// ---------------------------------------------------------------- checks de página
 
-  // --- Fase 1 keyboard checks ---
-  const kbChecks = await page.evaluate(() => {
+async function checkBasics(page, errors, failed) {
+  const issues = [];
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  if (overflow) issues.push('overflow-x detected');
+  errors.forEach((e) => issues.push(`console.error: ${e}`));
+  failed.forEach((f) => issues.push(`request failed: ${f}`));
+  const h1s = await page.evaluate(() => document.querySelectorAll('h1').length);
+  if (h1s !== 1) issues.push(`se esperaba 1 <h1>, hay ${h1s}`);
+  const editable = await page.evaluate(() => document.querySelectorAll('[contenteditable]').length);
+  if (editable) issues.push('existe contenteditable en el DOM');
+  return issues;
+}
+
+async function checkKeyboardStatic(page, viewport) {
+  const issues = [];
+  const kb = await page.evaluate(() => {
     const wrapper = document.getElementById('kb-wrapper');
     const stage = document.getElementById('kb-stage');
     if (!wrapper || !stage) return { skip: true };
 
     const wrapperRect = wrapper.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
+    const kbFitsContainer = stageRect.width <= wrapperRect.width + 1;
 
-    // 1. Keyboard stage visual width ≤ wrapper width
-    const kbFitsContainer = stageRect.width <= wrapperRect.width + 1; // +1 for rounding
-
-    // 2. Wrapper height ≈ 312 * scale (+ slack)
-    // Derive scale from stage rendered width / 900
     const scale = stageRect.width / 900;
     const expectedH = 312 * scale;
     const actualH = wrapperRect.height;
-    const heightOk = actualH >= expectedH - 1 && actualH <= expectedH + 25; // ±25px slack
+    const heightOk = actualH >= expectedH - 1 && actualH <= expectedH + 25;
 
-    // 3. Enter key clickable via elementFromPoint (scroll into view first)
+    const keys = Array.from(document.querySelectorAll('.key'));
+    const keysOk = keys.length === 10 && keys.every((k) => k.getAttribute('href') && k.getAttribute('aria-label'));
+
     const enterEl = document.getElementById('key-Enter');
     let enterClickable = false;
+    const blockedKeys = [];
     if (enterEl) {
       enterEl.scrollIntoView({ behavior: 'instant', block: 'center' });
-      const r = enterEl.getBoundingClientRect();
-      // Hit center of Enter (accounting for S key overlap on left, use right portion)
-      const testX = r.left + r.width * 0.65;
-      const testY = r.top + r.height * 0.5;
-      const hit = document.elementFromPoint(testX, testY);
-      enterClickable = hit === enterEl || (hit !== null && enterEl.contains(hit));
+      const hits = (el, fx, fy) => {
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy);
+        return hit === el || (hit !== null && el.contains(hit));
+      };
+      // Área expuesta del Enter (a la derecha del borde que tapa S)
+      enterClickable = hits(enterEl, 0.65, 0.5) && hits(enterEl, 0.9, 0.9);
+      // Cada tecla debe recibir el click en su centro; S también en su borde derecho (donde se cruza con Enter)
+      for (const k of keys) {
+        const pts = k.id === 'key-S' ? [[0.5, 0.45], [0.9, 0.6]] : [[0.5, 0.45]];
+        if (!pts.every(([fx, fy]) => hits(k, fx, fy))) blockedKeys.push(k.id.replace('key-', ''));
+      }
     }
 
-    // 4. Satoshi 900 loaded
-    const satoshiLoaded = document.fonts.check('900 72px Satoshi');
-
-    return { kbFitsContainer, heightOk, enterClickable, satoshiLoaded, scale, actualH, expectedH };
+    return {
+      kbFitsContainer,
+      heightOk,
+      keysOk,
+      enterClickable,
+      blockedKeys,
+      satoshiLoaded: document.fonts.check('900 72px Satoshi'),
+      scale,
+      actualH,
+      expectedH,
+    };
   });
 
-  // --- Fase 1 reduced-motion check ---
-  const rmChecks = await page.evaluate(() => {
-    // Check that no animated transform is running on .key-face elements
-    // (reduced motion means CSS transitions are 0.01ms via global rule)
-    const face = document.querySelector('.key-face');
-    if (!face) return { skip: true };
-    const style = window.getComputedStyle(face);
-    const duration = parseFloat(style.transitionDuration);
-    const noAnim = duration < 0.05; // < 50ms means effectively disabled
-    return { noAnim };
-  }, { reducedMotion: 'reduce' }); // note: this arg is ignored by evaluate; see below
+  if (kb.skip) return ['no se encontró el teclado'];
+  if (!kb.kbFitsContainer) issues.push('keyboard wider than container');
+  if (!kb.heightOk) issues.push(`wrapper height ${kb.actualH.toFixed(1)}px ≠ 312×${kb.scale.toFixed(3)}=${kb.expectedH.toFixed(1)}px`);
+  if (!kb.keysOk) issues.push('las 10 teclas deben tener href y aria-label');
+  if (!kb.enterClickable) issues.push('Enter key not clickable at expected coordinates');
+  if (kb.blockedKeys.length) issues.push(`teclas tapadas por otra en su área clickeable: ${kb.blockedKeys.join(', ')}`);
+  if (!kb.satoshiLoaded) issues.push('Satoshi 900 not loaded (document.fonts.check failed)');
 
-  return { overflow, errors, failed, kbChecks, rmChecks };
+  if (viewport.name === '1440x810') {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const fold = await page.evaluate(() => {
+      const r = document.getElementById('kb-stage').getBoundingClientRect();
+      return { stageTop: r.top, row1Bottom: r.top + 161, viewportH: window.innerHeight };
+    });
+    if (fold.row1Bottom > fold.viewportH) {
+      issues.push(`fold: fila 1 del teclado no entra sin scroll (bottom=${fold.row1Bottom.toFixed(0)}px > ${fold.viewportH}px)`);
+    }
+  }
+  return issues;
 }
 
-async function checkReducedMotion(browser, url, viewport) {
-  const ctx = await browser.newContext({
-    viewport: { width: viewport.width, height: viewport.height },
-    reducedMotion: 'reduce',
+/** Muestrea qué teclas tienen .is-pressed cada 50 ms durante ~6 s (sin display). */
+async function checkKeyboardAnimation(page) {
+  const issues = [];
+  await page.evaluate(() => {
+    document.getElementById('kb-wrapper')?.scrollIntoView({ behavior: 'instant', block: 'center' });
   });
-  const page = await ctx.newPage();
-  await page.goto(url, { waitUntil: 'networkidle' });
-  await sleep(300);
+  const samples = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const out = [];
+        const t0 = performance.now();
+        const timer = setInterval(() => {
+          out.push(Array.from(document.querySelectorAll('.key.is-pressed')).map((k) => k.id.replace('key-', '')));
+          if (performance.now() - t0 >= 6000) {
+            clearInterval(timer);
+            resolve(out);
+          }
+        }, 50);
+      }),
+  );
 
-  const result = await page.evaluate(() => {
-    const face = document.querySelector('.key-face');
-    if (!face) return { skip: true };
-    const style = window.getComputedStyle(face);
-    const duration = parseFloat(style.transitionDuration);
-    // Also check no is-pressed classes are being added (animation stopped)
-    const pressedKeys = document.querySelectorAll('.is-pressed').length;
-    return { transitionDuration: duration, pressedKeys, noAnim: duration < 0.05 && pressedKeys === 0 };
+  const seen = new Set(samples.flat());
+  const expected = ['L', 'E', 'K1', 'I', 'W', 'O', 'R', 'K2', 'S', 'Enter'];
+  const missing = expected.filter((k) => !seen.has(k));
+  if (missing.length) issues.push(`teclas que nunca se presionaron en ~6 s: ${missing.join(', ')}`);
+
+  const maxSimultaneous = Math.max(...samples.map((s) => s.length));
+  if (maxSimultaneous > 1) issues.push(`hubo ${maxSimultaneous} teclas presionadas a la vez`);
+
+  const run = {};
+  let worstKey = '';
+  let worst = 0;
+  for (const s of samples) {
+    for (const k of expected) {
+      run[k] = s.includes(k) ? (run[k] ?? 0) + 1 : 0;
+      if (run[k] > worst) {
+        worst = run[k];
+        worstKey = k;
+      }
+    }
+  }
+  if (worst * 50 > 1000) issues.push(`la tecla ${worstKey} estuvo presionada ~${worst * 50} ms seguidos (> 1 s)`);
+  return issues;
+}
+
+/** Muestrea el translateX del marquee ~4 s: avanza y se mantiene en [-anchoGrupo, 0]. */
+async function checkMarquee(page) {
+  const issues = [];
+  await page.evaluate(() => {
+    document.querySelector('.marquee-strip')?.scrollIntoView({ behavior: 'instant', block: 'center' });
   });
+  const data = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const track = document.getElementById('marquee-track');
+        const g1 = document.getElementById('marquee-g1');
+        const tx = [];
+        const t0 = performance.now();
+        const timer = setInterval(() => {
+          tx.push(new DOMMatrix(getComputedStyle(track).transform).m41);
+          if (performance.now() - t0 >= 4000) {
+            clearInterval(timer);
+            resolve({
+              tx,
+              groupWidth: g1.getBoundingClientRect().width,
+              vw: document.documentElement.clientWidth,
+              exposed: document.querySelectorAll('#marquee-g1 > :not([aria-hidden="true"])').length,
+            });
+          }
+        }, 100);
+      }),
+  );
 
+  const { tx, groupWidth, vw, exposed } = data;
+  if (groupWidth < vw - 1) issues.push(`grupo del marquee (${groupWidth.toFixed(0)}px) más angosto que el viewport (${vw}px)`);
+  const out = tx.filter((v) => v > 0.01 || v < -groupWidth - 0.01);
+  if (out.length) issues.push(`translateX fuera de [-${groupWidth.toFixed(0)}, 0]: ${out.slice(0, 3).map((v) => v.toFixed(1)).join(', ')}`);
+  const travelled = tx[0] - tx[tx.length - 1];
+  if (travelled < 120) issues.push(`el marquee casi no avanzó en 4 s (${travelled.toFixed(0)}px)`);
+  if (exposed !== 1) issues.push(`el texto debe estar expuesto una sola vez (hay ${exposed})`);
+  return issues;
+}
+
+async function checkReducedMotion(browser) {
+  const issues = [];
+  const viewport = VIEWPORTS.find((v) => v.name === '390x844');
+  const { ctx, page } = await openPage(browser, viewport, `${BASE_URL}/`, { reducedMotion: 'reduce' });
+  const data = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const track = document.getElementById('marquee-track');
+        const tx0 = new DOMMatrix(getComputedStyle(track).transform).m41;
+        let pressed = 0;
+        const timer = setInterval(() => {
+          pressed += document.querySelectorAll('.is-pressed').length;
+        }, 50);
+        setTimeout(() => {
+          clearInterval(timer);
+          resolve({
+            pressed,
+            moved: Math.abs(new DOMMatrix(getComputedStyle(track).transform).m41 - tx0),
+            transition: parseFloat(getComputedStyle(document.querySelector('.key-face')).transitionDuration),
+            groups: getComputedStyle(document.getElementById('marquee-g2')).display,
+          });
+        }, 1500);
+      }),
+  );
+  if (data.pressed) issues.push('el teclado se animó con prefers-reduced-motion');
+  if (data.moved > 0.5) issues.push(`el marquee se movió ${data.moved.toFixed(1)}px con prefers-reduced-motion`);
+  if (data.transition >= 0.05) issues.push(`.key-face conserva transición (${data.transition}s)`);
+  if (data.groups !== 'none') issues.push('el marquee duplicado debe ocultarse con reduced-motion');
   await ctx.close();
-  return result;
+  return issues;
 }
+
+// ---------------------------------------------------------------- filtros
+
+const visibleCards = (page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll('#proyectos li[data-cats]'))
+      .filter((li) => !li.hidden)
+      .map((li) => li.dataset.cats.split(' ')),
+  );
+
+async function expectFilter(page, filter, via) {
+  const issues = [];
+  await page.waitForFunction((f) => new URL(location.href).searchParams.get('cat') === f, filter, { timeout: 3000 }).catch(() => {});
+  const cat = await page.evaluate(() => new URL(location.href).searchParams.get('cat'));
+  if (cat !== filter) issues.push(`${via}: URL debería tener ?cat=${filter} (tiene ${cat})`);
+  const cards = await visibleCards(page);
+  if (cards.length === 0) issues.push(`${via}: ningún proyecto visible con ${filter}`);
+  const wrong = cards.filter((c) => !c.includes(filter));
+  if (wrong.length) issues.push(`${via}: ${wrong.length} cards visibles sin la categoría ${filter}`);
+  const pressed = await page.evaluate(() => document.querySelector('.chip[aria-pressed="true"]')?.dataset.filter);
+  if (pressed !== filter) issues.push(`${via}: chip activo "${pressed}" ≠ "${filter}"`);
+  return issues;
+}
+
+async function checkFilters(browser, viewport) {
+  const issues = [];
+  const { ctx, page } = await openPage(browser, viewport, `${BASE_URL}/`);
+  const totalCards = (await visibleCards(page)).length;
+
+  // 1. teclas del hero → filtro + ?cat=
+  for (const [key, filter] of Object.entries(FILTER_KEYS)) {
+    await page.locator(`#key-${key}`).click();
+    issues.push(...(await expectFilter(page, filter, `tecla ${key}`)));
+  }
+
+  // 2. chips (todas las categorías)
+  for (const cat of CATEGORIES) {
+    await page.locator(`.chip[data-filter="${cat}"]`).click();
+    issues.push(...(await expectFilter(page, cat, `chip ${cat}`)));
+  }
+
+  // 3. "Todos" limpia el parámetro y muestra todo
+  await page.locator('.chip[data-filter="all"]').click();
+  const cat = await page.evaluate(() => new URL(location.href).searchParams.get('cat'));
+  if (cat !== null) issues.push(`"Todos" debería quitar ?cat= (queda ${cat})`);
+  if ((await visibleCards(page)).length !== totalCards) issues.push('"Todos" no restauró todas las cards');
+  await ctx.close();
+
+  // 4. carga directa con ?cat=web y con valor inválido
+  const direct = await openPage(browser, viewport, `${BASE_URL}/?cat=web`);
+  issues.push(...(await expectFilter(direct.page, 'web', 'carga directa ?cat=web')));
+  await direct.ctx.close();
+
+  const bogus = await openPage(browser, viewport, `${BASE_URL}/?cat=bogus`);
+  const pressed = await bogus.page.evaluate(() => document.querySelector('.chip[aria-pressed="true"]')?.dataset.filter);
+  if (pressed !== 'all') issues.push(`?cat=bogus debería caer en "Todos" (activo: ${pressed})`);
+  if ((await visibleCards(bogus.page)).length !== totalCards) issues.push('?cat=bogus ocultó cards');
+  await bogus.ctx.close();
+  return issues;
+}
+
+
+// ---------------------------------------------------------------- Fase 3: CTA sticky y secciones
+
+const barState = (page) =>
+  page.evaluate(() => {
+    const bar = document.getElementById('sticky-cta');
+    const cs = getComputedStyle(bar);
+    const r = bar.getBoundingClientRect();
+    return {
+      display: cs.display,
+      visibility: cs.visibility,
+      visible: cs.display !== 'none' && cs.visibility === 'visible' && r.top < window.innerHeight && r.bottom > 0,
+      bottomGap: window.innerHeight - r.bottom,
+      height: r.height,
+      bodyPad: parseFloat(getComputedStyle(document.body).paddingBottom),
+      scrollPad: parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) || 0,
+    };
+  });
+
+/** Scrollea con salto instantáneo y espera a que terminen los IntersectionObservers y la transición. */
+async function jumpTo(page, selector, block = 'start') {
+  await page.evaluate(([sel, b]) => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.querySelector(sel).scrollIntoView({ block: b });
+    document.documentElement.style.scrollBehavior = prev;
+  }, [selector, block]);
+  await sleep(500);
+}
+
+async function checkStickyCta(browser, pagePath, midSel, untilSel) {
+  const issues = [];
+  const mobile = VIEWPORTS.find((v) => v.name === '390x844');
+  const { ctx, page } = await openPage(browser, mobile, `${BASE_URL}${pagePath}`);
+
+  let st = await barState(page);
+  if (st.visible) issues.push('visible arriba, antes de pasar el hero');
+  await jumpTo(page, midSel, 'center');
+  st = await barState(page);
+  if (!st.visible) issues.push(`no aparece a mitad de página (${midSel})`);
+  else {
+    if (st.bottomGap > 1) issues.push(`la barra no está pegada al borde inferior (gap ${st.bottomGap.toFixed(0)}px)`);
+    if (st.bodyPad < st.height - 1) issues.push(`body sin padding inferior suficiente (${st.bodyPad}px < ${st.height.toFixed(0)}px)`);
+    if (st.scrollPad < st.height - 1) issues.push(`scroll-padding-bottom insuficiente para el foco (${st.scrollPad}px)`);
+  }
+  await jumpTo(page, untilSel, 'center');
+  st = await barState(page);
+  if (st.visible) issues.push(`sigue visible con ${untilSel} en pantalla`);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await sleep(500);
+  st = await barState(page);
+  if (st.visible) issues.push('visible al final de la página');
+  await ctx.close();
+
+  const desktop = VIEWPORTS.find((v) => v.name === '1440x810');
+  const d = await openPage(browser, desktop, `${BASE_URL}${pagePath}`);
+  await jumpTo(d.page, midSel, 'center');
+  st = await barState(d.page);
+  if (st.display !== 'none') issues.push('la barra se muestra en ≥700px');
+  await d.ctx.close();
+  return issues;
+}
+
+async function checkSections(browser) {
+  const issues = [];
+  const viewport = VIEWPORTS.find((v) => v.name === '1440x810');
+  const { ctx, page } = await openPage(browser, viewport, `${BASE_URL}/`);
+  const data = await page.evaluate(() => {
+    const textOutside = Array.from(document.body.children)
+      .map((el) => el.innerText ?? '')
+      .join('\n');
+    const about = document.getElementById('sobre-mi');
+    const mail = document.querySelector('#contacto a[href^="mailto:"]');
+    const stackChips = Array.from(document.querySelectorAll('#stack .chips li')).map((li) => li.textContent.trim());
+    return {
+      ids: ['proyectos', 'servicios', 'proceso', 'sobre-mi', 'contacto', 'stack'].filter((id) => !document.getElementById(id)),
+      klienTotal: (textOutside.match(/Klien IT Systems/g) ?? []).length,
+      klienInAbout: ((about?.innerText ?? '').match(/Klien IT Systems/g) ?? []).length,
+      steps: document.querySelectorAll('#proceso ol > li').length,
+      featuredStep: document.querySelector('#proceso li.featured h3')?.textContent?.trim(),
+      services: document.querySelectorAll('#servicios li').length,
+      serviceFilters: Array.from(document.querySelectorAll('#servicios a[data-filter]')).map((a) => a.dataset.filter),
+      mailWrap: mail ? getComputedStyle(mail).overflowWrap : null,
+      mailDecoration: mail ? getComputedStyle(mail).textDecorationLine : null,
+      contactBg: getComputedStyle(document.getElementById('contacto')).backgroundColor,
+      contactTitle: document.querySelector('#contacto h2')?.textContent?.replace(/\s+/g, ' ').trim(),
+      credit: /ui\.debbie/.test(document.querySelector('footer')?.textContent ?? ''),
+      year: new RegExp(String(new Date().getFullYear())).test(document.querySelector('footer')?.textContent ?? ''),
+      stackGroups: Array.from(document.querySelectorAll('#stack .group h4')).map((h) => h.textContent.trim()),
+      stackChips,
+    };
+  });
+  if (data.ids.length) issues.push(`faltan secciones: ${data.ids.join(', ')}`);
+  if (data.klienTotal !== data.klienInAbout || data.klienInAbout !== 1) {
+    issues.push(`"Klien IT Systems" debe aparecer solo en #sobre-mi (total ${data.klienTotal}, en sobre-mi ${data.klienInAbout})`);
+  }
+  if (data.steps !== 4) issues.push(`el proceso debe tener 4 pasos (hay ${data.steps})`);
+  if (data.featuredStep !== 'Te muestro una demo') issues.push(`el paso destacado debería ser "Te muestro una demo" (es ${data.featuredStep})`);
+  if (data.services !== 4) issues.push(`debe haber 4 servicios (hay ${data.services})`);
+  if (data.serviceFilters.join() !== 'web,sistemas,integraciones,it') issues.push(`filtros de servicios: ${data.serviceFilters.join()}`);
+  if (data.mailWrap !== 'anywhere') issues.push(`el email debería tener overflow-wrap:anywhere (es ${data.mailWrap})`);
+  if (data.mailDecoration !== 'underline') issues.push('el email debería estar subrayado');
+  if (data.contactBg !== 'rgb(21, 26, 51)') issues.push(`fondo de contacto ${data.contactBg} ≠ #151a33`);
+  if (!/Tu próximo proyecto/.test(data.contactTitle ?? '') || !/empieza con un hola/.test(data.contactTitle ?? '')) issues.push(`titular de contacto: ${data.contactTitle}`);
+  if (!data.credit) issues.push('falta el crédito ui.debbie en el footer');
+  if (!data.year) issues.push('el footer no muestra el año actual');
+  if (data.stackGroups.join() !== 'Frontend,Backend,Infra y herramientas,IA') issues.push(`grupos del stack: ${data.stackGroups.join()}`);
+
+  // "Ver ejemplos" de Servicios aplica el filtro
+  await page.locator('#servicios a[data-filter="integraciones"]').click();
+  issues.push(...(await expectFilter(page, 'integraciones', 'servicios → Ver ejemplos')));
+  await ctx.close();
+  return issues;
+}
+
+
+// ---------------------------------------------------------------- SEO / Open Graph
+
+const collectMeta = (page) =>
+  page.evaluate(() => {
+    const m = (sel) => document.querySelector(sel)?.getAttribute('content') ?? null;
+    return {
+      lang: document.documentElement.lang,
+      title: document.title,
+      description: m('meta[name="description"]'),
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null,
+      ogTitle: m('meta[property="og:title"]'),
+      ogDescription: m('meta[property="og:description"]'),
+      ogUrl: m('meta[property="og:url"]'),
+      ogImage: m('meta[property="og:image"]'),
+      ogWidth: m('meta[property="og:image:width"]'),
+      ogHeight: m('meta[property="og:image:height"]'),
+      twitterCard: m('meta[name="twitter:card"]'),
+      twitterImage: m('meta[name="twitter:image"]'),
+      jsonLd: Array.from(document.querySelectorAll('script[type="application/ld+json"]')).map((s) => s.textContent),
+    };
+  });
+
+async function checkSeo(metas, api) {
+  const issues = [];
+  const titles = new Set();
+  for (const { pagePath, meta } of metas) {
+    const w = pagePath;
+    if (meta.lang !== 'es') issues.push(`${w}: lang="${meta.lang}" (se esperaba es)`);
+    if (!meta.title || meta.title.length > 80) issues.push(`${w}: title vacío o demasiado largo (${meta.title?.length})`);
+    if (titles.has(meta.title)) issues.push(`${w}: title repetido "${meta.title}"`);
+    titles.add(meta.title);
+    if (!meta.description || meta.description.length < 40 || meta.description.length > 320) {
+      issues.push(`${w}: description ausente o de largo raro (${meta.description?.length})`);
+    }
+    if (meta.canonical !== `${SITE_URL}${pagePath}`) issues.push(`${w}: canonical ${meta.canonical} ≠ ${SITE_URL}${pagePath}`);
+    if (meta.ogUrl !== meta.canonical) issues.push(`${w}: og:url ≠ canonical`);
+    if (meta.ogTitle !== meta.title) issues.push(`${w}: og:title ≠ title`);
+    if (!meta.ogDescription) issues.push(`${w}: falta og:description`);
+    if (meta.twitterCard !== 'summary_large_image') issues.push(`${w}: twitter:card = ${meta.twitterCard}`);
+    if (meta.twitterImage !== meta.ogImage) issues.push(`${w}: twitter:image ≠ og:image`);
+    if (meta.ogWidth !== '1200' || meta.ogHeight !== '630') issues.push(`${w}: og:image:width/height ≠ 1200×630`);
+
+    if (!meta.ogImage || !meta.ogImage.startsWith(`${SITE_URL}/og/`) || !meta.ogImage.endsWith('.png')) {
+      issues.push(`${w}: og:image no es una URL absoluta del sitio (${meta.ogImage})`);
+      continue;
+    }
+    const res = await api.request.get(meta.ogImage.replace(SITE_URL, BASE_URL));
+    const body = await res.body();
+    if (res.status() !== 200) issues.push(`${w}: og:image → ${res.status()}`);
+    else {
+      if (res.headers()['content-type'] !== 'image/png') issues.push(`${w}: og:image content-type ${res.headers()['content-type']}`);
+      if (body.length > 300 * 1024) issues.push(`${w}: og:image pesa ${(body.length / 1024).toFixed(0)} KB (> 300 KB, WhatsApp puede ignorarla)`);
+      const [pw, ph] = [body.readUInt32BE(16), body.readUInt32BE(20)];
+      if (pw !== 1200 || ph !== 630) issues.push(`${w}: og:image mide ${pw}×${ph}`);
+    }
+
+    // JSON-LD Person solo en la home
+    if (pagePath === '/') {
+      let ld = null;
+      try {
+        ld = JSON.parse(meta.jsonLd[0] ?? 'null');
+      } catch {
+        /* se reporta abajo */
+      }
+      if (!ld || ld['@type'] !== 'Person' || !ld.name) issues.push('/: falta JSON-LD Person válido');
+      else {
+        if (ld.url !== SITE_URL) issues.push(`/: JSON-LD url ${ld.url} ≠ ${SITE_URL}`);
+        if (/Klien/.test(JSON.stringify(ld))) issues.push('/: el JSON-LD no debe incluir al empleador');
+        for (const link of ld.sameAs ?? []) if (!/^https:\/\//.test(link)) issues.push(`/: sameAs inválido (${link})`);
+      }
+    } else if (meta.jsonLd.length) {
+      issues.push(`${w}: JSON-LD inesperado fuera de la home`);
+    }
+  }
+
+  // robots.txt y sitemap
+  const robots = await (await api.request.get(`${BASE_URL}/robots.txt`)).text();
+  if (!robots.includes(`Sitemap: ${SITE_URL}/sitemap-index.xml`)) issues.push('robots.txt no apunta al sitemap con la URL del sitio');
+  const index = await api.request.get(`${BASE_URL}/sitemap-index.xml`);
+  if (index.status() !== 200) issues.push(`sitemap-index.xml → ${index.status()}`);
+  const sm = await api.request.get(`${BASE_URL}/sitemap-0.xml`);
+  const smText = sm.status() === 200 ? await sm.text() : '';
+  if (!smText) issues.push(`sitemap-0.xml → ${sm.status()}`);
+  for (const { pagePath } of metas) if (!smText.includes(`<loc>${SITE_URL}${pagePath}</loc>`)) issues.push(`el sitemap no incluye ${pagePath}`);
+  return issues;
+}
+
+// ---------------------------------------------------------------- links y contenido
+
+async function collectLinks(page) {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll('a')).map((a) => ({
+      raw: a.getAttribute('href'),
+      href: a.href,
+      target: a.getAttribute('target'),
+      rel: a.getAttribute('rel') ?? '',
+      text: (a.textContent ?? '').trim().slice(0, 40),
+    })),
+  );
+}
+
+function auditLinks(pagePath, links, idsByPath, internal) {
+  const issues = [];
+  for (const l of links) {
+    const where = `${pagePath} → "${l.text}"`;
+    if (l.raw === null || l.raw.trim() === '' || l.raw.trim() === '#') {
+      issues.push(`${where}: href vacío o "#" suelto`);
+      continue;
+    }
+    if (l.href.startsWith('https://wa.me/')) {
+      const m = l.href.match(/^https:\/\/wa\.me\/(\d{8,15})\?text=(.+)$/);
+      if (!m) issues.push(`${where}: wa.me sin número válido o sin text (${l.href})`);
+      else if (!decodeURIComponent(m[2]).trim()) issues.push(`${where}: wa.me con text vacío`);
+    } else if (l.href.startsWith('mailto:')) {
+      if (!/^mailto:[^@\s]+@[^@\s]+\.[^@\s]+$/.test(l.href)) issues.push(`${where}: mailto inválido (${l.href})`);
+    } else if (l.href.startsWith(BASE_URL)) {
+      const u = new URL(l.href);
+      internal.add(u.pathname + u.search);
+      if (u.hash) {
+        const ids = idsByPath.get(u.pathname);
+        if (ids && !ids.has(u.hash.slice(1))) issues.push(`${where}: el ancla ${u.hash} no existe en ${u.pathname}`);
+        else if (!ids) internal.add(`${u.pathname}#${u.hash.slice(1)}`);
+      }
+    }
+    if (l.target === '_blank' && !/\bnoopener\b/.test(l.rel)) issues.push(`${where}: target=_blank sin rel=noopener`);
+  }
+  return issues;
+}
+
+const FORBIDDEN_EVERYWHERE = [
+  [/TODO/, 'aparece "TODO"'],
+  [/Presidente|Pdte\b|Peña/, 'aparece la mención retirada del Presidente'],
+  [/3 gimnasios|Tres gimnasios/i, 'aparece el claim retirado de "3 gimnasios"'],
+];
+const KNOWN_PORTALS = /infocasas|clasipar|mercado ?libre|\bolx\b|encuentra24|remax|marketplace de facebook/i;
+
+function checkContent(slug, html, text) {
+  const issues = [];
+  for (const [re, msg] of FORBIDDEN_EVERYWHERE) if (re.test(html)) issues.push(`${slug}: ${msg}`);
+  if (slug === 'valuador-inmuebles') {
+    if (!/precio de oferta/i.test(text)) issues.push('valuador: no dice "precio de oferta"');
+    if (!/<blockquote/.test(html)) issues.push('valuador: falta el bloque visible de limitación');
+    if (/\d\s?%|R²|\bMAE\b|\bRMSE\b/.test(text)) issues.push('valuador: contiene una métrica');
+    if (KNOWN_PORTALS.test(text)) issues.push('valuador: nombra un portal inmobiliario');
+  }
+  if (slug === 'mbarete' && !text.includes('Usado por gimnasios en Buenos Aires y en distintas partes de Paraguay.')) {
+    issues.push('mbarete: falta la frase de resultado');
+  }
+  return issues;
+}
+
+// ---------------------------------------------------------------- main
 
 async function main() {
   mkdirSync(CHECKS_DIR, { recursive: true });
 
   let previewProc = null;
-  const ownServer = !process.env.CHECK_URL;
-
-  if (ownServer) {
+  if (!process.env.CHECK_URL) {
     console.log('▶ Starting astro preview on port 4322…');
     previewProc = spawn('node', ['node_modules/.bin/astro', 'preview', '--port', '4322', '--host'], {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    previewProc.stdout.on('data', d => process.stdout.write(d));
-    previewProc.stderr.on('data', d => process.stderr.write(d));
+    previewProc.stdout.on('data', (d) => process.stdout.write(d));
+    previewProc.stderr.on('data', (d) => process.stderr.write(d));
     await waitForServer(BASE_URL);
     console.log('✓ Preview server ready\n');
   }
@@ -167,72 +654,104 @@ async function main() {
       : undefined,
   });
 
-  let totalFails = 0;
+  const links = []; // { pagePath, links }
+  const idsByPath = new Map();
+  const contentIssues = [];
+  const metas = []; // { pagePath, meta } para el chequeo de SEO
 
   try {
+    // ---- Home en los 6 viewports
     for (const viewport of VIEWPORTS) {
-      for (const pagePath of PAGES) {
-        const url = `${BASE_URL}${pagePath}`;
-        const ctx = await browser.newContext({
-          viewport: { width: viewport.width, height: viewport.height },
+      const { ctx, page, errors, failed } = await openPage(browser, viewport, `${BASE_URL}/`);
+      const issues = [
+        ...(await checkBasics(page, errors, failed)),
+        ...(await checkKeyboardStatic(page, viewport)),
+      ];
+      if (ANIM_VIEWPORTS.includes(viewport.name)) {
+        // el teclado animado y el marquee se miden sin mover el mouse
+        issues.push(...(await checkKeyboardAnimation(page)).map((i) => `animación: ${i}`));
+        issues.push(...(await checkMarquee(page)).map((i) => `marquee: ${i}`));
+      } else {
+        issues.push(...(await checkMarquee(page)).filter((i) => i.includes('viewport')).map((i) => `marquee: ${i}`));
+      }
+      await shot(page, viewport.name);
+      if (viewport.name === '1440x810' || viewport.name === '390x844') {
+        const hero = await page.$('#hero');
+        if (hero) await hero.screenshot({ path: path.join(CHECKS_DIR, `hero-${viewport.name}.png`) });
+      }
+
+      if (viewport.name === '1440x810') {
+        links.push({ pagePath: '/', links: await collectLinks(page) });
+        metas.push({ pagePath: '/', meta: await collectMeta(page) });
+        idsByPath.set('/', new Set(await page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id))));
+        contentIssues.push(
+          ...checkContent('home', await page.content(), await page.evaluate(() => document.body.innerText)),
+        );
+        const eco = await page.evaluate(() => {
+          const card = Array.from(document.querySelectorAll('#proyectos article')).find((a) => a.textContent.includes('Ecodespensa'));
+          return card?.querySelector('.badge')?.textContent?.trim() ?? null;
         });
-        const pw = await ctx.newPage();
+        if (eco !== 'En producción') contentIssues.push(`home: badge de Ecodespensa = ${JSON.stringify(eco)} (se esperaba "En producción")`);
+      }
+      report(`${viewport.name} — /`, issues);
+      await ctx.close();
+    }
 
-        const { overflow, errors, failed, kbChecks } = await checkPage(pw, url, viewport);
-
-        const screenshotPath = path.join(CHECKS_DIR, `${viewport.name}.png`);
-        await pw.screenshot({ path: screenshotPath, fullPage: true });
-
-        // Hero crop screenshot
-        if (HERO_CROP_VIEWPORTS.includes(viewport.name)) {
-          const heroEl = await pw.$('#hero');
-          if (heroEl) {
-            const heroCropPath = path.join(CHECKS_DIR, `hero-${viewport.name}.png`);
-            await heroEl.screenshot({ path: heroCropPath });
-            console.log(`  📸 Hero crop → .checks/hero-${viewport.name}.png`);
-          }
+    // ---- Páginas de proyecto (todas) en 390×844 y 1440×810
+    for (const name of CASE_VIEWPORTS) {
+      const viewport = VIEWPORTS.find((v) => v.name === name);
+      for (const slug of SLUGS) {
+        const pagePath = `/proyectos/${slug}/`;
+        const { ctx, page, errors, failed } = await openPage(browser, viewport, `${BASE_URL}${pagePath}`);
+        const issues = await checkBasics(page, errors, failed);
+        await shot(page, `${name}-${slug}`);
+        if (name === '1440x810') {
+          links.push({ pagePath, links: await collectLinks(page) });
+          metas.push({ pagePath, meta: await collectMeta(page) });
+          idsByPath.set(pagePath, new Set(await page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id))));
+          contentIssues.push(
+            ...checkContent(slug, await page.content(), await page.evaluate(() => document.body.innerText)),
+          );
         }
-
-        const issues = [];
-        if (overflow) issues.push('overflow-x detected');
-        errors.forEach(e => issues.push(`console.error: ${e}`));
-        failed.forEach(f => issues.push(`request failed: ${f}`));
-
-        // Keyboard checks
-        if (kbChecks && !kbChecks.skip) {
-          if (!kbChecks.kbFitsContainer) issues.push(`keyboard wider than container`);
-          if (!kbChecks.heightOk) issues.push(`wrapper height ${kbChecks.actualH?.toFixed(1)}px ≠ 312×${kbChecks.scale?.toFixed(3)}=${kbChecks.expectedH?.toFixed(1)}px`);
-          if (!kbChecks.enterClickable) issues.push(`Enter key not clickable at expected coordinates`);
-          if (!kbChecks.satoshiLoaded) issues.push(`Satoshi 900 not loaded (document.fonts.check failed)`);
-        }
-
-        if (issues.length === 0) {
-          console.log(`✓ ${viewport.name} — ${pagePath}`);
-        } else {
-          console.log(`✗ ${viewport.name} — ${pagePath}`);
-          issues.forEach(i => console.log(`   • ${i}`));
-          totalFails += issues.length;
-        }
-
+        report(`${name} — ${pagePath}`, issues);
         await ctx.close();
       }
     }
 
-    // Reduced-motion check (once, on first viewport)
-    console.log('\n▶ Reduced-motion check (390×844)…');
-    const rmViewport = VIEWPORTS.find(v => v.name === '390x844');
-    if (rmViewport) {
-      const rmResult = await checkReducedMotion(browser, `${BASE_URL}/`, rmViewport);
-      if (rmResult.skip) {
-        console.log('  ⚠ Keyboard not found — skip reduced-motion check');
-      } else if (rmResult.noAnim) {
-        console.log('  ✓ reduced-motion: no animation (transitionDuration < 50ms, no pressed keys)');
-      } else {
-        console.log(`  ✗ reduced-motion: animation still running (transitionDuration=${rmResult.transitionDuration}s, pressedKeys=${rmResult.pressedKeys})`);
-        totalFails++;
-      }
+    // ---- reduced-motion
+    report('reduced-motion (390×844)', await checkReducedMotion(browser));
+
+    // ---- filtros (desktop y mobile)
+    for (const name of ANIM_VIEWPORTS) {
+      const viewport = VIEWPORTS.find((v) => v.name === name);
+      report(`filtros (${name})`, await checkFilters(browser, viewport));
     }
 
+    // ---- CTA sticky, secciones de la Fase 3
+    report('CTA sticky — home (390×844)', await checkStickyCta(browser, '/', '#servicios', '#contacto'));
+    report('CTA sticky — caso (390×844)', await checkStickyCta(browser, '/proyectos/mbarete/', '.prose', '#caso-cta'));
+    report('secciones (servicios, proceso, sobre mí, contacto, footer)', await checkSections(browser));
+
+    // ---- links
+    const internal = new Set();
+    const linkIssues = [];
+    for (const { pagePath, links: ls } of links) linkIssues.push(...auditLinks(pagePath, ls, idsByPath, internal));
+    const api = await browser.newContext();
+    for (const target of internal) {
+      if (target.includes('#')) continue; // anclas: ya validadas contra el DOM
+      const res = await api.request.get(`${BASE_URL}${target}`);
+      if (res.status() !== 200) linkIssues.push(`link interno ${target} → ${res.status()}`);
+    }
+    await api.close();
+    report(`links (${links.reduce((n, l) => n + l.links.length, 0)} links, ${internal.size} rutas internas)`, linkIssues);
+
+    // ---- SEO / OG / sitemap
+    const seoApi = await browser.newContext();
+    report(`SEO y Open Graph (${metas.length} páginas, ${SITE_URL})`, await checkSeo(metas, seoApi));
+    await seoApi.close();
+
+    // ---- contenido
+    report('contenido (TODO, datos retirados, valuador, mbarete)', contentIssues);
   } finally {
     await browser.close();
     if (previewProc) {
@@ -241,8 +760,7 @@ async function main() {
     }
   }
 
-  console.log(`\nScreenshots saved to .checks/`);
-
+  console.log('\nScreenshots saved to .checks/');
   if (totalFails > 0) {
     console.error(`\n✗ ${totalFails} issue(s) found`);
     process.exit(1);
@@ -251,7 +769,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 ---
 title: "Estación de Carretera"
-summary: "Marketplace y showroom digital para los emprendedores de Hohenau, basado en el modelo japonés Michi-no-eki. Inaugurado con la presencia del Presidente de la República."
+summary: "Marketplace y showroom digital para los emprendedores de Hohenau, basado en el modelo japonés Michi-no-eki. Inaugurado con la presencia del intendente."
 category: ["web", "sistemas"]
 status: "en-produccion"
 featured: true
@@ -12,7 +12,7 @@ stack: ["React", "Python", "FastAPI", "PostgreSQL", "REST API"]
 highlights:
   - "Marketplace que conecta artesanos y productores locales con compradores"
   - "Dashboard de vendedor para gestión de inventario y pedidos"
-  - "Inaugurado en noviembre 2024 con presencia del Pdte. Santiago Peña"
+  - "Inaugurado en noviembre 2024 con presencia del intendente"
   - "100% construido en Itapúa, Paraguay"
 cover: ../../assets/projects/estacion-de-carretera/cover.jpeg
 coverMobile: ../../assets/projects/estacion-de-carretera/coverMobile.jpeg
@@ -35,4 +35,4 @@ Un marketplace completo: catálogo público donde los compradores exploran por c
 
 ## Resultado
 
-La plataforma se inauguró en noviembre de 2024 con la presencia del Presidente Santiago Peña, como parte del lanzamiento oficial de la iniciativa municipal.
+La plataforma se inauguró en noviembre de 2024 con la presencia del intendente, como parte del lanzamiento oficial de la iniciativa municipal.

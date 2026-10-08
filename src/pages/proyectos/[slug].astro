@@ -1,30 +1,449 @@
 ---
-import { getCollection, render } from 'astro:content';
-import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import ProjectMedia from '../../components/ProjectMedia.astro';
+import Footer from '../../components/Footer.astro';
+import StickyCta from '../../components/StickyCta.astro';
+import {
+  STATUS_LABEL,
+  caseHref,
+  descriptionOf,
+  getFeatured,
+  getProjects,
+  initials,
+  projectWhatsappHref,
+  shortTitle,
+  slugOf,
+  summaryOf,
+  type Project,
+} from '../../lib/projects';
+import { projectImages } from '../../lib/project-images';
+import { clean, cleanList } from '../../lib/todo';
 import { site } from '../../config/site';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects');
-  return projects.map(entry => ({
-    params: { slug: entry.id.replace(/\.md$/, '') },
-    props: { entry },
-  }));
+  const projects = await getProjects();
+  const featured = await getFeatured();
+  return projects.map((entry) => {
+    const i = featured.findIndex((p) => p.id === entry.id);
+    const n = featured.length;
+    return {
+      params: { slug: slugOf(entry) },
+      props: {
+        entry,
+        prev: i >= 0 ? featured[(i - 1 + n) % n] : null,
+        next: i >= 0 ? featured[(i + 1) % n] : null,
+      },
+    };
+  });
 }
 
 interface Props {
-  entry: CollectionEntry<'projects'>;
+  entry: Project;
+  prev: Project | null;
+  next: Project | null;
 }
 
-const { entry } = Astro.props;
+const { entry, prev, next } = Astro.props;
+const { data } = entry;
 const { Content } = await render(entry);
+
+const images = projectImages(entry);
+const summary = summaryOf(entry);
+const role = clean(data.role);
+const stack = cleanList(data.stack);
+const highlights = cleanList(data.highlights);
+const results = cleanList(data.results);
+const demoUrl = clean(data.demoUrl);
+const repoUrl = clean(data.repoUrl);
 ---
 
-<BaseLayout title={`${entry.data.title} — ${site.name}`} description={entry.data.summary}>
-  <!-- Fase 0: shell vacío. Contenido llega en Fase 2 -->
-  <article style="padding: 2rem; font-family: monospace; max-width: 800px;">
-    <h1>{entry.data.title}</h1>
-    <p>{entry.data.summary}</p>
-    <Content />
-  </article>
+<BaseLayout
+  title={`${shortTitle(entry)} — ${site.name}`}
+  description={descriptionOf(entry)}
+  ogImage={`/og/${slugOf(entry)}.png`}
+  ogImageAlt={`${data.title} — caso de estudio de ${site.name}`}
+  type="article"
+>
+  <Header />
+  <main class="case" style={`--accent: ${data.accent}`}>
+    <section id="caso-hero" class="hero">
+      <a class="back" href="/#proyectos">← Todos los proyectos</a>
+      <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
+      <h1>{data.title}</h1>
+      {summary && <p class="lead">{summary}</p>}
+
+      <dl class="meta">
+        <div><dt>Año</dt><dd>{data.year}</dd></div>
+        {role && <div><dt>Rol</dt><dd>{role}</dd></div>}
+        <div><dt>Estado</dt><dd>{STATUS_LABEL[data.status]}</dd></div>
+        {stack.length > 0 && (
+          <div class="meta-stack">
+            <dt>Stack</dt>
+            <dd>
+              <ul class="chips">{stack.map((s) => <li>{s}</li>)}</ul>
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      {(demoUrl || repoUrl) && (
+        <div class="links">
+          {demoUrl && (
+            <a class="btn btn-primary" href={demoUrl} target="_blank" rel="noopener noreferrer">Ver demo ↗</a>
+          )}
+          {repoUrl && (
+            <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">Ver código ↗</a>
+          )}
+        </div>
+      )}
+    </section>
+
+    <div class="wide">
+      <ProjectMedia
+        title={data.title}
+        accent={data.accent}
+        initials={initials(data.title)}
+        desktop={images.desktop}
+        mobile={images.mobile}
+        variant="case"
+      />
+    </div>
+
+    <section class="content">
+      {highlights.length > 0 && (
+        <div class="highlights">
+          <h2>Lo más importante</h2>
+          <ul>{highlights.map((h) => <li>{h}</li>)}</ul>
+        </div>
+      )}
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {results.length > 0 && (
+        <aside class="results" aria-labelledby="resultado-title">
+          <h2 id="resultado-title">Resultado</h2>
+          <ul>{results.map((r) => <li>{r}</li>)}</ul>
+        </aside>
+      )}
+    </section>
+
+    <section id="caso-cta" class="cta" aria-labelledby="cta-title">
+      <h2 id="cta-title">¿Querés algo así para tu negocio?</h2>
+      <p>Contame qué necesitás y te digo cómo lo encararía.</p>
+      <a class="btn btn-primary btn-lg" href={projectWhatsappHref(entry)} target="_blank" rel="noopener noreferrer">
+        Escribime por WhatsApp
+      </a>
+    </section>
+
+    <nav class="pager" aria-label="Otros proyectos">
+      {prev ? (
+        <a class="pager-link" href={caseHref(prev)} rel="prev">
+          <span class="pager-dir">← Anterior</span>
+          <span class="pager-title">{shortTitle(prev)}</span>
+        </a>
+      ) : (
+        <a class="pager-link" href="/#proyectos">
+          <span class="pager-dir">←</span>
+          <span class="pager-title">Todos los proyectos</span>
+        </a>
+      )}
+      {next && (
+        <a class="pager-link pager-next" href={caseHref(next)} rel="next">
+          <span class="pager-dir">Siguiente →</span>
+          <span class="pager-title">{shortTitle(next)}</span>
+        </a>
+      )}
+    </nav>
+  </main>
+  <Footer />
+  <StickyCta after="#caso-hero" until="#caso-cta" message={`Hola Brian, vi el proyecto "${shortTitle(entry)}" en tu portfolio y quiero algo parecido para mi negocio.`} />
 </BaseLayout>
+
+<style>
+  .case {
+    padding: var(--space-xl) var(--pad-desktop) var(--space-2xl);
+  }
+
+  .hero,
+  .wide,
+  .content,
+  .cta,
+  .pager {
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .back {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    text-decoration: underline;
+  }
+
+  h1 {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.25rem, 6vw, 4.25rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .lead {
+    max-width: 62ch;
+    font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-md) var(--space-lg);
+    width: 100%;
+    margin-top: var(--space-sm);
+    padding-block: var(--space-md);
+    border-block: 1px solid rgb(0 0 0 / 0.1);
+  }
+
+  .meta dt {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .meta dd {
+    margin-top: 0.2rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .meta-stack {
+    grid-column: 1 / -1;
+  }
+
+  .meta-stack dd {
+    margin-top: 0.5rem;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .wide {
+    margin-block: var(--space-xl);
+  }
+
+  /* --- Contenido --- */
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .highlights h2,
+  .results h2 {
+    margin-bottom: var(--space-sm);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .highlights ul,
+  .results ul {
+    display: grid;
+    gap: 0.6rem;
+    padding-left: 1.25rem;
+  }
+
+  .highlights li::marker {
+    color: var(--color-accent);
+  }
+
+  .prose {
+    max-width: 68ch;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+  }
+
+  .prose :global(h2) {
+    margin: var(--space-xl) 0 var(--space-sm);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .prose :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .prose :global(p + p),
+  .prose :global(p + ul),
+  .prose :global(ul + p) {
+    margin-top: var(--space-md);
+  }
+
+  .prose :global(ul) {
+    display: grid;
+    gap: 0.5rem;
+    padding-left: 1.25rem;
+  }
+
+  .prose :global(em) {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1.1em;
+  }
+
+  .prose :global(code) {
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+    background: var(--color-bg-hero-to);
+    font-size: 0.9em;
+  }
+
+  /* Bloque de aclaración visible (p. ej. limitación del valuador) */
+  .prose :global(blockquote) {
+    margin: var(--space-md) 0;
+    padding: var(--space-md) var(--space-lg);
+    border: 2px solid #111;
+    border-left-width: 8px;
+    border-left-color: var(--accent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 16%, #fff);
+    box-shadow: 0 4px 0 #000;
+    font-weight: 500;
+  }
+
+  .results {
+    padding: var(--space-lg);
+    border: 2px solid #111;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--accent) 22%, #fff);
+    box-shadow: 0 5px 0 #000;
+  }
+
+  .results ul {
+    list-style: none;
+    padding-left: 0;
+    font-size: 1.1875rem;
+    font-weight: 600;
+  }
+
+  .results li::before {
+    content: '✓';
+    margin-right: 0.5rem;
+  }
+
+  /* --- CTA y navegación --- */
+  .cta {
+    margin-top: var(--space-2xl);
+    padding: var(--space-xl) var(--space-lg);
+    border-radius: 24px;
+    background: var(--color-bg-contact);
+    color: var(--color-text-contact);
+    text-align: center;
+  }
+
+  .cta h2 {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .cta p {
+    margin: var(--space-sm) 0 var(--space-lg);
+    color: var(--color-text-contact);
+    opacity: 0.85;
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+
+  .pager-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: var(--space-md);
+    border: 2px solid #111;
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--color-text-primary);
+  }
+
+  .pager-next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  .pager-dir {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  .pager-title {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.125rem;
+    overflow-wrap: anywhere;
+  }
+
+  @media (hover: hover) {
+    .pager-link:hover {
+      background: var(--color-bg-hero-to);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .case {
+      padding-inline: var(--pad-tablet);
+    }
+  }
+
+  @media (max-width: 699px) {
+    .case {
+      padding: var(--space-lg) var(--pad-mobile) var(--space-xl);
+    }
+
+    .cta {
+      padding-inline: var(--pad-mobile);
+    }
+
+    .pager {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pager-next {
+      grid-column: auto;
+    }
+  }
+</style>

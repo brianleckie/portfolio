@@ -1,5 +1,5 @@
 ---
-import { site, whatsappHref } from '../config/site';
+import { whatsappHref } from '../config/site';
 import Keyboard from './Keyboard.astro';
 import Marquee from './Marquee.astro';
 
@@ -22,8 +22,8 @@ const waHref = whatsappHref();
     </p>
 
     <div class="hero-ctas">
-      <a href="#proyectos" class="cta cta-secondary">Ver proyectos</a>
-      <a href={waHref} target="_blank" rel="noopener noreferrer" class="cta cta-primary">
+      <a href="#proyectos" class="btn btn-ghost">Ver proyectos</a>
+      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn btn-primary">
         Escribime por WhatsApp
       </a>
     </div>
@@ -44,7 +44,7 @@ const waHref = whatsappHref();
     max-width: var(--max-w);
     margin: 0 auto;
     padding: 0 var(--pad-desktop);
-    padding-bottom: var(--space-xl);
+    padding-bottom: 16px;
   }
 
   .hero-headline {
@@ -84,39 +84,6 @@ const waHref = whatsappHref();
     flex-wrap: wrap;
     gap: var(--space-sm);
     align-items: center;
-  }
-
-  .cta {
-    display: inline-flex;
-    align-items: center;
-    height: 48px;
-    padding: 0 1.5rem;
-    border-radius: 10px;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-  }
-
-  .cta-primary {
-    background-color: var(--color-accent);
-    color: #fff;
-    border: 2px solid var(--color-accent);
-  }
-
-  .cta-primary:hover {
-    background-color: #3d49c4;
-    border-color: #3d49c4;
-  }
-
-  .cta-secondary {
-    background-color: transparent;
-    color: var(--color-text-primary);
-    border: 2px solid rgba(0, 0, 0, 0.15);
-  }
-
-  .cta-secondary:hover {
-    border-color: rgba(0, 0, 0, 0.35);
   }
 
   @media (max-width: 1024px) {

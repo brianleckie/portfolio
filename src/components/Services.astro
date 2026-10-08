@@ -1,0 +1,123 @@
+---
+import { services } from '../config/services';
+import { site } from '../config/site';
+import { clean } from '../lib/todo';
+---
+
+<section id="servicios" class="section tint" aria-labelledby="servicios-title">
+  <div class="section-inner">
+    <h2 id="servicios-title" class="section-title">Servicios</h2>
+    <p class="section-lead">Lo que puedo hacer por tu negocio.</p>
+
+    <ul class="grid">
+      {services.map((s, i) => {
+        const price = site.showPrices ? clean(s.fromPrice) : null;
+        return (
+          <li class="card" style={`--accent: ${s.accent}`}>
+            <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{s.title}</h3>
+            <p>{s.description}</p>
+            {price && <p class="price">{price}</p>}
+            <a class="examples" href={`/?cat=${s.filter}#proyectos`} data-filter={s.filter}>
+              Ver ejemplos<span class="sr-only"> de {s.title.toLowerCase()}</span> →
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .tint {
+    background-color: var(--color-bg-hero-from);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    padding-bottom: 5px; /* sombra dura */
+    list-style: none;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+    border: 2px solid #111;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 5px 0 #000;
+  }
+
+  .num {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid #111;
+    border-radius: 14px;
+    background: var(--accent);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.125rem;
+    color: #111;
+  }
+
+  h3 {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.375rem;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+  }
+
+  p {
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+  }
+
+  .price {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .examples {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: auto;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .examples:hover {
+    text-decoration: underline;
+  }
+
+
+  @media (max-width: 1100px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 699px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+      margin-top: var(--space-lg);
+    }
+  }
+</style>
+
+<script>
+  import { bindFilterLinks } from '../scripts/filter-links';
+
+  bindFilterLinks(document.getElementById('servicios') ?? document);
+</script>

@@ -1,0 +1,90 @@
+---
+import { site, resolveValue } from '../config/site';
+
+const github = resolveValue(site.github);
+const linkedin = resolveValue(site.linkedin);
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="inner">
+    <p>© {year} {site.name}</p>
+
+    <nav class="links" aria-label="Pie de página">
+      <a href="/#proyectos">Proyectos</a>
+      <a href="/#servicios">Servicios</a>
+      <a href="/#contacto">Contacto</a>
+      {github && <a href={github} target="_blank" rel="noopener noreferrer">GitHub</a>}
+      {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>}
+    </nav>
+
+    {site.showDesignCredit && (
+      <p class="credit">Diseño inspirado en un prompt de ui.debbie</p>
+    )}
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: var(--space-lg) var(--pad-desktop);
+    border-top: 1px solid rgb(255 255 255 / 0.14);
+    background-color: var(--color-bg-contact);
+    color: var(--color-text-contact);
+    font-size: 0.9375rem;
+  }
+
+  .inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm) var(--space-lg);
+    max-width: var(--max-w);
+    margin: 0 auto;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem var(--space-md);
+  }
+
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--color-text-contact-link);
+    text-decoration: none;
+  }
+
+  .links a:hover {
+    text-decoration: underline;
+  }
+
+  .links a:focus-visible {
+    outline-color: var(--color-text-contact-link);
+  }
+
+  .credit {
+    flex-basis: 100%;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 1024px) {
+    .footer {
+      padding-inline: var(--pad-tablet);
+    }
+  }
+
+  @media (max-width: 699px) {
+    .footer {
+      padding-inline: var(--pad-mobile);
+    }
+
+    .inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

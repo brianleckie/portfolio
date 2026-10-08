@@ -1,0 +1,102 @@
+---
+import type { Project } from '../lib/projects';
+import { STATUS_LABEL, caseHref, stackChips, summaryOf } from '../lib/projects';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const { data } = project;
+const summary = summaryOf(project);
+const { shown, extra } = stackChips(project, 3);
+---
+
+<article class="mini" style={`--accent: ${data.accent}`}>
+  <div class="meta">
+    <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
+    <span class="year">{data.year}</span>
+  </div>
+
+  <h4 class="title">
+    <a href={caseHref(project)}>{data.title}</a>
+  </h4>
+
+  {summary && <p class="summary">{summary}</p>}
+
+  {shown.length > 0 && (
+    <ul class="chips" aria-label="Tecnologías">
+      {shown.map((s) => <li>{s}</li>)}
+      {extra > 0 && <li class="more">+{extra}</li>}
+    </ul>
+  )}
+</article>
+
+<style>
+  .mini {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    height: 100%;
+    min-width: 0;
+    padding: 1.25rem;
+    border: 2px solid #111;
+    border-top: 8px solid var(--accent);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 0 #000;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .year {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+  }
+
+  .title {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.125rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+  }
+
+  /* Toda la card es clickeable a través del link del título */
+  .title a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+  }
+
+  .summary {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+
+  .chips {
+    margin-top: auto;
+    padding-top: 0.25rem;
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .mini:hover {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #000;
+    }
+  }
+</style>

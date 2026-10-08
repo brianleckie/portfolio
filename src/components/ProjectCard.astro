@@ -1,0 +1,141 @@
+---
+import type { Project } from '../lib/projects';
+import { STATUS_LABEL, caseHref, initials, stackChips, summaryOf, shortTitle } from '../lib/projects';
+import { clean, cleanList } from '../lib/todo';
+import { projectImages } from '../lib/project-images';
+import ProjectMedia from './ProjectMedia.astro';
+
+interface Props {
+  project: Project;
+  eager?: boolean;
+}
+
+const { project, eager = false } = Astro.props;
+const { data } = project;
+const images = projectImages(project);
+const summary = summaryOf(project);
+const { shown, extra } = stackChips(project);
+const result = cleanList(data.results)[0];
+const title = shortTitle(project);
+const tagline = data.title.includes(' — ') ? data.title.split(' — ').slice(1).join(' — ') : null;
+const demoUrl = clean(data.demoUrl);
+---
+
+<article class="card" style={`--accent: ${data.accent}`}>
+  <ProjectMedia
+    title={data.title}
+    accent={data.accent}
+    initials={initials(data.title)}
+    desktop={images.desktop}
+    mobile={images.mobile}
+    eager={eager}
+  />
+
+  <div class="body">
+    <div class="meta">
+      <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
+      <span class="year">{data.year}</span>
+    </div>
+
+    <h3 class="title">{title}</h3>
+    {tagline && <p class="tagline">{tagline}</p>}
+    {summary && summary !== tagline && <p class="summary">{summary}</p>}
+
+    {result && (
+      <p class="result"><span aria-hidden="true">✓</span> {result}</p>
+    )}
+
+    {shown.length > 0 && (
+      <ul class="chips" aria-label="Tecnologías">
+        {shown.map((s) => <li>{s}</li>)}
+        {extra > 0 && <li class="more">+{extra}</li>}
+      </ul>
+    )}
+
+    <div class="actions">
+      <a class="btn btn-primary" href={caseHref(project)} aria-label={`Ver caso: ${data.title}`}>Ver caso</a>
+      {demoUrl && (
+        <a
+          class="btn btn-ghost"
+          href={demoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ver demo de ${title} (se abre en una pestaña nueva)`}
+        >Ver demo ↗</a>
+      )}
+    </div>
+  </div>
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .year {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+
+  .title {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .tagline {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    color: var(--color-text-primary);
+  }
+
+  .summary {
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+  }
+
+  .result {
+    padding: 0.6rem 0.9rem;
+    border-left: 4px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 22%, #fff);
+    border-radius: 0 10px 10px 0;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .result span {
+    margin-right: 0.35rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+</style>

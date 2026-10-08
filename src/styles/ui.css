@@ -1,0 +1,142 @@
+/* Primitivas compartidas: secciones, botones, badge de estado y chips de stack. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: #3d49c4;
+  border-color: #3d49c4;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  border-color: rgb(0 0 0 / 0.15);
+  color: var(--color-text-primary);
+}
+
+.btn-ghost:hover {
+  border-color: rgb(0 0 0 / 0.35);
+}
+
+.btn-lg {
+  min-height: 56px;
+  padding: 0 2rem;
+  font-size: 1.0625rem;
+}
+
+/* Estado del proyecto: texto + color (nunca solo color) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.badge[data-status='en-produccion'] { background-color: #dcf5e1; color: #14532d; }
+.badge[data-status='entregado']     { background-color: #dbeafe; color: #1e3a8a; }
+.badge[data-status='en-desarrollo'] { background-color: #fef3c7; color: #78350f; }
+.badge[data-status='demo']          { background-color: #ede9fe; color: #4c1d95; }
+.badge[data-status='academico']     { background-color: #fce7f3; color: #831843; }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+}
+
+.chips li {
+  padding: 0.2rem 0.65rem;
+  border: 1.5px solid rgb(0 0 0 / 0.18);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.chips .more {
+  border-style: dashed;
+  color: var(--color-text-secondary);
+}
+
+/* Secciones de la home: padding, ancho máximo y títulos */
+.section {
+  padding: var(--space-2xl) var(--pad-desktop);
+}
+
+.section-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: 'Satoshi', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+}
+
+.section-lead {
+  margin-top: 0.75rem;
+  max-width: 56ch;
+  font-size: clamp(1rem, 1.4vw, 1.1875rem);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding-inline: var(--pad-tablet);
+  }
+}
+
+@media (max-width: 699px) {
+  .section {
+    padding: var(--space-xl) var(--pad-mobile);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
