@@ -2,7 +2,7 @@
 title: "Ecodespensa — sincronización con Tiendanube"
 summary: "TODO: Integración que sincroniza el sistema de gestión del local con la tienda online en Tiendanube."
 category: ["integraciones", "sistemas"]
-status: "en-desarrollo"
+status: "en-produccion"
 featured: true
 order: 6
 clientNamePublic: false
