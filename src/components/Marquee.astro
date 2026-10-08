@@ -1,0 +1,122 @@
+---
+const TEXT = "Catálogos con pedido por WhatsApp. · Sistemas a medida. · Integraciones que ahorran horas. · Webs que se ven bien en el celular. · Elegí una tecla.";
+---
+
+<div class="marquee-strip" role="marquee" aria-label={TEXT}>
+  <div class="marquee-track" id="marquee-track">
+    <span class="marquee-group" id="marquee-g1" aria-hidden="false">
+      {TEXT}&nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;
+    </span>
+    <span class="marquee-group" id="marquee-g2" aria-hidden="true">
+      {TEXT}&nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;
+    </span>
+  </div>
+</div>
+
+<style>
+  .marquee-strip {
+    background-color: var(--color-marquee-bg);
+    color: var(--color-marquee-text);
+    overflow: hidden;
+    padding: 1.25rem 0;
+    width: 100%;
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  .marquee-group {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(1.375rem, 2.5vw, 2rem);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Reduced motion: static, wrappable */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-strip {
+      overflow: visible;
+    }
+    .marquee-track {
+      display: block;
+      width: auto;
+      animation: none !important;
+    }
+    .marquee-group {
+      white-space: normal;
+      display: block;
+    }
+    #marquee-g2 {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReduced.matches) return;
+
+    const track = document.getElementById('marquee-track');
+    const g1 = document.getElementById('marquee-g1');
+    const g2 = document.getElementById('marquee-g2');
+    if (!track || !g1 || !g2) return;
+
+    const SPEED = 50; // px/s
+
+    let raf: number;
+    let last: number | null = null;
+    let offset = 0;
+    let groupWidth = 0;
+
+    function measure() {
+      groupWidth = g1.offsetWidth;
+    }
+
+    function step(ts: number) {
+      if (last === null) last = ts;
+      const dt = Math.min(ts - last, 50); // cap at 50ms to avoid jumps on tab restore
+      last = ts;
+      offset += SPEED * (dt / 1000);
+      if (offset >= groupWidth) offset -= groupWidth;
+      track.style.transform = `translateX(-${offset}px)`;
+      raf = requestAnimationFrame(step);
+    }
+
+    function start() {
+      measure();
+      last = null;
+      raf = requestAnimationFrame(step);
+    }
+
+    // Recalculate on resize
+    const ro = new ResizeObserver(() => {
+      measure();
+      // Ensure group repeats text enough times to fill viewport
+      // Each group is one copy of the text; two groups cover continuous loop
+    });
+    ro.observe(document.body);
+
+    start();
+
+    // Pause on tab hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(raf);
+        last = null;
+      } else {
+        last = null;
+        raf = requestAnimationFrame(step);
+      }
+    });
+
+    document.addEventListener('astro:before-swap', () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    });
+  })();
+</script>

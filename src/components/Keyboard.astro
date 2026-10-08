@@ -1,0 +1,367 @@
+---
+import { whatsappHref } from '../config/site';
+
+const waHref = whatsappHref();
+
+const KEYS = [
+  // Row 1 (y=0): L, E, K, I
+  { id: 'L', letter: 'L', caption: 'PROYECTOS', href: '#proyectos', filter: null,
+    x: 73, y: 0, w: 146, h: 161, face: '#a9ddff', base: '#3886c9' },
+  { id: 'E', letter: 'E', caption: 'SERVICIOS', href: '#servicios', filter: null,
+    x: 219, y: 0, w: 146, h: 161, face: '#d9f28f', base: '#7aa52d' },
+  { id: 'K1', letter: 'K', caption: 'STACK', href: '#sobre-mi', filter: null,
+    x: 365, y: 0, w: 146, h: 161, face: '#ffb7d5', base: '#d94f8a' },
+  { id: 'I', letter: 'I', caption: 'SOBRE MÍ', href: '#sobre-mi', filter: null,
+    x: 511, y: 0, w: 146, h: 161, face: '#c8b6ff', base: '#7153c7' },
+  // Row 2 (y=139): W, O, R, K, S
+  { id: 'W', letter: 'W', caption: 'WEBS Y CATÁLOGOS', href: '#proyectos', filter: 'web',
+    x: 0, y: 139, w: 146, h: 161, face: '#ffd98e', base: '#d28a24' },
+  { id: 'O', letter: 'O', caption: 'SISTEMAS', href: '#proyectos', filter: 'sistemas',
+    x: 146, y: 139, w: 146, h: 161, face: '#b9f2df', base: '#2caa85' },
+  { id: 'R', letter: 'R', caption: 'INTEGRACIONES', href: '#proyectos', filter: 'integraciones',
+    x: 292, y: 139, w: 146, h: 161, face: '#ffc3a0', base: '#d96c44' },
+  { id: 'K2', letter: 'K', caption: 'MI PROCESO', href: '#proceso', filter: null,
+    x: 438, y: 139, w: 146, h: 161, face: '#c6d7ff', base: '#5a78c9' },
+  { id: 'S', letter: 'S', caption: 'IT Y SOPORTE', href: '#proyectos', filter: 'it',
+    x: 584, y: 139, w: 146, h: 161, face: '#f4b8ff', base: '#a34cbf' },
+];
+
+const ENTER = {
+  id: 'Enter',
+  letter: '↵',
+  caption: 'HABLEMOS',
+  href: waHref,
+  x: 657, y: 0, w: 218, h: 300,
+  face: '#9be7a8', base: '#25a244',
+};
+---
+
+<section class="keyboard-section" aria-label="Teclado de navegación">
+  <div class="kb-wrapper" id="kb-wrapper">
+    <div class="kb-stage" id="kb-stage">
+      {KEYS.map(key => (
+        <a
+          href={key.href}
+          class="key"
+          id={`key-${key.id}`}
+          aria-label={key.caption.charAt(0) + key.caption.slice(1).toLowerCase().replace('mÍ', 'mí')}
+          data-filter={key.filter || undefined}
+          style={`
+            --face: ${key.face};
+            --base: ${key.base};
+            left: ${key.x}px;
+            top: ${key.y}px;
+            width: ${key.w}px;
+            height: ${key.h}px;
+          `}
+        >
+          <span class="key-base" aria-hidden="true"></span>
+          <span class="key-face" aria-hidden="true">
+            <span class="key-letter" aria-hidden="true">{key.letter}</span>
+            <span class="key-caption" aria-hidden="true">{key.caption}</span>
+          </span>
+        </a>
+      ))}
+
+      <a
+        href={ENTER.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="key key-enter"
+        id="key-Enter"
+        aria-label="Hablemos por WhatsApp"
+        style={`
+          --face: ${ENTER.face};
+          --base: ${ENTER.base};
+          left: ${ENTER.x}px;
+          top: ${ENTER.y}px;
+          width: ${ENTER.w}px;
+          height: ${ENTER.h}px;
+        `}
+      >
+        <span class="key-base" aria-hidden="true"></span>
+        <span class="key-face" aria-hidden="true">
+          <span class="key-enter-symbol" aria-hidden="true">↵</span>
+          <span class="key-enter-caption" aria-hidden="true">HABLEMOS</span>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .keyboard-section {
+    padding: var(--space-xl) 0 0;
+  }
+
+  .kb-wrapper {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad-desktop);
+    /* height is set dynamically by JS: 312 * scale + slack */
+  }
+
+  .kb-stage {
+    position: relative;
+    width: 900px;
+    height: 312px;
+    transform-origin: left top;
+    /* transform: scale() set by JS */
+  }
+
+  /* === BASE KEY ANATOMY === */
+  .key {
+    position: absolute;
+    display: block;
+    text-decoration: none;
+    border: 2px solid #111;
+    border-radius: 38px;
+    background-color: var(--base);
+    /* shadow: the base */
+    box-shadow: 0 5px 0 #000;
+    outline-offset: 4px;
+    cursor: pointer;
+    /* JS adds pressed class for animation */
+  }
+
+  .key-base {
+    display: none; /* base is the key background itself */
+  }
+
+  .key-face {
+    position: absolute;
+    inset: 0 10px 33px 10px;
+    top: 0;
+    border: 2px solid #111;
+    border-radius: 29px;
+    background-color: var(--face);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    pointer-events: none;
+    transition: transform 0.18s ease-out;
+    /* JS moves face down on press */
+  }
+
+  .key-letter {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 72px;
+    line-height: 1;
+    color: #111;
+    letter-spacing: -0.03em;
+    pointer-events: none;
+  }
+
+  .key-caption {
+    font-family: 'Inter Variable', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.1s;
+  }
+
+  /* === ENTER === */
+  .key-enter .key-face {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 16px 14px 16px 14px;
+  }
+
+  .key-enter-symbol {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 72px;
+    line-height: 1;
+    color: #111;
+    align-self: center;
+    pointer-events: none;
+  }
+
+  .key-enter-caption {
+    font-family: 'Inter Variable', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: 0.1em;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    pointer-events: none;
+    opacity: 1;
+  }
+
+  /* === HOVER (pointer devices only) === */
+  @media (hover: hover) {
+    .key:hover .key-face {
+      transform: translateY(8px);
+    }
+  }
+
+  /* === PRESSED STATE (JS adds .is-pressed) === */
+  .key.is-pressed .key-face {
+    transform: translateY(12px);
+  }
+
+  .key.is-pressed {
+    box-shadow: 0 3px 0 #000;
+  }
+
+  /* === CAPTIONS HIDDEN WHEN SCALE < 0.6 === */
+  .kb-wrapper.captions-hidden .key-caption,
+  .kb-wrapper.captions-hidden .key-enter-caption {
+    opacity: 0;
+  }
+
+  /* === REDUCED MOTION === */
+  @media (prefers-reduced-motion: reduce) {
+    .key-face {
+      transition: none;
+    }
+    .key:hover .key-face {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const wrapper = document.getElementById('kb-wrapper');
+    const stage = document.getElementById('kb-stage');
+    if (!wrapper || !stage) return;
+
+    // --- Scaling ---
+    function getContainerWidth() {
+      return wrapper.clientWidth;
+    }
+
+    let currentScale = 1;
+
+    function applyScale() {
+      const cw = getContainerWidth();
+      const scale = Math.min(1, cw / 900);
+      currentScale = scale;
+      stage.style.transform = `scale(${scale})`;
+      const slack = 20; // px for shadow + focus ring
+      wrapper.style.height = `${312 * scale + slack}px`;
+      wrapper.classList.toggle('captions-hidden', scale < 0.6);
+    }
+
+    const ro = new ResizeObserver(() => applyScale());
+    ro.observe(wrapper);
+    applyScale();
+
+    // --- Animation sequence ---
+    const KEY_ORDER = ['L','E','K1','I','W','O','R','K2','S','Enter'];
+    const PRESS_DURATION = 180;   // ms face stays down
+    const STEP_INTERVAL = 340;    // ms between key presses
+    const REST_AFTER_ENTER = 1200; // ms pause after Enter before next cycle
+
+    let animIdx = 0;
+    let animTimer: ReturnType<typeof setTimeout> | null = null;
+    let paused = false;
+    let focusedKey: Element | null = null;
+    let pointerActive = false;
+
+    function getKeyEl(id: string): HTMLElement | null {
+      return document.getElementById(`key-${id}`) as HTMLElement | null;
+    }
+
+    function pressKey(id: string) {
+      const el = getKeyEl(id);
+      if (!el) return;
+      el.classList.add('is-pressed');
+      setTimeout(() => el.classList.remove('is-pressed'), PRESS_DURATION);
+    }
+
+    function scheduleNext(delay: number) {
+      animTimer = setTimeout(tick, delay);
+    }
+
+    function tick() {
+      if (paused) return;
+      const id = KEY_ORDER[animIdx];
+      pressKey(id);
+      animIdx = (animIdx + 1) % KEY_ORDER.length;
+      const wasEnter = id === 'Enter';
+      scheduleNext(wasEnter ? REST_AFTER_ENTER : STEP_INTERVAL);
+    }
+
+    function pause() {
+      paused = true;
+      if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+      // un-press all keys
+      KEY_ORDER.forEach(id => getKeyEl(id)?.classList.remove('is-pressed'));
+    }
+
+    function resume() {
+      if (paused && !pointerActive && !focusedKey && !document.hidden) {
+        paused = false;
+        scheduleNext(STEP_INTERVAL);
+      }
+    }
+
+    // Pointer events
+    const allKeys = Array.from(document.querySelectorAll('.key'));
+    allKeys.forEach(el => {
+      el.addEventListener('pointerenter', () => { pointerActive = true; pause(); });
+      el.addEventListener('pointerleave', () => { pointerActive = false; resume(); });
+    });
+
+    // Keyboard focus
+    allKeys.forEach(el => {
+      el.addEventListener('focusin', () => { focusedKey = el; pause(); });
+      el.addEventListener('focusout', () => { focusedKey = null; resume(); });
+    });
+
+    // Tab visibility
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) pause(); else resume();
+    });
+
+    // IntersectionObserver — pause when off-screen
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) resume(); else pause();
+    }, { threshold: 0.1 });
+    if (wrapper) io.observe(wrapper);
+
+    // Reduced motion: never start
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!prefersReduced.matches) {
+      scheduleNext(STEP_INTERVAL);
+    }
+    prefersReduced.addEventListener('change', e => {
+      if (e.matches) pause(); else resume();
+    });
+
+    // Cleanup on navigation (Astro view transitions if added later)
+    document.addEventListener('astro:before-swap', () => {
+      pause();
+      ro.disconnect();
+      io.disconnect();
+    });
+
+    // Filter links
+    allKeys.forEach(el => {
+      const anchor = el as HTMLAnchorElement;
+      const filter = anchor.dataset.filter;
+      if (!filter) return;
+      anchor.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector('#proyectos');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          // dispatch custom event for ProjectGrid to listen on
+          document.dispatchEvent(new CustomEvent('kb:filter', { detail: { filter } }));
+        }
+      });
+    });
+  })();
+</script>

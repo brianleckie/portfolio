@@ -1,0 +1,155 @@
+---
+import { site, whatsappHref } from '../config/site';
+
+const waHref = whatsappHref();
+---
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="wordmark" aria-label={`${site.name} — inicio`}>
+      leki<span class="dot">.</span>
+    </a>
+
+    <nav class="nav-desktop" aria-label="Navegación principal">
+      <a href="#proyectos">Proyectos</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#sobre-mi">Sobre mí</a>
+      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
+        Hablemos ↗
+      </a>
+    </nav>
+
+    <div class="mobile-right">
+      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
+        Hablemos ↗
+      </a>
+    </div>
+  </div>
+
+  <nav class="nav-mobile" aria-label="Navegación secundaria">
+    <a href="#proyectos">Proyectos</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#sobre-mi">Sobre mí</a>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .header-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad-desktop);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wordmark {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1.75rem;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+
+  .dot {
+    color: var(--color-accent);
+  }
+
+  .nav-desktop {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .nav-desktop a {
+    font-size: 0.9375rem;
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    transition: color 0.15s;
+  }
+
+  .nav-desktop a:hover {
+    color: var(--color-text-primary);
+  }
+
+  .btn-hablemos {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--color-accent) !important;
+    padding: 0.5rem 1rem;
+    border: 1.5px solid var(--color-accent);
+    border-radius: 8px;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .btn-hablemos:hover {
+    background-color: var(--color-accent);
+    color: #fff !important;
+  }
+
+  .mobile-right {
+    display: none;
+  }
+
+  .nav-mobile {
+    display: none;
+  }
+
+  @media (max-width: 700px) {
+    .header-inner {
+      padding: 0 var(--pad-mobile);
+    }
+
+    .nav-desktop {
+      display: none;
+    }
+
+    .mobile-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-mobile {
+      display: flex;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      gap: var(--space-lg);
+      padding: 0.5rem var(--pad-mobile);
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      scrollbar-width: none;
+    }
+
+    .nav-mobile::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-mobile a {
+      scroll-snap-align: start;
+      white-space: nowrap;
+      font-size: 0.875rem;
+      text-decoration: none;
+      color: var(--color-text-secondary);
+      padding: 0.25rem 0;
+      flex-shrink: 0;
+    }
+  }
+
+  @media (max-width: 1024px) and (min-width: 701px) {
+    .header-inner {
+      padding: 0 var(--pad-tablet);
+    }
+  }
+</style>

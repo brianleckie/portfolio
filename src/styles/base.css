@@ -2,8 +2,19 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource/instrument-serif/400-italic.css";
 
-/* Satoshi loaded from Fontshare CDN in BaseLayout <head>
-   Self-hosting tracked as TODO in docs/DECISIONS.md */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
