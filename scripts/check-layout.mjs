@@ -105,7 +105,20 @@ async function checkPage(page, url, viewport) {
     return { kbFitsContainer, heightOk, enterClickable, satoshiLoaded, scale, actualH, expectedH };
   });
 
-  // --- Fase 1 reduced-motion check ---
+  // --- 5. Fold check (1440×810 only): fila 1 visible without scrolling ---
+  let foldCheck = null;
+  if (viewport.width === 1440 && viewport.height === 810) {
+    await page.evaluate(() => window.scrollTo(0, 0));
+    foldCheck = await page.evaluate(() => {
+      const stage = document.getElementById('kb-stage');
+      if (!stage) return { skip: true };
+      const r = stage.getBoundingClientRect();
+      const row1Bottom = r.top + 161; // fila 1 ends at y=161 within stage; at scale=1 same px
+      return { stageTop: r.top, row1Bottom, viewportH: window.innerHeight, row1InFold: row1Bottom <= window.innerHeight };
+    });
+  }
+
+  // --- Fase 1 reduced-motion check (dead code — actual check is in checkReducedMotion()) ---
   const rmChecks = await page.evaluate(() => {
     // Check that no animated transform is running on .key-face elements
     // (reduced motion means CSS transitions are 0.01ms via global rule)
@@ -117,7 +130,7 @@ async function checkPage(page, url, viewport) {
     return { noAnim };
   }, { reducedMotion: 'reduce' }); // note: this arg is ignored by evaluate; see below
 
-  return { overflow, errors, failed, kbChecks, rmChecks };
+  return { overflow, errors, failed, kbChecks, foldCheck, rmChecks };
 }
 
 async function checkReducedMotion(browser, url, viewport) {
@@ -178,7 +191,7 @@ async function main() {
         });
         const pw = await ctx.newPage();
 
-        const { overflow, errors, failed, kbChecks } = await checkPage(pw, url, viewport);
+        const { overflow, errors, failed, kbChecks, foldCheck } = await checkPage(pw, url, viewport);
 
         const screenshotPath = path.join(CHECKS_DIR, `${viewport.name}.png`);
         await pw.screenshot({ path: screenshotPath, fullPage: true });
@@ -204,6 +217,15 @@ async function main() {
           if (!kbChecks.heightOk) issues.push(`wrapper height ${kbChecks.actualH?.toFixed(1)}px ≠ 312×${kbChecks.scale?.toFixed(3)}=${kbChecks.expectedH?.toFixed(1)}px`);
           if (!kbChecks.enterClickable) issues.push(`Enter key not clickable at expected coordinates`);
           if (!kbChecks.satoshiLoaded) issues.push(`Satoshi 900 not loaded (document.fonts.check failed)`);
+        }
+
+        // Fold check (1440×810 only)
+        if (foldCheck && !foldCheck.skip) {
+          if (!foldCheck.row1InFold) {
+            issues.push(`fold: fila 1 del teclado no visible sin scroll (row1Bottom=${foldCheck.row1Bottom?.toFixed(0)}px > viewport ${foldCheck.viewportH}px)`);
+          } else {
+            console.log(`  ✓ fold: fila 1 visible sin scroll (stageTop=${foldCheck.stageTop?.toFixed(0)}px, row1Bottom=${foldCheck.row1Bottom?.toFixed(0)}px)`);
+          }
         }
 
         if (issues.length === 0) {

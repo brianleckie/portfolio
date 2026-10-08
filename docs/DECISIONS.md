@@ -34,3 +34,10 @@
 - **Captions ocultos cuando scale < 0.6** — a ~4px serían ilegibles; el nombre accesible se mantiene en `aria-label`.
 - **Marquee: dos grupos en `display:flex; width:max-content`**, animados con `requestAnimationFrame` a 50px/s. Duración calculada por el ancho real del primer grupo.
 - **Secciones #proyectos, #servicios, #proceso, #sobre-mi, #contacto:** shells vacíos con IDs y texto placeholder para Fases 2–3. Los IDs son necesarios para que las teclas del teclado y el header ya sean funcionales.
+
+## Correcciones post-Fase 1 (audit del usuario)
+
+- **Fold en 1440×810:** `hero-inner padding-bottom` reducido a 16px y `keyboard-section padding-top` a 8px (ahorro total 72px). Teclado comienza en ~255px del viewport; fila 1 (161px) completamente visible sin scroll. Chequeado con nuevo test en `check-layout.mjs`.
+- **Keyboard `inViewport` boolean:** `paused = true` al inicio; IO setea `inViewport` y llama `resume()`. `resume()` verifica las 5 condiciones: `paused && inViewport && !pointerActive && !focusedKey && !document.hidden && !prefersReduced.matches`. Elimina la ventana de 1-tick donde animation re-arrancaba antes de que el IO la pausara de nuevo.
+- **Marquee IntersectionObserver:** `cancelAnimationFrame` cuando `.marquee-strip` sale del viewport; rAF se reinicia al volver. Unifica con el `visibilitychange` handler en `startRaf()`/`stopRaf()`.
+- **check:layout fold check:** nuevo check exclusivo de 1440×810 que mide `getBoundingClientRect()` del `#kb-stage` sin scroll y verifica `stageTop + 161 ≤ 810`.
