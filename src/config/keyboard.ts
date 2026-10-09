@@ -1,46 +1,62 @@
-// Geometría y colores del teclado (SPEC §6). Lo usan Keyboard.astro y la imagen OG de la home.
+// Teclado del hero (SPEC §6). Acá vive el CONTENIDO en orden de lectura.
+// Colores y geometría del arco viven en src/styles/tokens.css (fuente única): el CSS los usa directo
+// y la imagen OG de la home los lee de ese mismo archivo con kbToken().
+import tokensCss from '../styles/tokens.css?raw';
+
 export interface KeyDef {
   id: string;
   letter: string;
   caption: string;
   href: string;
   filter: string | null;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  face: string;
-  base: string;
 }
 
+/** Orden de lectura = orden del DOM = tabulación. Las 4 primeras son la fila de arriba. */
 export const KEYS: KeyDef[] = [
-  // Row 1 (y=0): L, E, K, I
-  { id: 'L', letter: 'L', caption: 'PROYECTOS', href: '#proyectos', filter: null,
-    x: 73, y: 0, w: 146, h: 161, face: '#a9ddff', base: '#3886c9' },
-  { id: 'E', letter: 'E', caption: 'SERVICIOS', href: '#servicios', filter: null,
-    x: 219, y: 0, w: 146, h: 161, face: '#d9f28f', base: '#7aa52d' },
-  { id: 'K1', letter: 'K', caption: 'STACK', href: '#stack', filter: null,
-    x: 365, y: 0, w: 146, h: 161, face: '#ffb7d5', base: '#d94f8a' },
-  { id: 'I', letter: 'I', caption: 'SOBRE MÍ', href: '#sobre-mi', filter: null,
-    x: 511, y: 0, w: 146, h: 161, face: '#c8b6ff', base: '#7153c7' },
-  // Row 2 (y=139): W, O, R, K, S
-  { id: 'W', letter: 'W', caption: 'WEBS Y CATÁLOGOS', href: '#proyectos', filter: 'web',
-    x: 0, y: 139, w: 146, h: 161, face: '#ffd98e', base: '#d28a24' },
-  { id: 'O', letter: 'O', caption: 'SISTEMAS', href: '#proyectos', filter: 'sistemas',
-    x: 146, y: 139, w: 146, h: 161, face: '#b9f2df', base: '#2caa85' },
-  { id: 'R', letter: 'R', caption: 'INTEGRACIONES', href: '#proyectos', filter: 'integraciones',
-    x: 292, y: 139, w: 146, h: 161, face: '#ffc3a0', base: '#d96c44' },
-  { id: 'K2', letter: 'K', caption: 'MI PROCESO', href: '#proceso', filter: null,
-    x: 438, y: 139, w: 146, h: 161, face: '#c6d7ff', base: '#5a78c9' },
-  { id: 'S', letter: 'S', caption: 'IT Y SOPORTE', href: '#proyectos', filter: 'it',
-    x: 584, y: 139, w: 146, h: 161, face: '#f4b8ff', base: '#a34cbf' },
+  { id: 'L', letter: 'L', caption: 'PROYECTOS', href: '#proyectos', filter: null },
+  { id: 'E', letter: 'E', caption: 'SERVICIOS', href: '#servicios', filter: null },
+  { id: 'K1', letter: 'K', caption: 'STACK', href: '#stack', filter: null },
+  { id: 'I', letter: 'I', caption: 'SOBRE MÍ', href: '#sobre-mi', filter: null },
+  { id: 'W', letter: 'W', caption: 'WEBS Y CATÁLOGOS', href: '#proyectos', filter: 'web' },
+  { id: 'O', letter: 'O', caption: 'SISTEMAS', href: '#proyectos', filter: 'sistemas' },
+  { id: 'R', letter: 'R', caption: 'INTEGRACIONES', href: '#proyectos', filter: 'integraciones' },
+  { id: 'K2', letter: 'K', caption: 'MI PROCESO', href: '#proceso', filter: null },
+  { id: 'S', letter: 'S', caption: 'IT Y SOPORTE', href: '#proyectos', filter: 'it' },
 ];
 
-/** El Enter abre WhatsApp: el href lo agrega quien lo renderiza (whatsappHref()). */
-export const ENTER = {
-  id: 'Enter',
-  letter: '↵',
-  caption: 'HABLEMOS',
-  x: 657, y: 0, w: 218, h: 300,
-  face: '#9be7a8', base: '#25a244',
+/** El Enter abre WhatsApp: el href lo arma quien lo renderiza (whatsappHref()). */
+export const ENTER = { id: 'Enter', caption: 'HABLEMOS' } as const;
+
+/** Valor de `--<name>` en tokens.css. Si falta, falla el build (la OG nunca se desincroniza). */
+export function kbToken(name: string): string {
+  const match = tokensCss.match(new RegExp(`--${name}:\\s*([^;]+);`));
+  if (!match) throw new Error(`[keyboard] falta --${name} en src/styles/tokens.css`);
+  return match[1].trim();
+}
+
+const num = (name: string) => Number.parseFloat(kbToken(name));
+
+/** Arco desktop en u (mismas fórmulas que .key en Keyboard.astro). */
+export const ARC = {
+  pitch: num('kb-pitch'),
+  tilt: num('kb-tilt'),
+  sag: num('kb-sag'),
+  row: num('kb-row'),
+  y0: num('kb-y0'),
+  enterW: num('kb-enter-w'),
+  enterDy: num('kb-enter-dy'),
+  w: num('kb-w'),
+  h: num('kb-h'),
+};
+
+/** Centro (x desde el eje central, y desde el borde superior, en u) y rotación de KEYS[index]. */
+export function keyPlacement(index: number) {
+  const row = index < 4 ? 0 : 1;
+  const i = row === 0 ? index - 1.5 : index - 6;
+  return { x: i * ARC.pitch, y: ARC.y0 + row * ARC.row + ARC.sag * i * i, rotate: i * ARC.tilt };
+}
+
+export const keyColors = (id: string) => {
+  const k = id.toLowerCase();
+  return { face: kbToken(`key-${k}-face`), side: kbToken(`key-${k}-side`), ink: kbToken(`key-${k}-ink`) };
 };

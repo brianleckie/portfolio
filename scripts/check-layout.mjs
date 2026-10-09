@@ -5,7 +5,8 @@
 // Chequea:
 //   - Home en 6 viewports y todas las páginas de proyecto en 390×844 y 1440×810:
 //     overflow horizontal, errores de consola, requests fallidas/404.
-//   - Teclado: cabe en su contenedor, altura del wrapper, Enter clickeable, Satoshi 900, fold.
+//   - Teclado: centrado, sin superposición (SAT), clickeable, lado ≥ 56px, captions, fold completo; línea de
+//     ubicación y botón de WhatsApp del hero (solo mobile) dentro del primer pantallazo.
 //   - Animación (sin display): teclas presionadas muestreadas cada 50 ms durante ~6 s.
 //   - Marquee: translateX muestreado ~4 s, siempre en [-anchoGrupo, 0], grupo >= viewport.
 //   - reduced-motion: ni teclado ni marquee se mueven.
@@ -116,75 +117,222 @@ async function checkBasics(page, errors, failed) {
   return issues;
 }
 
-async function checkKeyboardStatic(page, viewport) {
-  const issues = [];
-  const kb = await page.evaluate(() => {
-    const wrapper = document.getElementById('kb-wrapper');
-    const stage = document.getElementById('kb-stage');
-    if (!wrapper || !stage) return { skip: true };
+const KEY_ORDER = ['L', 'E', 'K1', 'I', 'W', 'O', 'R', 'K2', 'S', 'Enter'];
+const KEY_LABELS = {
+  L: 'Proyectos', E: 'Servicios', K1: 'Stack', I: 'Sobre mí', W: 'Webs y catálogos', O: 'Sistemas',
+  R: 'Integraciones', K2: 'Mi proceso', S: 'IT y soporte', Enter: 'Hablemos por WhatsApp',
+};
+const KEY_HREFS = { L: '#proyectos', E: '#servicios', K1: '#stack', I: '#sobre-mi', W: '#proyectos', O: '#proyectos', R: '#proyectos', K2: '#proceso', S: '#proyectos' };
+const MIN_KEY_SIDE = 56;
+const MOBILE_MAX = 699; // el botón de WhatsApp del hero existe solo por debajo de 700px
+const LOCATION = readFileSync(path.join(ROOT, 'src/config/site.ts'), 'utf8').match(/^\s*location:\s*"([^"]+)"/m)[1];
 
-    const wrapperRect = wrapper.getBoundingClientRect();
-    const stageRect = stage.getBoundingClientRect();
-    const kbFitsContainer = stageRect.width <= wrapperRect.width + 1;
-
-    const scale = stageRect.width / 900;
-    const expectedH = 312 * scale;
-    const actualH = wrapperRect.height;
-    const heightOk = actualH >= expectedH - 1 && actualH <= expectedH + 25;
-
-    const keys = Array.from(document.querySelectorAll('.key'));
-    const keysOk = keys.length === 10 && keys.every((k) => k.getAttribute('href') && k.getAttribute('aria-label'));
-
-    const enterEl = document.getElementById('key-Enter');
-    let enterClickable = false;
-    const blockedKeys = [];
-    if (enterEl) {
-      enterEl.scrollIntoView({ behavior: 'instant', block: 'center' });
-      const hits = (el, fx, fy) => {
-        const r = el.getBoundingClientRect();
-        const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy);
-        return hit === el || (hit !== null && el.contains(hit));
+/** Cada tecla en coordenadas de viewport: lado SIN transformar, ángulo, esquinas rotadas y puntos internos. */
+const readKeys = (page) =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll('#kb-stage .key')).map((el) => {
+      const cs = getComputedStyle(el);
+      const m = new DOMMatrix(cs.transform);
+      const a = Math.atan2(m.b, m.a);
+      const r = el.getBoundingClientRect(); // bbox del rect rotado: su centro = centro de la tecla
+      const w = parseFloat(cs.width);
+      const h = parseFloat(cs.height);
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const at = (lx, ly) => [cx + lx * Math.cos(a) - ly * Math.sin(a), cy + lx * Math.sin(a) + ly * Math.cos(a)];
+      return {
+        id: el.id.replace('key-', ''),
+        href: el.getAttribute('href'),
+        label: el.getAttribute('aria-label'),
+        filter: el.getAttribute('data-filter'),
+        w,
+        h,
+        rect: { left: r.left, right: r.right, top: r.top, bottom: r.bottom },
+        corners: [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => at((sx * w) / 2, (sy * h) / 2)),
+        probes: [[0, 0], [-0.35, -0.35], [0.35, -0.35], [0.35, 0.35], [-0.35, 0.35]].map(([fx, fy]) => at(fx * w, fy * h)),
+        captionPx: parseFloat(getComputedStyle(el.querySelector('.key-caption, .key-enter-caption')).fontSize),
       };
-      // Área expuesta del Enter (a la derecha del borde que tapa S)
-      enterClickable = hits(enterEl, 0.65, 0.5) && hits(enterEl, 0.9, 0.9);
-      // Cada tecla debe recibir el click en su centro; S también en su borde derecho (donde se cruza con Enter)
-      for (const k of keys) {
-        const pts = k.id === 'key-S' ? [[0.5, 0.45], [0.9, 0.6]] : [[0.5, 0.45]];
-        if (!pts.every(([fx, fy]) => hits(k, fx, fy))) blockedKeys.push(k.id.replace('key-', ''));
-      }
-    }
+    }),
+  );
 
-    return {
-      kbFitsContainer,
-      heightOk,
-      keysOk,
-      enterClickable,
-      blockedKeys,
-      satoshiLoaded: document.fonts.check('900 72px Satoshi'),
-      scale,
-      actualH,
-      expectedH,
-    };
-  });
-
-  if (kb.skip) return ['no se encontró el teclado'];
-  if (!kb.kbFitsContainer) issues.push('keyboard wider than container');
-  if (!kb.heightOk) issues.push(`wrapper height ${kb.actualH.toFixed(1)}px ≠ 312×${kb.scale.toFixed(3)}=${kb.expectedH.toFixed(1)}px`);
-  if (!kb.keysOk) issues.push('las 10 teclas deben tener href y aria-label');
-  if (!kb.enterClickable) issues.push('Enter key not clickable at expected coordinates');
-  if (kb.blockedKeys.length) issues.push(`teclas tapadas por otra en su área clickeable: ${kb.blockedKeys.join(', ')}`);
-  if (!kb.satoshiLoaded) issues.push('Satoshi 900 not loaded (document.fonts.check failed)');
-
-  if (viewport.name === '1440x810') {
-    await page.evaluate(() => window.scrollTo(0, 0));
-    const fold = await page.evaluate(() => {
-      const r = document.getElementById('kb-stage').getBoundingClientRect();
-      return { stageTop: r.top, row1Bottom: r.top + 161, viewportH: window.innerHeight };
-    });
-    if (fold.row1Bottom > fold.viewportH) {
-      issues.push(`fold: fila 1 del teclado no entra sin scroll (bottom=${fold.row1Bottom.toFixed(0)}px > ${fold.viewportH}px)`);
+/** Separación entre dos polígonos convexos por SAT (px; ≤ 0 = se tocan o se superponen). */
+function satGap(a, b) {
+  let best = -Infinity;
+  for (const poly of [a, b]) {
+    for (let i = 0; i < poly.length; i++) {
+      const [x1, y1] = poly[i];
+      const [x2, y2] = poly[(i + 1) % poly.length];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      const nx = (y1 - y2) / len;
+      const ny = (x2 - x1) / len;
+      const pa = a.map(([x, y]) => x * nx + y * ny);
+      const pb = b.map(([x, y]) => x * nx + y * ny);
+      best = Math.max(best, Math.min(...pb) - Math.max(...pa), Math.min(...pa) - Math.max(...pb));
     }
   }
+  return best;
+}
+
+async function checkKeyboardStatic(page, viewport) {
+  const issues = [];
+  if (!(await page.$('#kb-wrapper #kb-stage'))) return ['no se encontró el teclado (#kb-wrapper / #kb-stage)'];
+
+  // Medir en reposo: con reduced-motion el script suelta las teclas y no hay transiciones
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await sleep(100);
+
+  // Fold (sin scroll): titular bajo el header, teclado completo (Enter incluido) y, en mobile, también el botón de WhatsApp
+  const fold = await page.evaluate(() => {
+    const rect = (sel) => document.querySelector(sel)?.getBoundingClientRect();
+    const cta = document.querySelector('.hero-cta .btn');
+    return {
+      headerBottom: rect('.site-header').bottom,
+      locationTop: rect('.hero-location')?.top ?? null,
+      h1Top: rect('#hero h1').top,
+      kbBottom: Math.max(...Array.from(document.querySelectorAll('#kb-stage .key')).map((k) => k.getBoundingClientRect().bottom)),
+      ctaShown: !!cta && getComputedStyle(cta).display !== 'none' && cta.getBoundingClientRect().height > 0,
+      ctaTop: cta?.getBoundingClientRect().top ?? null,
+      ctaBottom: cta?.getBoundingClientRect().bottom ?? null,
+      vh: window.innerHeight,
+    };
+  });
+  if (fold.locationTop === null) issues.push(`falta la línea de ubicación (.hero-location)`);
+  else if (fold.locationTop < fold.headerBottom - 0.5) issues.push(`fold: la línea de ubicación queda bajo el header (${fold.locationTop.toFixed(0)} < ${fold.headerBottom.toFixed(0)})`);
+  if (fold.h1Top < fold.headerBottom - 0.5) issues.push(`fold: el titular queda bajo el header (${fold.h1Top.toFixed(0)} < ${fold.headerBottom.toFixed(0)})`);
+  if (fold.kbBottom > fold.vh) issues.push(`fold: el teclado (Enter incluido) no entra sin scroll (bottom ${fold.kbBottom.toFixed(0)} > ${fold.vh})`);
+
+  // Botón "Escribime por WhatsApp": solo mobile (<700px), debajo del teclado y dentro del primer pantallazo
+  if (viewport.width <= MOBILE_MAX) {
+    if (!fold.ctaShown) issues.push('mobile: falta el botón "Escribime por WhatsApp" bajo el teclado');
+    else {
+      if (fold.ctaTop < fold.kbBottom) issues.push(`mobile: el botón de WhatsApp (top ${fold.ctaTop.toFixed(0)}) queda sobre el teclado (bottom ${fold.kbBottom.toFixed(0)})`);
+      if (fold.ctaBottom > fold.vh) issues.push(`fold: el botón de WhatsApp no entra sin scroll (bottom ${fold.ctaBottom.toFixed(0)} > ${fold.vh})`);
+    }
+  } else if (fold.ctaShown) {
+    issues.push(`el botón de WhatsApp del hero debe existir solo en mobile (<700px), se ve a ${viewport.width}px`);
+  }
+
+  await page.evaluate(() => document.getElementById('kb-stage').scrollIntoView({ behavior: 'instant', block: 'center' }));
+  await sleep(50);
+  const keys = await readKeys(page);
+  const env = await page.evaluate(() => ({
+    vw: document.documentElement.clientWidth,
+    stage: document.getElementById('kb-stage').getBoundingClientRect().toJSON(),
+    marqueeTop: document.querySelector('.marquee-strip')?.getBoundingClientRect().top ?? Infinity,
+    satoshi: document.fonts.check('900 72px Satoshi'),
+    location: document.querySelector('.hero-location')?.textContent?.trim() ?? null,
+    locationPx: parseFloat(getComputedStyle(document.querySelector('.hero-location') ?? document.body).fontSize),
+    locationInH1: !!document.querySelector('#hero h1 .hero-location'),
+    ctaText: document.querySelector('.hero-cta .btn')?.textContent?.trim() ?? null,
+    ctaHref: document.querySelector('.hero-cta .btn')?.getAttribute('href') ?? null,
+    ctaTarget: document.querySelector('.hero-cta .btn')?.getAttribute('target') ?? null,
+    ctaRel: document.querySelector('.hero-cta .btn')?.getAttribute('rel') ?? '',
+  }));
+
+  // Línea de ubicación: texto del sitio, legible (≥ 11px) y por encima del titular
+  if (env.location !== LOCATION) issues.push(`línea de ubicación = ${JSON.stringify(env.location)} (se esperaba ${JSON.stringify(LOCATION)})`);
+  if (env.locationPx < 11) issues.push(`línea de ubicación de ${env.locationPx}px (< 11px)`);
+  if (fold.locationTop !== null && fold.locationTop > fold.h1Top) issues.push('la línea de ubicación debe ir sobre el titular');
+  if (env.ctaText !== 'Escribime por WhatsApp') issues.push(`botón del hero: texto ${JSON.stringify(env.ctaText)}`);
+  if (!/^https:\/\/wa\.me\/\d+/.test(env.ctaHref ?? '')) issues.push(`botón del hero: href ${JSON.stringify(env.ctaHref)} (se esperaba wa.me/<número>)`);
+  if (env.ctaTarget !== '_blank' || !/noopener/.test(env.ctaRel)) issues.push('botón del hero: debe abrir en pestaña nueva con rel=noopener');
+
+  // Orden (= tabulación), nombres accesibles, href y filtros
+  const ids = keys.map((k) => k.id).join(',');
+  if (ids !== KEY_ORDER.join(',')) issues.push(`orden del DOM/tabulación: ${ids}`);
+  for (const k of keys) {
+    if (!k.href || k.href === '#') issues.push(`${k.id}: href vacío`);
+    if (k.id !== 'Enter' && k.href !== KEY_HREFS[k.id]) issues.push(`${k.id}: href ${k.href} ≠ ${KEY_HREFS[k.id]}`);
+    if (k.label !== KEY_LABELS[k.id]) issues.push(`${k.id}: aria-label "${k.label}" ≠ "${KEY_LABELS[k.id]}"`);
+    if (k.filter !== (FILTER_KEYS[k.id] ?? null)) issues.push(`${k.id}: data-filter ${k.filter} ≠ ${FILTER_KEYS[k.id] ?? null}`);
+  }
+
+  // Centrada, dentro de pantalla, dentro del alto reservado y sin pisar el marquee
+  const u = keys.reduce(
+    (acc, k) => ({
+      left: Math.min(acc.left, k.rect.left), right: Math.max(acc.right, k.rect.right),
+      top: Math.min(acc.top, k.rect.top), bottom: Math.max(acc.bottom, k.rect.bottom),
+    }),
+    { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity },
+  );
+  const off = (u.left + u.right) / 2 - env.vw / 2;
+  if (Math.abs(off) > 4) issues.push(`composición descentrada ${off.toFixed(1)}px`);
+  if (u.left < 0 || u.right > env.vw) issues.push(`teclas fuera de pantalla (${u.left.toFixed(0)}–${u.right.toFixed(0)} de ${env.vw}px)`);
+  if (u.top < env.stage.top - 1 || u.bottom > env.stage.bottom + 1) issues.push('las teclas se salen del alto de #kb-stage');
+  if (env.marqueeTop < u.bottom) issues.push('el marquee pisa al teclado');
+
+  // Sin superposición: polígonos rotados (SAT), no bounding boxes
+  for (let a = 0; a < keys.length; a++) {
+    for (let b = a + 1; b < keys.length; b++) {
+      const gap = satGap(keys[a].corners, keys[b].corners);
+      if (gap < 1) issues.push(`teclas superpuestas o pegadas: ${keys[a].id}–${keys[b].id} (${gap.toFixed(1)}px)`);
+    }
+  }
+
+  // Lado real post-escala (no el bbox rotado) ≥ 56px; teclas cuadradas
+  for (const k of keys) {
+    const side = Math.min(k.w, k.h);
+    if (side < MIN_KEY_SIDE) issues.push(`${k.id}: ${side.toFixed(1)}px de lado (< ${MIN_KEY_SIDE}px)`);
+    if (k.id !== 'Enter' && Math.abs(k.w - k.h) > 0.5) issues.push(`${k.id} no es cuadrada (${k.w}×${k.h})`);
+  }
+
+  // Captions: 0px (ocultos) o ≥ 10px; el del Enter siempre ≥ 11px
+  for (const k of keys) {
+    const bad = k.id === 'Enter' ? k.captionPx < 11 : k.captionPx > 0 && k.captionPx < 10;
+    if (bad) issues.push(`${k.id}: caption de ${k.captionPx}px`);
+  }
+
+  // Clickeables: centro + 4 puntos internos de TODAS las teclas (Enter incluido)
+  const blocked = await page.evaluate(
+    (list) =>
+      list
+        .filter(({ id, probes }) => {
+          const el = document.getElementById(`key-${id}`);
+          return !probes.every(([x, y]) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit === el || el.contains(hit);
+          });
+        })
+        .map((k) => k.id),
+    keys.map(({ id, probes }) => ({ id, probes })),
+  );
+  if (blocked.length) issues.push(`teclas que no reciben el click en todo su interior: ${blocked.join(', ')}`);
+
+  if (!env.satoshi) issues.push('Satoshi 900 not loaded (document.fonts.check failed)');
+  await page.emulateMedia({ reducedMotion: 'no-preference' }); // la animación vuelve para checkKeyboardAnimation
+  return issues;
+}
+
+/** El CTA sticky aparece recién cuando el hero entero (botón de WhatsApp incluido) quedó atrás. */
+async function checkHeroSticky(browser) {
+  const issues = [];
+  const mobile = VIEWPORTS.find((v) => v.name === '390x844');
+  const { ctx, page } = await openPage(browser, mobile, `${BASE_URL}/`);
+  const scrollHeroBottomTo = async (y) => {
+    await page.evaluate((target) => {
+      const prev = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = 'auto';
+      window.scrollBy(0, document.getElementById('hero').getBoundingClientRect().bottom - target);
+      document.documentElement.style.scrollBehavior = prev;
+    }, y);
+    await sleep(500);
+  };
+  const state = () =>
+    page.evaluate(() => ({
+      bar: document.getElementById('sticky-cta').classList.contains('is-visible'),
+      heroBottom: document.getElementById('hero').getBoundingClientRect().bottom,
+    }));
+
+  let st = await state();
+  if (st.bar) issues.push('sticky visible en el primer pantallazo');
+  await scrollHeroBottomTo(24); // el hero todavía asoma 24px
+  st = await state();
+  if (st.bar) issues.push(`sticky visible con el hero todavía en pantalla (bottom del hero ${st.heroBottom.toFixed(0)}px)`);
+  await scrollHeroBottomTo(-24); // el hero ya quedó atrás
+  st = await state();
+  if (!st.bar) issues.push('sticky no aparece después de pasar el hero');
+  await ctx.close();
   return issues;
 }
 
@@ -1005,6 +1153,7 @@ async function main() {
 
     // ---- CTA sticky, secciones de la Fase 3
     report('CTA sticky — home (390×844)', await checkStickyCta(browser, '/', '#servicios', '#contacto'));
+    report('CTA sticky — recién después del hero (390×844)', await checkHeroSticky(browser));
     report('CTA sticky — caso (390×844)', await checkStickyCta(browser, '/proyectos/mbarete/', '.prose', '#caso-cta'));
     report('secciones (servicios, proceso, sobre mí, contacto, footer)', await checkSections(browser));
 

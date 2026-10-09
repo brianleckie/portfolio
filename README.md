@@ -87,7 +87,8 @@ Se generan en el build (`src/pages/og/[slug].png.ts`): una por proyecto (`/og/<s
 `npm run build && npm run check:layout` levanta `astro preview` y revisa, con Playwright:
 
 - la home en 1440×810, 1440×1002, 1024×768, 768×1024, 390×844 y 360×740, y las 15 páginas de proyecto en 390×844 y 1440×810: sin overflow horizontal, cero errores de consola, cero 404;
-- teclado: cabe en su contenedor, cada tecla recibe el click en su área (S y Enter incluidas), animación muestreada cada 50 ms (las 10 teclas, nunca 2 a la vez, ninguna trabada > 1 s);
+- teclado en arco: composición centrada (±4px), sin teclas superpuestas (SAT sobre polígonos rotados), cada tecla recibe el click en todo su interior (Enter incluido), lado ≥ 56px a 360 y 390, captions de 0px o ≥ 10px, fold completo a 1440×810, animación muestreada cada 50 ms (las 10 teclas, nunca 2 a la vez, ninguna trabada > 1 s);
+- hero: línea "Encarnación, Paraguay" sobre el titular, botón "Escribime por WhatsApp" solo en mobile (<700px) dentro del primer pantallazo y sticky CTA recién después del hero;
 - marquee: `translateX` siempre en `[-anchoGrupo, 0]`; `prefers-reduced-motion` sin movimiento;
 - filtros desde teclas, chips y Servicios, con `?cat=` en la URL;
 - CTA sticky mobile, links (`wa.me` con número y `text`, `mailto`, sin `href` vacío), SEO/OG/sitemap/robots y que no aparezca ningún `TODO`.

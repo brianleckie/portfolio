@@ -7,7 +7,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { KEYS, ENTER } from '../../config/keyboard';
+import { KEYS, ENTER, ARC, kbToken, keyColors, keyPlacement } from '../../config/keyboard';
 import { site } from '../../config/site';
 import { STATUS_LABEL, getProjects, shortTitle, slugOf, summaryOf, type Project } from '../../lib/projects';
 import { cleanList } from '../../lib/todo';
@@ -31,12 +31,25 @@ type Style = Record<string, string | number>;
 type Child = OgNode | string | false | null | undefined;
 interface OgNode {
   type: string;
-  props: { style: Style; children?: Child | Child[] };
+  props: { style?: Style; children?: Child | Child[]; [attr: string]: unknown };
 }
 
 const div = (style: Style, children?: Child | Child[]): OgNode => ({
   type: 'div',
   props: { style: { display: 'flex', ...style }, children },
+});
+
+// ↵ como SVG (Satoshi no tiene el glifo); mismo trazo que el Enter de Keyboard.astro
+const returnIcon = (color: string, width: number, height: number): OgNode => ({
+  type: 'img',
+  props: {
+    src: `data:image/svg+xml;utf8,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 44" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M54 5v21H12"/><path d="M24 13 11 26l13 13"/></svg>`,
+    )}`,
+    width,
+    height,
+    style: { alignSelf: 'flex-start' },
+  },
 });
 
 let fontsPromise: Promise<unknown[]> | undefined;
@@ -118,76 +131,104 @@ function projectCard(p: Project): OgNode {
   ]);
 }
 
-function keyNode(k: { x: number; y: number; w: number; h: number; face: string; base: string }, s: number, content: OgNode): OgNode {
+const LINE = kbToken('kb-line');
+
+// Misma anatomía que Keyboard.astro: el contenedor es la pared lateral y la cara va inset (0.05u / 0.085u / 0.2u abajo)
+function ogKey(c: { face: string; side: string }, box: Style, rotate: number, u: number, content: Child | Child[]): OgNode {
   return div(
     {
       position: 'absolute',
-      left: k.x * s,
-      top: k.y * s,
-      width: k.w * s,
-      height: k.h * s,
-      background: k.base,
-      border: '3px solid #111111',
-      borderRadius: 38 * s,
-      boxShadow: '0 5px 0 #000000',
+      ...box,
+      transform: `rotate(${rotate}deg)`,
+      transformOrigin: 'center',
+      background: c.side,
+      border: `3px solid ${LINE}`,
+      borderRadius: u * 0.22,
+      boxShadow: `0 ${u * 0.05}px 0 ${LINE}`,
     },
     div(
       {
         position: 'absolute',
-        left: 10 * s,
-        right: 10 * s,
-        top: 0,
-        bottom: 33 * s,
+        left: u * 0.085,
+        right: u * 0.085,
+        top: u * 0.05,
+        bottom: u * 0.2,
         alignItems: 'center',
         justifyContent: 'center',
-        background: k.face,
-        border: '3px solid #111111',
-        borderRadius: 29 * s,
+        background: c.face,
+        border: `3px solid ${LINE}`,
+        borderRadius: u * 0.16,
       },
       content,
     ),
   );
 }
 
+// Composición centrada como el hero: pastilla "Brian", línea, y el teclado en arco leído de tokens.css (ARC)
 function homeCard(): OgNode {
-  const s = 0.75; // el teclado de 900×312 escalado
-  const line = { fontFamily: 'Satoshi', fontWeight: 900, fontSize: 66, lineHeight: 1.05, letterSpacing: -2, color: INK, whiteSpace: 'pre' };
+  const u = 104; // lado de la tecla en px de la imagen (composición ≈ 611×361)
+  const stageW = ARC.w * u;
+  const keys = KEYS.map((k, index) => {
+    const { x, y, rotate } = keyPlacement(index);
+    const c = keyColors(k.id);
+    return ogKey(
+      c,
+      { left: stageW / 2 + (x - 0.5) * u, top: (y - 0.5) * u, width: u, height: u },
+      rotate,
+      u,
+      div({ fontFamily: 'Satoshi', fontWeight: 900, fontSize: u * 0.44, lineHeight: 1, color: c.ink }, k.letter),
+    );
+  });
 
-  const enter = keyNode(
-    ENTER,
-    s,
-    div({ fontFamily: 'Inter', fontWeight: 600, fontSize: 20, letterSpacing: 5, color: '#111111', transform: 'rotate(90deg)' }, 'HABLEMOS'),
+  const ec = keyColors('enter');
+  const ew = ARC.enterW * u;
+  const enter = ogKey(
+    ec,
+    { left: (stageW - ew) / 2, top: (ARC.y0 + ARC.row + ARC.enterDy - 0.5) * u, width: ew, height: u },
+    0,
+    u,
+    div(
+      { flexGrow: 1, alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'flex-end', padding: `${u * 0.08}px ${u * 0.12}px` },
+      [
+        returnIcon(ec.ink, u * 0.58, u * 0.4),
+        div({ fontFamily: 'Inter', fontWeight: 600, fontSize: 17, letterSpacing: 2.4, color: kbToken('key-enter-caption') }, ENTER.caption),
+      ],
+    ),
   );
-  const keys = KEYS.map((k) =>
-    keyNode(k, s, div({ fontFamily: 'Satoshi', fontWeight: 900, fontSize: 72 * s, color: '#111111' }, k.letter)),
+
+  const p = keyColors('E');
+  const pill = div(
+    { background: p.side, border: `3px solid ${LINE}`, borderRadius: 14, boxShadow: `0 4px 0 ${LINE}`, paddingBottom: 7, transform: 'rotate(-2deg)' },
+    div({ background: p.face, borderRadius: 11, padding: '0 16px 2px', color: p.ink }, 'Brian'),
   );
+  const pre = { whiteSpace: 'pre' };
 
   return div(
     {
       width: W,
       height: H,
+      position: 'relative',
       flexDirection: 'column',
-      justifyContent: 'space-between',
-      background: 'linear-gradient(160deg, #f7f9ff 0%, #ffffff 50%, #f3f0ff 100%)',
-      padding: '56px 64px 64px',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: kbToken('color-bg-hero'),
+      backgroundSize: '24px 24px',
+      backgroundImage: `radial-gradient(circle, ${kbToken('color-hero-dot')} 1.2px, transparent 1.8px)`,
     },
     [
-      div({ flexDirection: 'column' }, [
-        div(line, 'Hola, soy Brian.'),
-        div(line, 'Hago webs y sistemas'),
-        div({ alignItems: 'baseline' }, [
-          div(line, 'que '),
-          div({ ...line, fontFamily: 'Instrument Serif', fontWeight: 400, fontStyle: 'italic', fontSize: 76, color: ACCENT }, 'trabajan'),
-          div(line, ' para tu negocio.'),
-        ]),
+      // Wordmark y host en las esquinas, fuera del recorte cuadrado que hace WhatsApp
+      div({ position: 'absolute', left: 48, top: 36 }, wordmark(44)),
+      div({ position: 'absolute', right: 48, bottom: 30, fontFamily: 'Inter', fontSize: 20, fontWeight: 600, color: MUTED }, host),
+      div({ alignItems: 'center', gap: 18, fontFamily: 'Satoshi', fontWeight: 900, fontSize: 64, lineHeight: 1.1, letterSpacing: -1.9, color: INK }, [
+        div({}, 'Hola, soy'),
+        pill,
       ]),
-      div({ justifyContent: 'space-between', alignItems: 'flex-end' }, [
-        div({ position: 'relative', width: 900 * s, height: 312 * s, flexShrink: 0 }, [enter, ...keys]),
-        div({ flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }, [
-          wordmark(112),
-          div({ fontSize: 20, fontWeight: 600, color: MUTED, whiteSpace: 'nowrap' }, host),
-        ]),
+      div({ marginTop: 10, alignItems: 'baseline', fontFamily: 'Inter', fontSize: 28, color: MUTED }, [
+        div(pre, 'Hago webs y sistemas que '),
+        div({ ...pre, fontFamily: 'Instrument Serif', fontStyle: 'italic', fontSize: 34, color: ACCENT }, 'trabajan'),
+        div(pre, ' para tu negocio.'),
       ]),
+      div({ position: 'relative', marginTop: 26, width: stageW, height: ARC.h * u + 6, flexShrink: 0 }, [...keys, enter]),
     ],
   );
 }
