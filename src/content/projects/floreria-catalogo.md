@@ -14,6 +14,14 @@ highlights:
   - "Panel de administración para carga y baja de productos sin tocar código"
   - "Mantenimiento mensual incluido en el precio"
   - "Producto replicable: desarrollado primero para una florería, después adaptado y vendido a una segunda"
+links:
+  - label: "Rocío Florería"
+    url: "https://rociofloreria.vercel.app"
+  - label: "Ornella Florería"
+    url: "https://ornella-floreria.vercel.app"
+preview:
+  desktop: ornella # desktop-ornella.webp en el marco de navegador (pendiente de capturar)
+  mobile: rocio    # mobile-rocio.webp en el teléfono
 year: 2024
 accent: "#ffb7d5"
 ---

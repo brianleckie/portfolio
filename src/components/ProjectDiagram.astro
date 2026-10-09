@@ -1,0 +1,326 @@
+---
+// Esquema de "cómo funciona" para proyectos sin interfaz (backend, integraciones, modelos).
+// No es una captura: lleva la etiqueta "Diagrama" y su contenido es texto real (lista ordenada).
+// Todo sale del campo `flow` del .md (validado en src/content.config.ts).
+import type { Flow } from '../lib/projects';
+import { FLOW_ICON_PATHS } from '../lib/flow';
+
+interface Props {
+  flow: Flow;
+  title: string;
+  variant?: 'card' | 'case';
+}
+
+const { flow, title, variant = 'card' } = Astro.props;
+const n = flow.steps.length;
+---
+
+<figure class="diagram" data-diagram data-variant={variant}>
+  <figcaption class="head">
+    <span class="tag">Diagrama</span><span class="sr-only">: </span>
+    <span class="title">{flow.title}</span>
+    {variant === 'card' && <span class="sr-only"> — {title}</span>}
+  </figcaption>
+
+  <ol class="steps" role="list" data-count={n} style={`--n: ${n}`}>
+    {flow.steps.map((step, i) => (
+      <li class="step" style={`--i: ${i}`}>
+        <span class="cap" aria-hidden="true">{i + 1}</span>
+        {step.icon && (
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d={FLOW_ICON_PATHS[step.icon]} /></svg>
+        )}
+        <div class="text">
+          <span class="label">{step.label}</span>
+          {step.detail && <span class="detail">{step.detail}</span>}
+          {step.branches && (
+            <ul class="branches" role="list">
+              {step.branches.map((b) => (
+                <li>
+                  {step.code ? <code>{b.label}</code> : <span>{b.label}</span>}
+                  {b.detail && <span class="bdetail"><span class="sr-only">: </span>{b.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {i < n - 1 && <span class="link" aria-hidden="true"><span class="packet"></span></span>}
+      </li>
+    ))}
+  </ol>
+
+  {flow.note && <p class="note">{flow.note}</p>}
+</figure>
+
+<style>
+  .diagram {
+    container: diagram / inline-size;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Encabezado: deja claro que es un esquema y no una captura del producto */
+  .head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; }
+
+  .tag {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #111;
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(1.0625rem, 3.2cqi, 1.5rem);
+    line-height: 1.1;
+    color: var(--color-text-primary);
+  }
+
+  /* --- Base: columna; la flecha baja alineada con el número (caso en mobile) --- */
+  .steps {
+    --gap: 24px;
+    --row-gap: 26px;
+    align-self: center;
+    display: grid;
+    gap: var(--row-gap) var(--gap);
+    margin-block: 0.875rem;
+    list-style: none;
+  }
+
+  .step {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'cap text icon';
+    align-items: start;
+    gap: 0.25rem 0.65rem;
+    min-width: 0;
+    padding: 0.625rem 0.75rem;
+    border: 2px solid #111;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 0 #000;
+  }
+
+  .cap {
+    grid-area: cap;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    aspect-ratio: 1;
+    border: 2px solid #111;
+    border-radius: 8px;
+    background: var(--accent);
+    box-shadow: 0 2px 0 #111;
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 0.875rem;
+    line-height: 1;
+    color: #111;
+  }
+
+  .icon {
+    grid-area: icon;
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: #111;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .text { grid-area: text; display: grid; gap: 0.2rem; min-width: 0; }
+
+  .label {
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #111;
+    overflow-wrap: break-word; /* red de seguridad: el schema ya limita el largo de las palabras */
+  }
+
+  .detail { font-size: 0.8125rem; line-height: 1.4; color: var(--color-text-secondary); }
+
+  .branches { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; list-style: none; }
+
+  .branches li {
+    display: grid;
+    padding: 0.15rem 0.55rem;
+    border: 1.5px solid #111;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 50%, #fff);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #111;
+  }
+
+  .branches code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+
+  .bdetail { font-size: 0.6875rem; font-weight: 500; color: var(--color-text-secondary); }
+
+  .note {
+    justify-self: start;
+    padding: 0.35rem 0.75rem;
+    border: 2px dashed #111;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.8);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-text-primary);
+  }
+
+  /* Conector: flecha horizontal de 14px; se rota 90° (abajo) o 180° (izquierda) sobre su origen */
+  .link {
+    position: absolute;
+    left: calc(0.75rem + 0.875rem);   /* centro del número */
+    top: calc(100% + 6px - 7px);      /* borde (2) + sombra dura (4), centrado en el eje */
+    width: calc(var(--row-gap) - 7px);
+    height: 14px;
+    overflow: hidden;
+    transform-origin: 0 50%;
+    rotate: 90deg;
+    pointer-events: none;
+  }
+
+  .link::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 6px;
+    height: 2px;
+    background: #111;
+  }
+
+  .link::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 0;
+    width: 8px;
+    height: 10px;
+    background: #111;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  /* "Paquete de datos": solo transform/opacity; no existe con reduced-motion */
+  .packet { display: none; position: absolute; inset: 0; }
+
+  .packet::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: -10px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #111;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .packet {
+      display: block;
+      animation: diagram-packet 3.6s ease-in-out calc(var(--i) * 1.2s) infinite both;
+      animation-play-state: paused;
+    }
+
+    .diagram[data-play] .packet { animation-play-state: running; }
+  }
+
+  /* Relevo: cada tramo viaja 1/3 del ciclo y descansa */
+  @keyframes diagram-packet {
+    0% { transform: translateX(0); opacity: 0; }
+    6%, 27% { opacity: 1; }
+    33.3%, 100% { transform: translateX(calc(100% + 10px)); opacity: 0; }
+  }
+
+  /* Card: el detalle de las ramas queda para la página del caso (y para lectores de pantalla) */
+  .diagram[data-variant='card'] .bdetail {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* --- Cards angostas (también en mobile): serpentina 1→2 ↓ 3←4, solo nombres --- */
+  @container diagram (width < 560px) {
+    .diagram[data-variant='card'] .detail,
+    .diagram[data-variant='card'] .note {
+      position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+
+    .diagram[data-variant='card'] .steps {
+      --gap: 20px;
+      --row-gap: 22px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+      margin-block: 0.625rem 0;
+    }
+
+    .diagram[data-variant='card'] .step { align-items: center; gap: 0.5rem; padding: 0.5rem 0.625rem; border-radius: 12px; }
+    .diagram[data-variant='card'] .step:nth-child(3) { grid-area: 2 / 2; }
+    .diagram[data-variant='card'] .step:nth-child(4) { grid-area: 2 / 1; }
+    .diagram[data-variant='card'] .steps[data-count='3'] .step:nth-child(3) { grid-column: 1 / -1; }
+    .diagram[data-variant='card'] .cap { width: 1.375rem; font-size: 0.75rem; border-radius: 7px; }
+    .diagram[data-variant='card'] .label { font-size: clamp(0.75rem, 3cqi, 1.0625rem); }
+    .diagram[data-variant='card'] .step:nth-child(1) .link { left: calc(100% + 5px); top: calc(50% - 7px); width: calc(var(--gap) - 6px); rotate: none; }
+    .diagram[data-variant='card'] .step:nth-child(2) .link { left: 50%; }
+    .diagram[data-variant='card'] .step:nth-child(3) .link { left: -5px; top: calc(50% - 7px); width: calc(var(--gap) - 6px); rotate: 180deg; }
+  }
+
+  @container diagram (width < 440px) {
+    .diagram[data-variant='card'] .icon { display: none; }
+
+    .diagram[data-variant='card'] .branches {
+      position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+  }
+
+  @container diagram (width < 360px) {
+    .diagram[data-variant='card'] .cap { display: none; } /* las flechas ya marcan el orden */
+  }
+
+  /* --- Fila: cards anchas y página de caso en desktop --- */
+  @container diagram (width >= 560px) {
+    .steps {
+      grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+      align-items: center;
+      margin-block: 1rem;
+    }
+
+    .step {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas: 'cap icon' 'text text';
+      align-items: center;
+      gap: 0.6rem 0.5rem;
+      padding: 0.75rem 0.625rem 0.875rem;
+    }
+
+    .icon { justify-self: end; }
+    .label { font-size: clamp(0.8125rem, 2.3cqi, 1.125rem); }
+    .detail { font-size: clamp(0.75rem, 1.9cqi, 0.875rem); }
+    .link { left: calc(100% + 5px); top: calc(50% - 7px); width: calc(var(--gap) - 6px); rotate: none; }
+  }
+</style>
+
+<script>
+  // Los paquetes solo corren con el diagrama en pantalla (reduced-motion: el CSS ni los muestra).
+  const diagrams = document.querySelectorAll<HTMLElement>('[data-diagram]');
+  if (diagrams.length > 0 && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.target.toggleAttribute('data-play', e.isIntersecting)),
+      { threshold: 0.2 },
+    );
+    diagrams.forEach((d) => io.observe(d));
+  }
+</script>

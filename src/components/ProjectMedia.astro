@@ -1,6 +1,8 @@
 ---
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+import type { Flow } from '../lib/projects';
+import ProjectDiagram from './ProjectDiagram.astro';
 
 interface Props {
   title: string;
@@ -8,61 +10,61 @@ interface Props {
   initials: string;
   desktop?: ImageMetadata;
   mobile?: ImageMetadata;
+  flow?: Flow;
   eager?: boolean;
   variant?: 'card' | 'case';
 }
 
-const { title, accent, initials, desktop, mobile, eager = false, variant = 'card' } = Astro.props;
+const { title, accent, initials, desktop, mobile, flow, eager = false, variant = 'card' } = Astro.props;
 const loading = eager ? 'eager' : 'lazy';
-const desktopSizes =
-  variant === 'case'
-    ? '(min-width: 1100px) 960px, 92vw'
-    : '(min-width: 1024px) 560px, (min-width: 700px) 46vw, 92vw';
+const shot = desktop && mobile ? 'both' : desktop ? 'desktop' : mobile ? 'mobile' : undefined;
+const diagram = shot ? undefined : flow; // la captura siempre gana
+// La ventana del teléfono sigue la proporción de la captura (738×1600, 738×1326…), acotada, para no recortar costados
+const phoneRatio = mobile ? Math.min(0.58, Math.max(0.46, mobile.width / mobile.height)) : 9 / 19.5;
+
+// `sizes` = ancho real de cada marco (fracción de la media, ver la escena en el CSS).
+// Debe seguir a ProjectGrid (cards: 656px desde 1440, ~44vw en 2 columnas, ~90vw en mobile) y a [slug] (960px).
+const MEDIA = variant === 'case'
+  ? { max: 960, maxFrom: 1100, mid: 0.92, small: 0.9 }
+  : { max: 656, maxFrom: 1440, mid: 0.44, small: 0.9 };
+const sizesFor = (desk: number, mob: number) =>
+  `(min-width: ${MEDIA.maxFrom}px) ${Math.round(MEDIA.max * desk)}px, ` +
+  `(min-width: 700px) ${Math.round(MEDIA.mid * desk * 100)}vw, ${Math.round(MEDIA.small * mob * 100)}vw`;
+const desktopSizes = sizesFor(0.93, shot === 'both' ? 0.74 : 0.93);
+const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
 ---
 
 <div
   class="media"
   data-variant={variant}
-  data-has-desktop={desktop ? '' : undefined}
-  data-has-mobile={mobile ? '' : undefined}
+  data-shot={shot}
+  data-has-diagram={diagram ? '' : undefined}
   style={`--accent: ${accent}`}
 >
   {desktop && (
     <div class="frame browser">
       <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
-      <Picture
-        src={desktop}
-        alt={`Captura de escritorio de ${title}`}
-        formats={['avif', 'webp']}
-        fallbackFormat="webp"
-        widths={[480, 800, 1200]}
-        sizes={desktopSizes}
-        loading={loading}
-        decoding="async"
-      />
+      <div class="screen">
+        <Picture src={desktop} alt={`Captura de escritorio de ${title}`} formats={['avif', 'webp']}
+          fallbackFormat="webp" widths={[480, 800, 1200]} sizes={desktopSizes} loading={loading} decoding="async" />
+      </div>
     </div>
   )}
   {mobile && (
     <div class="frame phone">
-      <Picture
-        src={mobile}
-        alt={`Captura mobile de ${title}`}
-        formats={['avif', 'webp']}
-        fallbackFormat="webp"
-        widths={[240, 360, 480]}
-        sizes="(min-width: 700px) 140px, 180px"
-        loading={loading}
-        decoding="async"
-      />
+      <div class="screen" style={`aspect-ratio: ${phoneRatio}`}>
+        <Picture src={mobile} alt={`Captura mobile de ${title}`} formats={['avif', 'webp']}
+          fallbackFormat="webp" widths={[240, 360, 480]} sizes={mobileSizes} loading={loading} decoding="async" />
+      </div>
     </div>
   )}
-  {!desktop && !mobile && (
-    <div class="placeholder" aria-hidden="true"><span>{initials}</span></div>
-  )}
+  {diagram && <ProjectDiagram flow={diagram} title={title} variant={variant} />}
+  {!shot && !diagram && <div class="placeholder" aria-hidden="true"><span>{initials}</span></div>}
 </div>
 
 <style>
   .media {
+    container: media / inline-size;
     position: relative;
     display: grid;
     place-items: center;
@@ -74,68 +76,110 @@ const desktopSizes =
     overflow: hidden;
   }
 
-  .media[data-variant='card'] {
+  /* Misma caja en todas las cards y en todos los anchos (captura, diagrama o placeholder) */
+  .media[data-variant='card'],
+  .media[data-shot] {
     aspect-ratio: 16 / 10;
-  }
-
-  .frame {
-    background: #fff;
-    border: 2px solid #111;
-    box-shadow: 0 5px 0 #000;
-    overflow: hidden;
-  }
-
-  .frame :global(picture),
-  .frame :global(img) {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  /* Marco de navegador (captura desktop) */
-  .browser {
-    width: 100%;
-    border-radius: 12px;
-  }
-
-  .bar {
-    display: flex;
-    gap: 5px;
-    padding: 7px 10px;
-    border-bottom: 2px solid #111;
-    background: #f3f3f6;
-  }
-
-  .bar i {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #111;
-    opacity: 0.35;
-  }
-
-  /* Marco de teléfono (captura mobile) */
-  .phone {
-    width: 38%;
-    min-width: 96px;
-    max-width: 190px;
-    border-radius: 18px;
-  }
-
-  /* Con ambas capturas, el teléfono se superpone al navegador */
-  .media[data-has-desktop][data-has-mobile] .phone {
-    position: absolute;
-    right: 1.25rem;
-    bottom: 1rem;
-    width: 22%;
-    min-width: 84px;
   }
 
   .media[data-variant='case'] {
     padding: 2rem;
   }
 
-  /* Placeholder: una "tecla" con las iniciales y el color del proyecto */
+  /* ---------- Escena con capturas: todo en % del ancho de la media (cqi) ---------- */
+  .media[data-shot] {
+    padding: 0;
+  }
+
+  .frame {
+    position: absolute;
+    background: #fff;
+    border: 2px solid #111;
+    box-shadow: 0 5px 0 #000;
+    overflow: hidden;
+  }
+
+  /* Ventana de proporción fija: cualquier captura la llena sin deformarse (se recorta desde arriba) */
+  .screen {
+    overflow: hidden;
+  }
+
+  .screen :global(picture) {
+    display: block;
+    height: 100%;
+  }
+
+  .screen :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0;
+  }
+
+  .browser {
+    left: 3.7cqi;
+    right: 3.7cqi;
+    inset-block: 0;
+    height: fit-content;
+    margin-block: auto; /* centrado vertical sin transform (evita imágenes borrosas por medio píxel) */
+    border-radius: max(8px, 1.8cqi);
+  }
+
+  .browser .screen {
+    aspect-ratio: 11 / 5;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: max(3px, 0.8cqi);
+    height: max(14px, 3.6cqi);
+    padding-inline: max(7px, 1.6cqi);
+    border-bottom: 2px solid #111;
+    background: #f3f3f6;
+  }
+
+  .bar i {
+    width: max(5px, 1.2cqi);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #111;
+    opacity: 0.35;
+  }
+
+  .phone {
+    right: 3cqi;
+    bottom: 2.5cqi;
+    width: 22cqi;
+    border-radius: max(10px, 2.8cqi);
+  }
+
+  /* Solo captura mobile: teléfono centrado que asoma desde arriba */
+  .media[data-shot='mobile'] .phone {
+    right: auto;
+    bottom: auto;
+    left: 35cqi;
+    top: 6cqi;
+    width: 30cqi;
+  }
+
+  /* ---------- Diagrama (proyectos sin interfaz) ---------- */
+  .media[data-has-diagram] {
+    place-items: stretch; /* con container-type, centrado colapsaría el diagrama a ancho 0 */
+    padding: 1rem;
+    overflow: visible; /* si algo no entra (zoom de texto), la caja crece en vez de recortar */
+    background-image:
+      radial-gradient(circle, rgb(17 17 17 / 0.14) 1px, transparent 1.5px),
+      linear-gradient(155deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.05));
+    background-size: 16px 16px, auto;
+  }
+
+  .media[data-variant='case'][data-has-diagram] {
+    padding: 2rem;
+  }
+
+  /* ---------- Placeholder: una "tecla" con las iniciales ---------- */
   .placeholder {
     display: grid;
     place-items: center;
@@ -158,23 +202,25 @@ const desktopSizes =
   }
 
   @media (max-width: 699px) {
-    .media[data-variant='card'] {
-      aspect-ratio: auto;
+    /* Mobile: navegador a la izquierda y teléfono más grande que asoma recortado por abajo */
+    .media[data-shot='both'] .browser {
+      left: 4cqi;
+      right: 22cqi;
     }
 
-    /* Mobile primero: si existe la captura mobile, es la protagonista */
-    .media[data-has-mobile] .browser {
-      display: none;
+    .media[data-shot='both'] .phone {
+      right: 4cqi;
+      bottom: auto;
+      top: 7cqi;
+      width: 30cqi;
     }
 
-    .media[data-has-desktop][data-has-mobile] .phone,
-    .phone {
-      position: static;
-      width: min(52%, 190px);
+    .media[data-variant='card'] .placeholder {
+      width: min(36%, 140px);
     }
 
-    .placeholder {
-      width: min(44%, 150px);
+    .media[data-variant='case'][data-has-diagram] {
+      padding: 1rem;
     }
   }
 </style>

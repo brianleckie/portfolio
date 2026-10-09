@@ -31,7 +31,7 @@ Eso implica:
 4. **Mobile primero de verdad:** la mayoría de los clientes van a abrir el link desde WhatsApp en un Android. Tiene que verse impecable a 360px y 390px.
 5. Cada proyecto tiene **su propia URL** con preview (Open Graph) para mandarla por WhatsApp: "mirá lo que hice para una florería".
 
-La estética (teclado pastel, tipografía gigante, marquee editorial) es el gancho memorable. Los proyectos y el contacto son lo que vende.
+La estética (teclado de colores, tipografía gigante, marquee editorial) es el gancho memorable. Los proyectos y el contacto son lo que vende.
 
 ---
 
@@ -120,67 +120,73 @@ export const site = {
 
 ## 6. Hero
 
-### Titular (saltos de línea intencionales)
-> **"Hola, soy Brian."** / **"Hago webs y sistemas"** / **"que *trabajan* para tu negocio."**
+> Reemplaza el hero original (titular en tres líneas, bajada, dos CTAs y teclado 900×312 con Enter alto), por pedido del cliente: teclado en arco, centrado, con Enter ancho. Maqueta aprobada en 1440×810 y 390×844.
 
-- "trabajan" en Instrument Serif italic con color de acento.
-- Desktop: ~72–96px según largo de línea, line-height 1.02–1.08, tracking ajustado pero legible. Mobile: ~38–46px fluido con `clamp()`. Que envuelva natural sin recortes ni letras pisadas.
+### Titular
+- Renglón chico sobre el titular: **"Encarnación, Paraguay"** (`site.location`), `<p class="hero-location">`, Inter 600, 13px, mayúsculas con tracking 0.1em, `--color-text-secondary`. Desktop y mobile; cuesta ~16px de alto y no rompe el fold.
+- `<h1>` centrado en dos partes: **"Hola, soy [Brian]"** (Satoshi 900, `clamp(2.375rem, 1.6rem + 3vw, 4rem)`, lh 1.1, tracking −0.03em) con "Brian" dentro de una **pastilla-tecla** (cara `--key-e-face`, base `--key-e-side` visible abajo, contorno 2px `--kb-line`, sombra dura 0.07em, −2°), y **"Hago webs y sistemas que *trabajan* para tu negocio."** (Inter 500, `clamp(1.0625rem, .9rem + .5vw, 1.375rem)`, `--color-text-secondary`, `text-wrap: balance`; "trabajan" en Instrument Serif itálica `--color-accent`, 1.2em). Punto `.sr-only` tras "Brian".
+- **Sin bajada ni botones en desktop:** el CTA del hero es el Enter; además "Hablemos ↗" del header.
+- **Solo mobile (< 700px):** botón primario **"Escribime por WhatsApp"** (`btn btn-primary btn-lg`, `whatsappHref()`, pestaña nueva, `rel="noopener noreferrer"`) debajo del teclado, dentro del hero. Condición: el teclado completo y el botón entran sin scroll en 390×844 (y 360×740). La barra sticky sigue apareciendo recién después del hero (`after="#hero"`), así que no convive con este botón.
+- Fondo `--color-bg-hero` con grilla de puntos (`radial-gradient` 1.1px cada 24px; 20px en mobile), `--color-hero-dot`.
+- Padding superior `clamp(20px, 4svh, 40px)`; teclado a `clamp(12px, 3svh, 32px)` del titular.
 
-### Bajada y CTAs (debajo del titular)
-- Una línea en Inter, ~18–20px: "Desarrollador full-stack en Encarnación, Paraguay. Catálogos con pedido por WhatsApp, sistemas a medida e integraciones."
-- Dos botones: **"Ver proyectos"** (ancla a `#proyectos`) y **"Escribime por WhatsApp"** (primario). Altura mínima 44px.
+### Teclado
+9 teclas en dos filas **en arco** (L E K I / W O R K S, se lee "LEKI WORKS") y un **Enter ancho** centrado debajo. Nada se superpone. Toda la composición se centra en el hero.
 
-### Teclado (el objeto visual más fuerte)
-Debe quedar cerca del titular, integrado al hero, sin espaciadores vacíos ni márgenes negativos que se rompan en mobile.
+**Unidad:** `u` = lado de la tecla (cuadrada). Todo en `u`, calculado en CSS (sin JS de escala):
+- Desktop/tablet (contenedor ≥ 560px): `u = clamp(56px, min(100cqi / 5.88, (100svh − 330px) / 3.473), 140px)`.
+- Mobile (< 560px): `u = min(100cqi / 5.565, 104px)` → 57.5px a 360, 62.9px a 390.
 
-**Composición:** 9 teclas normales + 1 Enter alta, como una sola pieza táctil.
-- Fila superior: **L, E, K, I**. Fila inferior: **W, O, R, K, S**. (Se lee "LEKI WORKS".)
-- Sistema de coordenadas desktop: **900 × 312px**.
-- Tecla normal: **146 × 161px**.
-- Fila superior en y=0, x = **73, 219, 365, 511**.
-- Fila inferior en y=139, x = **0, 146, 292, 438, 584** (se superpone levemente a la superior).
-- Enter en x=**657**, y=0, **218 × 300px**, ocupa ambas filas a la derecha. La última tecla (S) se superpone a la parte izquierda del Enter.
-- El área expuesta del Enter debe seguir siendo clickeable: ninguna capa decorativa ni tecla superpuesta puede bloquearla.
+**Fórmulas** (i = lugar en la fila desde el centro; arriba ±0.5, ±1.5; abajo 0, ±1, ±2):
+`x = i·pitch`, `y = y0 + fila·row + sag·i²` (centro, desde el borde superior), `rot = i·tilt`.
+Enter: centro en x = 0, y = y0 + row + enterDy; ancho enterW·u, alto u.
 
-**Teclas, colores (cara / base), caption y destino, en orden de lectura:**
+| | pitch | tilt | sag | row | y0 | Enter (ancho, Δy) | W × H |
+|---|---|---|---|---|---|---|---|
+| Desktop | 1.18 | 5° | 0.075 | 1.20 | 0.503 | 3.36, 1.27 | 5.88 × 3.473 |
+| Mobile | 1.12 | 2.5° | 0.04 | 1.14 | 0.501 | 3.24, 1.18 | 5.565 × 3.321 |
 
-| Tecla | Cara | Base | Caption | Destino |
-|---|---|---|---|---|
-| L | `#a9ddff` | `#3886c9` | PROYECTOS | `#proyectos` |
-| E | `#d9f28f` | `#7aa52d` | SERVICIOS | `#servicios` |
-| K | `#ffb7d5` | `#d94f8a` | STACK | `#sobre-mi` (bloque stack) |
-| I | `#c8b6ff` | `#7153c7` | SOBRE MÍ | `#sobre-mi` |
-| W | `#ffd98e` | `#d28a24` | WEBS Y CATÁLOGOS | `#proyectos` + filtro `web` |
-| O | `#b9f2df` | `#2caa85` | SISTEMAS | `#proyectos` + filtro `sistemas` |
-| R | `#ffc3a0` | `#d96c44` | INTEGRACIONES | `#proyectos` + filtro `integraciones` |
-| K | `#c6d7ff` | `#5a78c9` | MI PROCESO | `#proceso` |
-| S | `#f4b8ff` | `#a34cbf` | IT Y SOPORTE | `#proyectos` + filtro `it` |
-| Enter | `#9be7a8` | `#25a244` | HABLEMOS | WhatsApp |
+Centros resultantes (x, y en u; rotación):
 
-- Todas las teclas son **anchors reales** (`<a href>`), con nombre accesible igual al caption (ej. "Webs y catálogos"). Las de filtro llevan `data-filter`; con JS aplican el filtro y hacen scroll; sin JS igual llevan a `#proyectos`.
-- El Enter abre WhatsApp en pestaña nueva (`rel="noopener"`), nombre accesible "Hablemos por WhatsApp".
+| Tecla | Desktop | Mobile |
+|---|---|---|
+| L | −1.770, 0.671, −7.5° | −1.680, 0.591, −3.75° |
+| E | −0.590, 0.521, −2.5° | −0.560, 0.511, −1.25° |
+| K | 0.590, 0.521, 2.5° | 0.560, 0.511, 1.25° |
+| I | 1.770, 0.671, 7.5° | 1.680, 0.591, 3.75° |
+| W | −2.360, 2.003, −10° | −2.240, 1.801, −5° |
+| O | −1.180, 1.778, −5° | −1.120, 1.681, −2.5° |
+| R | 0, 1.703, 0° | 0, 1.641, 0° |
+| K | 1.180, 1.778, 5° | 1.120, 1.681, 2.5° |
+| S | 2.360, 2.003, 10° | 2.240, 1.801, 5° |
+| Enter | 0, 2.973, 0° (3.36 × 1) | 0, 2.821, 0° (3.24 × 1) |
 
-**Anatomía de cada tecla:**
-- Contorno oscuro de 2px, radio exterior ~38px, pared lateral más oscura (la base), sombra inferior dura de 5px negra.
-- Cara elevada con contorno de 2px y radio ~29px, inset ~10px horizontal, dejando ~33px de base visible abajo.
-- Costuras finas en ángulo entre cara y base. Costuras e íconos con `pointer-events: none`.
-- Letra negra ~70–76px, Satoshi 900, tracking ajustado. Caption ~10–12px (en la composición sin escalar) que entre en la cara.
-- Enter: símbolo grande de "return" y caption vertical "HABLEMOS" sobre el lado derecho.
+Separación mínima entre polígonos rotados: 0.120u desktop, 0.098u mobile. Fuente única: `src/styles/tokens.css` (colores, arco desktop, `--kb-reserve`) + override mobile en `Keyboard.astro`; la imagen OG de la home lee `tokens.css` (`kbToken()` en `src/config/keyboard.ts`).
 
-**Animación automática:**
-- Presiona y suelta en orden: L, E, K, I, W, O, R, K, S, **Enter** (Enter participa).
-- En cada press: cara baja ~12–14px, base ~3–5px. Mantener un instante, soltar suave, avanzar cada ~300–380ms. Después del Enter, pausa de reposo antes de repetir. Nunca dejar una tecla trabada abajo.
-- Hover (solo con `@media (hover: hover)`) y foco de teclado: la cara baja ~8px en ~180ms. Press activo: la base baja ~5px.
-- Pausar la secuencia: durante interacción con puntero, con una tecla enfocada, con la pestaña oculta (`visibilitychange`) y **cuando el teclado sale del viewport** (`IntersectionObserver`). Reanudar limpio.
-- Sin botón visible de pausa. `prefers-reduced-motion: reduce` → sin movimiento automático, controles estáticos usables, sin flashes.
-- Limpiar timers/observers correctamente.
+**Teclas, colores (cara / pared / letra), caption y destino, en orden de lectura:**
 
-**Escalado responsive (crítico para mobile):**
-- `scale = min(1, anchoDisponible / 900)`, calculado por el ancho real del contenedor (ResizeObserver o `container queries` + CSS). Nunca una escala fija por breakpoint que haga la composición más ancha que la pantalla.
-- El wrapper debe tener altura = `312 × scale` (+ holgura para sombra y focus ring) para que el contenido siguiente fluya bien.
-- Ejemplo: 390px de viewport con 20px de padding → 350px → scale ≈ 0.389.
-- **Cuando scale < 0.6 ocultar visualmente los captions** de las teclas (quedarían ilegibles a ~4px); el nombre accesible se mantiene. Las letras siguen visibles.
-- Hit areas mínimas 24×24, apuntando a 44×44 donde se pueda. La navegación normal y los CTAs del hero son la ruta principal en mobile; el teclado ahí es gancho visual clickeable.
+| Tecla | Cara | Pared | Letra | Caption | Destino |
+|---|---|---|---|---|---|
+| L | `#ff6b3d` | `#c4441c` | `#111111` | PROYECTOS | `#proyectos` |
+| E | `#ffc83d` | `#c98a00` | `#111111` | SERVICIOS | `#servicios` |
+| K | `#ff8fc8` | `#cc4c8e` | `#111111` | STACK | `#stack` |
+| I | `#276b4c` | `#17402e` | `#fff4df` | SOBRE MÍ | `#sobre-mi` |
+| W | `#ffe2b5` | `#d29a55` | `#111111` | WEBS Y CATÁLOGOS | `#proyectos` + filtro `web` |
+| O | `#22b3a1` | `#12786b` | `#111111` | SISTEMAS | `#proyectos` + filtro `sistemas` |
+| R | `#ff9a3d` | `#c9670e` | `#111111` | INTEGRACIONES | `#proyectos` + filtro `integraciones` |
+| K | `#8e3a6e` | `#5a1f45` | `#fff4df` | MI PROCESO | `#proceso` |
+| S | `#b48cff` | `#7a52d1` | `#111111` | IT Y SOPORTE | `#proyectos` + filtro `it` |
+| Enter | `#2a2140` | `#141020` | ↵ `#ffc83d`, caption `#ffe2b5` | HABLEMOS | WhatsApp (pestaña nueva) |
+
+Letra/cara ≥ 4.5:1 en todas (5.85–15.1). Contorno `#111111`.
+
+**Anatomía:** el `<a>` es la pared lateral (`--side`) con contorno 2px, radio 0.22u, sombra dura 0.05u + sombra suave. Cara inset 0.05u arriba, 0.085u a los lados, 0.2u abajo; radio 0.16u; bisel (brillo inset arriba, sombra inset abajo). Costuras diagonales en las esquinas inferiores y pared inferior más oscura (`::before`). Letra Satoshi 900 a 0.44u. Caption Inter 650 `max(10px, .078u)`, visible **solo si u ≥ 116px**; si no, 0px (el nombre accesible se mantiene). Enter: ↵ en SVG inline (Satoshi no tiene el glifo) arriba a la izquierda, 0.58u; "HABLEMOS" abajo a la derecha, `max(11px, .085u)`, siempre visible. Decorados con `pointer-events: none`.
+
+**Animación:** cada tecla `rotate(rot) translateY(--dz)`: el hundimiento es en su eje local. Press: tecla +0.03u, sombra dura 0.05u → 0.02u, cara +0.07u, 140ms. Secuencia automática L, E, K, I, W, O, R, K, S, Enter (Enter participa): paso 340ms, tecla abajo 170ms, reposo 1400ms tras el Enter; nunca más de una abajo. Pausa con puntero sobre el teclado, foco dentro, pestaña oculta y fuera del viewport (IntersectionObserver 0.1). Hover (solo `hover: hover`) y foco: tecla +0.015u, cara +0.045u. `:active` = press (sin hover pegado en táctil). Sin botón de pausa. `prefers-reduced-motion: reduce` → sin secuencia ni transiciones. Timers/observers/listeners se limpian en `astro:before-swap`.
+
+**Fold (medido en el build):** a 1440×810 entran línea de ubicación, titular, línea y teclado completo (Enter incluido; u ≈ 138px, borde inferior del Enter ≈ 761px). Mobile 390×844: Enter ≈ 524px y botón de WhatsApp hasta ≈ 609px; 360×740: Enter ≈ 496px y botón hasta ≈ 578px.
+
+**Accesibilidad:** anchors reales con `aria-label` = caption ("Webs y catálogos", "IT y soporte"); Enter "Hablemos por WhatsApp", `rel="noopener noreferrer"`. `data-filter` en W/O/R/S (sin JS llevan a `#proyectos`). DOM = orden de lectura = tabulación. Foco 3px `--color-accent` offset 4px y `z-index` sobre las vecinas. Teclas ≥ 56px de lado en 360/390. Hit areas: la tecla entera es el link.
 
 ---
 
@@ -330,7 +336,8 @@ Cuatro pasos numerados:
 Con Playwright contra el build (`astro preview`), para viewports **1440×810, 1440×1002, 1024×768, 768×1024, 390×844 y 360×740**:
 
 - `document.documentElement.scrollWidth <= window.innerWidth` (sin overflow horizontal).
-- El teclado nunca es más ancho que su contenedor y la altura del wrapper coincide con la composición escalada.
+- Teclado: composición centrada (±4px), sin teclas superpuestas (SAT sobre los polígonos rotados), todas clickeables en centro y puntos internos (Enter incluido), lado ≥ 56px (360 y 390), captions de 0px o ≥ 10px, fold completo a 1440×810 (Enter incluido).
+- Hero: línea "Encarnación, Paraguay" sobre el titular; botón "Escribime por WhatsApp" solo por debajo de 700px, debajo del teclado y dentro del primer pantallazo (390×844 y 360×740); el CTA sticky aparece recién después del hero.
 - Cero errores de consola y cero requests fallidas (404).
 - Todas las teclas tienen `href` y nombre accesible; el Enter es clickeable en su área expuesta (click en coordenadas reales).
 - No existe `contenteditable` en el DOM.

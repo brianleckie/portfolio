@@ -4,6 +4,7 @@ import { clean, cleanList } from './todo';
 
 export type Project = CollectionEntry<'projects'>;
 export type Category = Project['data']['category'][number];
+export type Flow = NonNullable<Project['data']['flow']>;
 
 export const FILTERS: { id: 'all' | Category; label: string }[] = [
   { id: 'all', label: 'Todos' },

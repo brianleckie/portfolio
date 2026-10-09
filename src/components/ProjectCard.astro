@@ -19,6 +19,7 @@ const result = cleanList(data.results)[0];
 const title = shortTitle(project);
 const tagline = data.title.includes(' — ') ? data.title.split(' — ').slice(1).join(' — ') : null;
 const demoUrl = clean(data.demoUrl);
+const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
 ---
 
 <article class="card" style={`--accent: ${data.accent}`}>
@@ -28,6 +29,7 @@ const demoUrl = clean(data.demoUrl);
     initials={initials(data.title)}
     desktop={images.desktop}
     mobile={images.mobile}
+    flow={data.flow}
     eager={eager}
   />
 
@@ -63,6 +65,15 @@ const demoUrl = clean(data.demoUrl);
           aria-label={`Ver demo de ${title} (se abre en una pestaña nueva)`}
         >Ver demo ↗</a>
       )}
+      {links.map((l) => (
+        <a
+          class="btn btn-ghost"
+          href={l.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ver ${l.label} (se abre en una pestaña nueva)`}
+        >Ver {l.label} ↗</a>
+      ))}
     </div>
   </div>
 </article>
@@ -137,5 +148,25 @@ const demoUrl = clean(data.demoUrl);
     gap: 0.5rem;
     margin-top: auto;
     padding-top: 0.5rem;
+  }
+
+  /* Mobile: cuerpo más compacto (no se oculta ningún texto) */
+  @media (max-width: 699px) {
+    .card {
+      gap: 1rem;
+    }
+
+    .body {
+      gap: 0.6rem;
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+    }
+
+    .summary {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
   }
 </style>

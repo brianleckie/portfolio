@@ -14,6 +14,21 @@ highlights:
   - "Dataset propio y reproducible de avisos de portales inmobiliarios locales, recolectados con web scraping ético, limpiados y deduplicados."
   - "Variables geográficas a nivel barrio (distancia a avenidas, shoppings, colegios) y modelos de regresión: baseline por barrio, LightGBM y Random Forest."
   - "Intervalos de predicción con cobertura verificable, no un «±» arbitrario."
+flow:
+  steps:
+    - label: "Dataset propio"
+      detail: "Avisos de portales locales: scraping ético, limpiados y deduplicados"
+      icon: datos
+    - label: "Variables geo"
+      detail: "Por barrio: distancia a avenidas, shoppings y colegios"
+      icon: mapa
+    - label: "Modelos de regresión"
+      icon: modelo
+      branches: ["Baseline por barrio", "LightGBM", "Random Forest"]
+    - label: "Precio de oferta"
+      detail: "Por m² y total, con intervalo de predicción (no es precio de cierre)"
+      icon: precio
+  note: "Ablation: el modelo con y sin variables geo"
 year: 2025
 accent: "#ffd98e"
 ---

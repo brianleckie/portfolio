@@ -15,17 +15,22 @@
   /* Accent */
   --color-accent: #4f5bd5;
 
-  /* Keyboard key colors (face / base) */
-  --key-l-face: #a9ddff;  --key-l-base: #3886c9;
-  --key-e-face: #d9f28f;  --key-e-base: #7aa52d;
-  --key-k-face: #ffb7d5;  --key-k-base: #d94f8a;
-  --key-i-face: #c8b6ff;  --key-i-base: #7153c7;
-  --key-w-face: #ffd98e;  --key-w-base: #d28a24;
-  --key-o-face: #b9f2df;  --key-o-base: #2caa85;
-  --key-r-face: #ffc3a0;  --key-r-base: #d96c44;
-  --key-k2-face: #c6d7ff; --key-k2-base: #5a78c9;
-  --key-s-face: #f4b8ff;  --key-s-base: #a34cbf;
-  --key-enter-face: #9be7a8; --key-enter-base: #25a244;
+  /* Hero */
+  --color-bg-hero: #fbf8f2;
+  --color-hero-dot: rgba(29, 32, 51, 0.14);
+
+  /* Teclado — colores (cara / pared / letra). Fuente única: el CSS los usa y la imagen OG los lee con kbToken(). */
+  --kb-line: #111111;
+  --key-l-face: #ff6b3d;  --key-l-side: #c4441c;  --key-l-ink: #111111;   /* tomate     6.67:1 */
+  --key-e-face: #ffc83d;  --key-e-side: #c98a00;  --key-e-ink: #111111;   /* maíz      12.21:1 */
+  --key-k1-face: #ff8fc8; --key-k1-side: #cc4c8e; --key-k1-ink: #111111;  /* lapacho    9.01:1 */
+  --key-i-face: #276b4c;  --key-i-side: #17402e;  --key-i-ink: #fff4df;   /* yerba      5.85:1 */
+  --key-w-face: #ffe2b5;  --key-w-side: #d29a55;  --key-w-ink: #111111;   /* arena     15.10:1 */
+  --key-o-face: #22b3a1;  --key-o-side: #12786b;  --key-o-ink: #111111;   /* río        7.22:1 */
+  --key-r-face: #ff9a3d;  --key-r-side: #c9670e;  --key-r-ink: #111111;   /* mandarina  8.94:1 */
+  --key-k2-face: #8e3a6e; --key-k2-side: #5a1f45; --key-k2-ink: #fff4df;  /* mora       6.46:1 */
+  --key-s-face: #b48cff;  --key-s-side: #7a52d1;  --key-s-ink: #111111;   /* jacarandá  7.32:1 */
+  --key-enter-face: #2a2140; --key-enter-side: #141020; --key-enter-ink: #ffc83d; --key-enter-caption: #ffe2b5; /* 9.77 / 12.08 */
 
   /* Marquee */
   --color-marquee-bg: #ffdfa0;
@@ -44,13 +49,20 @@
   --max-w: 1440px;
   --header-h: 64px; /* mobile: ver media query abajo (header en dos filas) */
 
-  /* Keyboard geometry */
-  --kb-w: 900px;
-  --kb-h: 312px;
-  --kb-key-w: 146px;
-  --kb-key-h: 161px;
-  --kb-enter-w: 218px;
-  --kb-enter-h: 300px;
+  /* Teclado — arco DESKTOP en unidades de tecla (u = lado). El override mobile vive en Keyboard.astro.
+     Si cambiás pitch/tilt/sag/row recalculá: w = 4·pitch + cos(2·tilt) + sin(2·tilt);
+     y0 = 0.5·(cos(tilt/2) + sin(tilt/2)) − sag/4;  h = y0 + row + enter-dy + 0.5 */
+  --kb-pitch: 1.18;
+  --kb-tilt: 5;
+  --kb-sag: 0.075;
+  --kb-row: 1.2;
+  --kb-y0: 0.503;
+  --kb-enter-w: 3.36;
+  --kb-enter-dy: 1.27;
+  --kb-w: 5.88;
+  --kb-h: 3.473;
+  --kb-u-max: 140px;
+  --kb-reserve: 330px; /* header + línea de ubicación + titular + aire: lo que el teclado deja libre del alto de pantalla */
 }
 
 @media (max-width: 700px) {

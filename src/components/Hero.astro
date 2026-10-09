@@ -1,107 +1,137 @@
 ---
-import { whatsappHref } from '../config/site';
+import { site, whatsappHref } from '../config/site';
 import Keyboard from './Keyboard.astro';
 import Marquee from './Marquee.astro';
-
-const waHref = whatsappHref();
 ---
 
 <section class="hero" id="hero" aria-label="Presentación">
   <div class="hero-inner">
-    <h1 class="hero-headline">
-      <span class="line line-1">Hola, soy Brian.</span>
-      <span class="line line-2">Hago webs y sistemas</span>
-      <span class="line line-3">
-        que <em class="accent-word">trabajan</em> para tu negocio.
-      </span>
+    <p class="hero-location">{site.location}</p>
+    <h1 class="hero-title">
+      <span class="hero-hello">Hola, soy <span class="name-key">Brian</span><span class="sr-only">.</span></span>
+      <span class="hero-line">Hago webs y sistemas que <em class="accent-word">trabajan</em> para tu negocio.</span>
     </h1>
-
-    <p class="hero-sub">
-      Desarrollador full-stack en Encarnación, Paraguay.
-      Catálogos con pedido por WhatsApp, sistemas a medida e integraciones.
-    </p>
-
-    <div class="hero-ctas">
-      <a href="#proyectos" class="btn btn-ghost">Ver proyectos</a>
-      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-        Escribime por WhatsApp
-      </a>
-    </div>
   </div>
 
   <Keyboard />
+
+  <!-- Solo mobile (<700px): el Enter ya es el CTA en desktop; acá el botón de texto es más claro para un dueño de PyME -->
+  <div class="hero-cta">
+    <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+      Escribime por WhatsApp
+    </a>
+  </div>
+
   <Marquee />
 </section>
 
 <style>
   .hero {
-    background: linear-gradient(160deg, var(--color-bg-hero-from) 0%, #ffffff 50%, var(--color-bg-hero-to) 100%);
-    padding-top: var(--space-2xl);
+    --hero-dot-gap: 24px;
+    padding-top: clamp(20px, 4svh, 40px);
     overflow: hidden;
+    background-color: var(--color-bg-hero);
+    background-image: radial-gradient(circle, var(--color-hero-dot) 1.1px, transparent 1.6px);
+    background-position: 50% 0;
+    background-size: var(--hero-dot-gap) var(--hero-dot-gap);
   }
 
   .hero-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 var(--pad-desktop);
-    padding-bottom: 16px;
-  }
-
-  .hero-headline {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(2.375rem, 5.5vw, 5.5rem);
-    line-height: 1.04;
-    letter-spacing: -0.025em;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: 0.05em;
+    align-items: center;
+    gap: clamp(8px, 1.5svh, 14px);
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding-inline: var(--pad-desktop);
+    text-align: center;
   }
 
-  .line {
-    display: block;
+  .hero-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 1.5svh, 14px);
+  }
+
+  /* Renglón chico sobre el titular: da el dónde sin competir con él */
+  .hero-location {
+    font-family: 'Inter Variable', system-ui, sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  /* flex: el alto de la fila lo pone la pastilla (en em), no las métricas de la fuente → sin CLS al cargar Satoshi */
+  .hero-hello {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: 0.25em;
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-size: clamp(2.375rem, 1.6rem + 3vw, 4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
+  }
+
+  /* "Brian" en una tecla: cara maíz, base visible abajo, bisel y sombra dura (anatomía del teclado) */
+  .name-key {
+    padding: 0.02em 0.24em 0.11em;
+    border: 2px solid var(--kb-line);
+    border-radius: 0.22em;
+    background-color: var(--key-e-face);
+    box-shadow:
+      inset 0 -0.09em 0 var(--key-e-side),
+      inset 0 0.05em 0 rgb(255 255 255 / 0.45),
+      0 0.07em 0 var(--kb-line);
+    color: var(--key-e-ink);
+    white-space: nowrap;
+    transform: rotate(-2deg);
+  }
+
+  .hero-line {
+    max-width: 40rem;
+    font-family: 'Inter Variable', system-ui, sans-serif;
+    font-size: clamp(1.0625rem, 0.9rem + 0.5vw, 1.375rem);
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+    text-wrap: balance;
   }
 
   .accent-word {
     font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1.2em;
     font-style: italic;
     font-weight: 400;
+    line-height: 1;
     color: var(--color-accent);
   }
 
-  .hero-sub {
-    font-size: clamp(1rem, 1.4vw, 1.1875rem);
-    color: var(--color-text-secondary);
-    max-width: 52ch;
-    margin-bottom: var(--space-xl);
-    line-height: 1.6;
-  }
-
-  .hero-ctas {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    align-items: center;
+  .hero-cta {
+    display: none;
   }
 
   @media (max-width: 1024px) {
-    .hero-inner {
-      padding-left: var(--pad-tablet);
-      padding-right: var(--pad-tablet);
+    .hero-inner { padding-inline: var(--pad-tablet); }
+  }
+
+  @media (max-width: 699px) {
+    .hero-cta {
+      display: flex;
+      justify-content: center;
+      padding: 4px var(--pad-mobile) var(--space-lg);
     }
   }
 
   @media (max-width: 700px) {
-    .hero {
-      padding-top: var(--space-xl);
-    }
-
-    .hero-inner {
-      padding-left: var(--pad-mobile);
-      padding-right: var(--pad-mobile);
-      padding-bottom: var(--space-lg);
-    }
+    .hero { --hero-dot-gap: 20px; }
+    .hero-inner { padding-inline: var(--pad-mobile); }
   }
 </style>

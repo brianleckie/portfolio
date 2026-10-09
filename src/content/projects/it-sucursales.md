@@ -14,6 +14,19 @@ highlights:
   - "Desplegado en 15 sucursales mediante GitHub Actions"
   - "Permisos ACL en NAS QNAP por departamento"
   - "Despliegues de FortiClient para VPN corporativa"
+flow:
+  title: "Cómo se desplegó"
+  steps:
+    - label: "APK de RustDesk"
+      detail: "Servidor corporativo fijo, firmado con keystore corporativo"
+      icon: codigo
+    - label: "GitHub Actions"
+      detail: "Desplegado en 15 sucursales"
+      icon: despliegue
+    - label: "Sucursales"
+      detail: "Acceso remoto corporativo"
+      icon: sucursal
+  note: "FortiClient para VPN corporativa y permisos ACL por departamento en NAS QNAP"
 year: 2024
 accent: "#ffd98e"
 ---
