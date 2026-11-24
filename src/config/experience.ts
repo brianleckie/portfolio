@@ -20,8 +20,8 @@ export const experience: ExperienceEntry[] = [
     datetime: '2026-08',
     ongoing: true,
     description: {
-      es: 'Desarrollo de software para una empresa de IT de Países Bajos, en equipo remoto y en inglés.',
-      en: 'Software development for a Dutch IT company, working remotely in an English-speaking team.',
+      es: 'Desarrollo de software en inglés.',
+      en: 'Software development in English.',
     },
   },
   {
@@ -31,7 +31,7 @@ export const experience: ExperienceEntry[] = [
     datetime: '2026-10',
     ongoing: true,
     description: {
-      es: 'Empresa de desarrollo que fundamos entre 7 colegas. Lidero el equipo técnico.',
+      es: 'Fundada entre 7 colegas. Lidero el equipo técnico.',
       en: 'Software company founded by 7 colleagues. I lead the technical team.',
     },
     external: site.cpoTechUrl,
@@ -43,7 +43,7 @@ export const experience: ExperienceEntry[] = [
     datetime: '2026',
     ongoing: true,
     description: {
-      es: 'Catálogos, sistemas e integraciones para negocios: los proyectos de este sitio.',
+      es: 'Catálogos, sistemas e integraciones para negocios.',
       en: 'Catalogs, systems and integrations for businesses — the projects on this site.',
     },
   },
@@ -53,7 +53,7 @@ export const experience: ExperienceEntry[] = [
     date: { es: '2026', en: '2026' },
     datetime: '2026',
     description: {
-      es: 'Acceso remoto corporativo en 15 sucursales, permisos por departamento en NAS y despliegues de FortiClient.',
+      es: 'Acceso remoto en 15 sucursales, permisos por departamento en NAS y FortiClient.',
       en: 'Corporate remote access across 15 branches, per-department NAS permissions and FortiClient rollouts.',
     },
     project: 'it-sucursales',

@@ -28,6 +28,7 @@ accent: "#ffb7d5"
 shots:
   rocio:
     waitFor: "h1"
+    stickyBottom: ".whatsapp-float"
     alt:
       path: "/catalogo"
       waitFor: 'a[href^="/p/"]'

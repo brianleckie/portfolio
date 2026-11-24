@@ -1,465 +1,172 @@
 ---
-import { caseHref, homeHref, localeOf } from '../../i18n/routes';
-
 import { render } from 'astro:content';
+import { caseHref, homeHref, localeOf } from '../../i18n/routes';
+import { t } from '../../i18n/ui';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
-import ProjectMedia from '../../components/ProjectMedia.astro';
 import Footer from '../../components/Footer.astro';
-import StickyCta from '../../components/StickyCta.astro';
+import DevicePair from '../../components/DevicePair.astro';
+import ProjectDiagram from '../../components/ProjectDiagram.astro';
+import WhatsAppLink from '../../components/WhatsAppLink.astro';
 import {
-  descriptionOf,
-  getFeatured,
-  getProjects,
-  initials,
-  projectWhatsappHref,
-  shortTitle,
-  subtitleOf,
-  slugOf,
-  summaryOf,
-  type Project,
+  descriptionOf, getProjects, projectWhatsappHref, shortTitle, subtitleOf, slugOf, summaryOf, type Project,
 } from '../../lib/projects';
-import { projectImages } from '../../lib/project-images';
+import { projectFullImages, projectImages } from '../../lib/project-images';
 import { clean, cleanList } from '../../lib/todo';
 import { site } from '../../config/site';
-import { t } from '../../i18n/ui';
-const routeLocale = localeOf(Astro.currentLocale);
-const ui = t(routeLocale);
 
 export async function getStaticPaths() {
   const projects = await getProjects();
-  const featured = await getFeatured();
-  return projects.map((entry) => {
-    const i = featured.findIndex((p) => p.id === entry.id);
-    const n = featured.length;
-    return {
-      params: { slug: slugOf(entry) },
-      props: {
-        entry,
-        prev: i >= 0 ? featured[(i - 1 + n) % n] : null,
-        next: i >= 0 ? featured[(i + 1) % n] : null,
-      },
-    };
-  });
+  return projects.map((entry, i) => ({
+    params: { slug: slugOf(entry) },
+    props: { entry, prev: projects[i - 1], next: projects[i + 1] },
+  }));
 }
 
-interface Props {
-  entry: Project;
-  prev: Project | null;
-  next: Project | null;
-}
-
+interface Props { entry: Project; prev?: Project; next?: Project }
 const { entry, prev, next } = Astro.props;
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const ed = ui.editorial;
 const { data } = entry;
 const { Content } = await render(entry);
-
-const images = projectImages(entry);
+const slug = slugOf(entry);
 const title = shortTitle(entry);
 const subtitle = subtitleOf(entry);
 const summary = summaryOf(entry);
 const role = clean(data.role);
 const stack = cleanList(data.stack);
+const client = data.clientNamePublic && clean(data.client);
 const highlights = cleanList(data.highlights);
 const results = cleanList(data.results);
-const demoUrl = clean(data.demoUrl);
-const repoUrl = clean(data.repoUrl);
-const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
+const demo = clean(data.demoUrl);
+const repo = clean(data.repoUrl);
+const links = [
+  ...(demo ? [{ label: ui.viewDemo, url: demo }] : []),
+  ...(data.links ?? []).filter(({ label, url }) => clean(label) && clean(url))
+    .map(({ label, url }) => ({ label: ui.view + ' ' + label + ' ↗', url })),
+  ...(repo ? [{ label: ui.viewCode, url: repo }] : []),
+];
+const variants = slug === 'floreria-catalogo'
+  ? [{ title: ed.rocio, variant: 'rocio' }, { title: ed.ornella, variant: 'ornella' }]
+  : [{ title, variant: undefined }];
+const gallery = variants.flatMap(({ title, variant }) => [false, true].map((alternate) => ({
+  ...projectImages(entry, { variant, alternate }),
+  full: alternate ? undefined : projectFullImages(entry,
+    slug === 'floreria-catalogo' && variant === 'rocio' ? { desktop: 'ornella', mobile: 'rocio' } :
+      { desktop: variant, mobile: variant }),
+  label: alternate ? title + ' · ' + ed.alternate : title,
+}))).filter(({ desktop, mobile }) => desktop || mobile);
 ---
 
-<BaseLayout
-  title={`${shortTitle(entry)} — ${site.name}`}
-  description={descriptionOf(entry, routeLocale)}
-  ogImage={`/og/${slugOf(entry)}.png`}
-  ogImageAlt={`${data.title} — ${ui.caseStudyBy} ${site.name}`}
-  type="article"
-  locale={routeLocale}
->
-  <Header />
-  <main class="case" style={`--accent: ${data.accent}`}>
-    <section id="caso-hero" class="hero">
-      <a class="back" href={homeHref(routeLocale) + '#proyectos'}>{ui.allProjectsBack}</a>
-      <span class="badge" data-status={data.status}>{ui.status[data.status]}</span>
-      <h1>{title}</h1>
-      {subtitle && <p class="tagline">{subtitle}</p>}
-      {summary && <p class="lead">{summary}</p>}
-
-      <dl class="meta">
-        {role && <div><dt>{ui.role}</dt><dd>{role}</dd></div>}
-        <div><dt>{ui.statusLabel}</dt><dd>{ui.status[data.status]}</dd></div>
-        {stack.length > 0 && (
-          <div class="meta-stack">
-            <dt>{ui.stack}</dt>
-            <dd>
-              <ul class="chips">{stack.map((s) => <li>{s}</li>)}</ul>
-            </dd>
-          </div>
-        )}
+<BaseLayout title={`${title} — ${site.name}`} description={descriptionOf(entry, locale)}
+  ogImage={`/og/${slug}.png`} ogImageAlt={`${data.title} — ${ui.caseStudyBy} ${site.name}`} type="article" {locale}>
+  <Header {slug} />
+  <main class="wrap article" data-project={slug} data-status={data.status}>
+    <section class="article-hero" aria-labelledby="case-title">
+      <div class="sec-head">
+        <a class="link-arrow" href={homeHref(locale) + '#trabajos'}>{ui.allProjectsBack}</a>
+        <span class="status mono">{ui.status[data.status]}</span>
+      </div>
+      <h1 id="case-title">{title}</h1>
+      {subtitle && <p class="article-subtitle">{subtitle}</p>}
+      {summary && <p class="article-lead">{summary}</p>}
+      <dl class="article-meta mono">
+        <div><dt class="label">{ui.statusLabel}</dt><dd>{ui.status[data.status]}</dd></div>
+        {role && <div><dt class="label">{ui.role}</dt><dd>{role}</dd></div>}
+        {stack.length > 0 && <div><dt class="label">{ui.stack}</dt><dd>{stack.join(' · ')}</dd></div>}
+        {client && <div><dt class="label">{ed.client}</dt><dd>{client}</dd></div>}
       </dl>
-
-      {(demoUrl || repoUrl || links.length > 0) && (
-        <div class="links">
-          {demoUrl && (
-            <a class="btn btn-primary" href={demoUrl} target="_blank" rel="noopener noreferrer">{ui.viewDemo}</a>
-          )}
-          {links.map((l, i) => (
-            <a class:list={['btn', !demoUrl && i === 0 ? 'btn-primary' : 'btn-ghost']} href={l.url} target="_blank" rel="noopener noreferrer">
-              {ui.view} {l.label} ↗
-            </a>
-          ))}
-          {repoUrl && (
-            <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">{ui.viewCode}</a>
-          )}
-        </div>
+      {links.length > 0 && (
+        <ul class="article-links" role="list">
+          {links.map(({ label, url }) => <li><a class="link-arrow" href={url} target="_blank" rel="noopener">{label}</a></li>)}
+        </ul>
       )}
     </section>
 
-    <div class="wide">
-      <ProjectMedia
-        title={data.title}
-        accent={data.accent}
-        initials={initials(data.title)}
-        desktop={images.desktop}
-        mobile={images.mobile}
-        flow={data.flow}
-        variant="case"
-        eager
-      />
-    </div>
-
-    <section class="content">
-      {highlights.length > 0 && (
-        <div class="highlights">
-          <h2>{ui.highlights}</h2>
-          <ul>{highlights.map((h) => <li>{h}</li>)}</ul>
-        </div>
-      )}
-
-      <div class="prose">
-        <Content />
+    {gallery.length > 0 && (
+      <div class="gallery">
+        {gallery.map(({ desktop, mobile, label, full }, i) => (
+          <figure>
+            <DevicePair desktop={full?.desktop ?? desktop} mobile={full?.mobile ?? mobile}
+              fullDesktop={Boolean(full?.desktop)} fullMobile={Boolean(full?.mobile)} title={label} accent={data.accent} />
+            <figcaption class="fig mono">{ed.figure} {String(i + 1).padStart(2, '0')} · {label}</figcaption>
+          </figure>
+        ))}
       </div>
+    )}
+    {data.flow && <div class="article-diagram"><ProjectDiagram flow={data.flow} /></div>}
 
-      {results.length > 0 && (
-        <aside class="results" aria-labelledby="resultado-title">
-          <h2 id="resultado-title">{ui.results}</h2>
-          <ul>{results.map((r) => <li>{r}</li>)}</ul>
+    <div class="article-content">
+      <div class="prose"><Content /></div>
+      {(highlights.length > 0 || results.length > 0) && (
+        <aside class="article-notes">
+          {highlights.length > 0 && <div><h2>{ui.highlights}</h2><ul>{highlights.map((h) => <li>{h}</li>)}</ul></div>}
+          {results.length > 0 && <div><h2>{ui.results}</h2><ul>{results.map((r) => <li>{r}</li>)}</ul></div>}
         </aside>
       )}
-    </section>
+    </div>
 
-    <section id="caso-cta" class="cta" aria-labelledby="cta-title">
-      <h2 id="cta-title">{ui.caseCta}</h2>
+    <section class="article-cta" id="caso-cta" aria-labelledby="cta-title">
+      <h2 class="h2" id="cta-title">{ui.caseCta}</h2>
       <p>{ui.caseCtaBody}</p>
-      <a class="btn btn-primary btn-lg" href={projectWhatsappHref(entry, routeLocale)} target="_blank" rel="noopener noreferrer">
-        {ui.whatsappCta}
-      </a>
+      <WhatsAppLink href={projectWhatsappHref(entry, locale)} />
     </section>
-
     <nav class="pager" aria-label={ui.otherProjects}>
-      {prev ? (
-        <a class="pager-link" href={caseHref(slugOf(prev), routeLocale)} rel="prev">
-          <span class="pager-dir">{ui.previous}</span>
-          <span class="pager-title">{shortTitle(prev)}</span>
-        </a>
-      ) : (
-        <a class="pager-link" href={homeHref(routeLocale) + '#proyectos'}>
-          <span class="pager-dir">←</span>
-          <span class="pager-title">{ui.allProjects}</span>
-        </a>
-      )}
-      {next && (
-        <a class="pager-link pager-next" href={caseHref(slugOf(next), routeLocale)} rel="next">
-          <span class="pager-dir">{ui.next}</span>
-          <span class="pager-title">{shortTitle(next)}</span>
-        </a>
-      )}
+      {prev && <a href={caseHref(slugOf(prev), locale)} rel="prev"><span class="label">{ui.previous}</span>{shortTitle(prev)}</a>}
+      {next && <a href={caseHref(slugOf(next), locale)} rel="next"><span class="label">{ui.next}</span>{shortTitle(next)}</a>}
     </nav>
   </main>
   <Footer />
-  <StickyCta after="#caso-hero" until="#caso-cta" message={ui.projectMessage.replace('{title}', shortTitle(entry))} />
 </BaseLayout>
 
 <style>
-  .tagline { margin: 0.25rem 0; }
-  .case {
-    padding: var(--space-xl) var(--pad-desktop) var(--space-2xl);
-  }
-
-  .hero,
-  .wide,
-  .content,
-  .cta,
-  .pager {
-    max-width: 960px;
-    margin-inline: auto;
-  }
-
-  .hero {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-  }
-
-  .back {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--color-accent);
-    text-decoration: none;
-  }
-
-  .back:hover {
-    text-decoration: underline;
-  }
-
-  h1 {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(2.25rem, 6vw, 4.25rem);
-    line-height: 1.04;
-    letter-spacing: -0.03em;
-    color: var(--color-text-primary);
+  .article { --acc: var(--ink); padding-block: var(--space-lg); }
+  .article-hero h1 {
+    font-size: clamp(50px, 9vw, 136px);
+    letter-spacing: -.055em;
+    line-height: .94;
+    margin-block: var(--space-md);
     overflow-wrap: anywhere;
   }
-
-  .lead {
-    max-width: 62ch;
-    font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
-    line-height: 1.55;
-    color: var(--color-text-secondary);
-  }
-
-  .meta {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--space-md) var(--space-lg);
-    width: 100%;
-    margin-top: var(--space-sm);
-    padding-block: var(--space-md);
-    border-block: 1px solid rgb(0 0 0 / 0.1);
-  }
-
-  .meta dt {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-  }
-
-  .meta dd {
-    margin-top: 0.2rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
-  .meta-stack {
-    grid-column: 1 / -1;
-  }
-
-  .meta-stack dd {
-    margin-top: 0.5rem;
-  }
-
-  .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .wide {
-    margin-block: var(--space-xl);
-  }
-
-  /* --- Contenido --- */
-  .content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
-  }
-
-  .highlights h2,
-  .results h2 {
-    margin-bottom: var(--space-sm);
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: 1.5rem;
-    letter-spacing: -0.02em;
-  }
-
-  .highlights ul,
-  .results ul {
-    display: grid;
-    gap: 0.6rem;
-    padding-left: 1.25rem;
-  }
-
-  .highlights li::marker {
-    color: var(--color-accent);
-  }
-
-  .prose {
-    max-width: 68ch;
-    line-height: 1.7;
-    color: var(--color-text-primary);
-  }
-
-  .prose :global(h2) {
-    margin: var(--space-xl) 0 var(--space-sm);
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-  }
-
-  .prose :global(h2:first-child) {
-    margin-top: 0;
-  }
-
-  .prose :global(p + p),
-  .prose :global(p + ul),
-  .prose :global(ul + p) {
-    margin-top: var(--space-md);
-  }
-
-  .prose :global(ul) {
-    display: grid;
-    gap: 0.5rem;
-    padding-left: 1.25rem;
-  }
-
-  .prose :global(em) {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-size: 1.1em;
-  }
-
-  .prose :global(code) {
-    padding: 0.1rem 0.35rem;
-    border-radius: 6px;
-    background: var(--color-bg-hero-to);
-    font-size: 0.9em;
-  }
-
-  /* Bloque de aclaración visible (p. ej. limitación del valuador) */
-  .prose :global(blockquote) {
-    margin: var(--space-md) 0;
-    padding: var(--space-md) var(--space-lg);
-    border: 2px solid #111;
-    border-left-width: 8px;
-    border-left-color: var(--accent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--accent) 16%, #fff);
-    box-shadow: 0 4px 0 #000;
-    font-weight: 500;
-  }
-
-  .results {
-    padding: var(--space-lg);
-    border: 2px solid #111;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--accent) 22%, #fff);
-    box-shadow: 0 5px 0 #000;
-  }
-
-  .results ul {
-    list-style: none;
-    padding-left: 0;
-    font-size: 1.1875rem;
-    font-weight: 600;
-  }
-
-  .results li::before {
-    content: '✓';
-    margin-right: 0.5rem;
-  }
-
-  /* --- CTA y navegación --- */
-  .cta {
-    margin-top: var(--space-2xl);
-    padding: var(--space-xl) var(--space-lg);
-    border-radius: 24px;
-    background: var(--color-bg-contact);
-    color: var(--color-text-contact);
-    text-align: center;
-  }
-
-  .cta h2 {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  .cta p {
-    margin: var(--space-sm) 0 var(--space-lg);
-    color: var(--color-text-contact);
-    opacity: 0.85;
-  }
-
-  .pager {
+  .article-subtitle { font-size: clamp(22px, 3vw, 36px); line-height: 1.2; }
+  .article-lead { margin-top: var(--space-sm); max-width: 57ch; color: var(--ink-2); }
+  .article-meta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-md);
-    margin-top: var(--space-xl);
-  }
-
-  .pager-link {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: var(--space-md);
-    border: 2px solid #111;
-    border-radius: 14px;
-    text-decoration: none;
-    color: var(--color-text-primary);
-  }
-
-  .pager-next {
-    text-align: right;
-    grid-column: 2;
-  }
-
-  .pager-dir {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-  }
-
-  .pager-title {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: 1.125rem;
+    gap: var(--space-sm) var(--space-md);
+    border-block: 1px solid var(--rule);
+    padding-block: var(--space-sm);
+    margin-block: var(--space-md) 0;
     overflow-wrap: anywhere;
   }
-
-  @media (hover: hover) {
-    .pager-link:hover {
-      background: var(--color-bg-hero-to);
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .case {
-      padding-inline: var(--pad-tablet);
-    }
-  }
-
-  @media (max-width: 699px) {
-    .case {
-      padding: var(--space-lg) var(--pad-mobile) var(--space-xl);
-    }
-
-    .cta {
-      padding-inline: var(--pad-mobile);
-    }
-
-    .pager {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .pager-next {
-      grid-column: auto;
-    }
+  .article-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-md); margin: 0; padding: 0; list-style: none; }
+  .gallery, .article-diagram, .article-content { margin-block: var(--space-lg); }
+  .gallery { display: grid; gap: var(--space-md); }
+  .article-diagram { max-width: 900px; }
+  .article-content { display: grid; gap: var(--space-lg); }
+  .prose { max-width: 67ch; line-height: 1.65; overflow-wrap: anywhere; }
+  .prose :global(h2), .article-notes h2 { font-size: clamp(24px, 4vw, 38px); line-height: 1.13; letter-spacing: -.035em; }
+  .prose :global(h2:not(:first-child)) { margin-top: var(--space-lg); }
+  .prose :global(p), .prose :global(ul) { margin-top: var(--space-sm); }
+  .prose :global(ul), .article-notes ul { padding-inline-start: 20px; }
+  .prose :global(a) { display: inline-flex; align-items: center; min-height: 44px; }
+  .prose :global(code) { font-family: var(--mono); background: var(--paper-2); }
+  .prose :global(blockquote) { margin-inline: 0; padding: var(--space-sm); border-left: 2px solid var(--ink); }
+  .article-notes { border-top: 1px solid var(--rule); padding-top: var(--space-md); }
+  .article-notes > div + div { margin-top: var(--space-md); }
+  .article-cta { border-top: 1px solid var(--ink); padding-block: var(--space-md) var(--space-lg); }
+  .article-cta h2 { max-width: 17ch; }
+  .article-cta p { margin-top: var(--space-sm); }
+  .article-cta .btn-wa { margin-top: var(--space-md); }
+  .pager { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--rule); gap: var(--space-sm); }
+  .pager a { display: grid; align-content: start; min-height: 44px; padding-block: var(--space-sm); text-decoration: none; }
+  .pager a:hover { text-decoration: underline; }
+  .pager a[rel="next"] { grid-column: 2; text-align: right; }
+  @media (min-width: 1024px) {
+    .article-meta { grid-template-columns: repeat(4, minmax(0, 1fr)); padding-block: var(--space-md); }
+    .article-content { grid-template-columns: var(--grid); gap: var(--column-gap); }
+    .prose { grid-column: 1 / span 7; }
+    .article-notes { grid-column: 9 / span 4; }
   }
 </style>

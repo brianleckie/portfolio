@@ -1,240 +1,100 @@
 ---
 import { t } from '../i18n/ui';
-import { localeOf } from '../i18n/routes';
-import { FILTER_IDS, getFeatured, getOthers } from '../lib/projects';
-import ProjectCard from './ProjectCard.astro';
-import ProjectMini from './ProjectMini.astro';
+import { caseHref, localeOf } from '../i18n/routes';
+import { getFeatured, getOthers, shortTitle, slugOf, subtitleOf, summaryOf } from '../lib/projects';
+import { projectFullImages, projectImages } from '../lib/project-images';
+import { clean, cleanList } from '../lib/todo';
+import DevicePair from './DevicePair.astro';
+import ProjectDiagram from './ProjectDiagram.astro';
 
-const featured = await getFeatured();
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const ed = ui.editorial;
+const number = (n: number) => String(n).padStart(2, '0');
+const titles: Record<string, string> = { 'floreria-catalogo': ed.florists, 'dashboard-iot': ed.iot };
+const featured = (await getFeatured()).map((project, i) => {
+  const slug = slugOf(project);
+  return {
+    project, slug, n: number(i + 1), title: titles[slug] ?? shortTitle(project),
+    href: caseHref(slug, locale), images: projectImages(project),
+  };
+});
 const others = await getOthers();
-const ui = t(localeOf(Astro.currentLocale));
 ---
 
-<section id="proyectos" class="section" aria-labelledby="proyectos-title">
-  <div class="section-inner">
-    <header class="head">
-      <h2 id="proyectos-title" class="section-title">{ui.projects}</h2>
-      <p class="section-lead">
-        {ui.projectsLead}
-      </p>
-    </header>
-
-    <!-- Los filtros solo aparecen cuando corre JS (sin JS se ven todos los proyectos) -->
-    <div id="filters-wrap" hidden>
-      <div class="filters" role="group" aria-label={ui.categoryFilters}>
-        {FILTER_IDS.map((id) => (
-          <button type="button" class="chip" data-filter={id} aria-pressed={id === 'all' ? 'true' : 'false'}>
-            {ui.filters[id]}
-          </button>
+<section class="sec" id="trabajos" aria-labelledby="work-title">
+  <div class="wrap" id="proyectos">
+    <div class="sec-head"><span class="label">{ed.selected}</span><span class="label">{ed.cases.replace('{count}', number(featured.length))}</span></div>
+    <div class="proj-head">
+      <h2 class="h2" id="work-title">{ed.work}</h2>
+      <ol class="toc" role="list">
+        {featured.map(({ slug, n, title }) => (
+          <li><a href={'#c-' + slug}><span class="mono">{n}</span><span>{title}</span></a></li>
         ))}
-      </div>
+      </ol>
     </div>
-    <p id="filter-status" data-one={ui.filterOne} data-many={ui.filterMany} class="sr-only" role="status" aria-live="polite"></p>
-
-    <div id="featured-block">
-      <ul class="featured-grid">
-        {featured.map((p, i) => (
-          <li data-cats={p.data.category.join(' ')} data-group="featured">
-            <ProjectCard project={p} eager={i === 0} />
+    <ol class="cases" role="list">
+      {featured.map(({ project, slug, n, title, href, images }) => {
+        const { data } = project;
+        const role = clean(data.role);
+        const stack = cleanList(data.stack).slice(0, 3).join(' · ');
+        const florists = slug === 'floreria-catalogo';
+        const flow = data.flow;
+        const full = projectFullImages(project);
+        const textOnly = !images.desktop && !images.mobile && !flow;
+        const summary = summaryOf(project);
+        const status = ui.status[data.status];
+        const link = <a class="case-link" {href} aria-label={ed.viewCase + ' · ' + title}>{ed.viewCase} →</a>;
+        return (
+          <li class:list={['case', textOnly && 'text-only']} id={'c-' + slug} data-project={slug} data-status={data.status}>
+            <div class="case-body">
+              <div class="case-top"><span class="num">{n}</span><span class="status mono">{status}</span></div>
+              <h3>{title}</h3>
+              {!textOnly && <p class="desc">{slug === 'mbarete' && <><strong>{cleanList(data.results)[0]}</strong>{' '}</>}{summary}</p>}
+              {(role || stack) && <dl class="meta">
+                {role && <><dt>{ui.role}</dt><dd>{role}</dd></>}
+                {stack && <><dt>{ui.stack}</dt><dd>{stack}</dd></>}
+              </dl>}
+            </div>
+            {textOnly ? (
+              <div class="text-aside"><p>{summary}</p>{link}</div>
+            ) : flow && !images.desktop && !images.mobile ? (
+              <div class="flow-wrap">
+                <ProjectDiagram flow={flow} note={slug === 'ecodespensa' ? ed.ecoNote : undefined} />
+                <div class="fig mono"><span>{ed.figure} {n} · {status}</span>{link}</div>
+              </div>
+            ) : (
+              <figure class="media featured-shot">
+                <DevicePair desktop={full.desktop ?? images.desktop} mobile={full.mobile ?? images.mobile}
+                  fullDesktop={Boolean(full.desktop)} fullMobile={Boolean(full.mobile)} {title} accent={data.accent} />
+                <figcaption class="fig mono"><span>{ed.figure} {n} · {florists ? ed.floristsCaption : status}</span>{link}</figcaption>
+              </figure>
+            )}
           </li>
-        ))}
-      </ul>
-    </div>
-
-    <div id="more-block" class="more">
-      <h3 class="more-title">{ui.moreProjects}</h3>
-      <ul class="mini-grid">
-        {others.map((p) => (
-          <li data-cats={p.data.category.join(' ')} data-group="more">
-            <ProjectMini project={p} />
-          </li>
-        ))}
-      </ul>
-    </div>
-
-    <p id="projects-empty" class="empty" hidden>
-      {ui.noProjects}
-      <button type="button" class="link-btn" data-filter="all">{ui.viewAll}</button>
-    </p>
+        );
+      })}
+    </ol>
   </div>
 </section>
 
-<style>
-  .head {
-    margin-bottom: var(--space-lg);
-  }
-
-  /* --- Filtros --- */
-  .filters {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: var(--space-lg);
-    padding: 0.35rem 0.25rem 0.5rem;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-
-  .filters::-webkit-scrollbar {
-    display: none;
-  }
-
-  .chip {
-    flex-shrink: 0;
-    scroll-snap-align: start;
-    min-height: 44px;
-    padding: 0 1.1rem;
-    border: 2px solid #111;
-    border-radius: 999px;
-    background: #fff;
-    font-family: inherit;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: background-color 0.15s, color 0.15s;
-  }
-
-  .chip[aria-pressed='true'] {
-    background: #111;
-    color: #fff;
-  }
-
-  @media (hover: hover) {
-    .chip[aria-pressed='false']:hover {
-      background: var(--color-bg-hero-to);
-    }
-  }
-
-  /* --- Destacados --- */
-  .featured-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-xl) var(--space-lg);
-    list-style: none;
-  }
-
-  /* --- Más proyectos --- */
-  .more {
-    margin-top: var(--space-2xl);
-  }
-
-  .more-title {
-    margin-bottom: var(--space-md);
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    letter-spacing: -0.02em;
-  }
-
-  .mini-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-md);
-    padding-bottom: 4px; /* sombra dura de las cards */
-    list-style: none;
-  }
-
-  .empty {
-    padding: var(--space-lg);
-    border: 2px dashed rgb(0 0 0 / 0.25);
-    border-radius: 16px;
-    text-align: center;
-    color: var(--color-text-secondary);
-  }
-
-  .link-btn {
-    margin-left: 0.5rem;
-    border: 0;
-    background: none;
-    font: inherit;
-    font-weight: 600;
-    color: var(--color-accent);
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
-
-  @media (max-width: 1024px) {
-    .mini-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 699px) {
-    .featured-grid {
-      grid-template-columns: minmax(0, 1fr);
-      gap: var(--space-lg); /* las medias 16/10 ya separan visualmente cada proyecto */
-    }
-
-    .mini-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    /* La fila de chips sangra hasta el borde: sin overflow de página */
-    .filters {
-      margin-inline: calc(var(--pad-mobile) * -1);
-      padding-inline: var(--pad-mobile);
-      scroll-padding-inline: var(--pad-mobile);
-    }
-  }
-</style>
-
-<script>
-  const VALID = ['web', 'sistemas', 'integraciones', 'it', 'academico'];
-
-  const root = document.getElementById('proyectos');
-  const filtersWrap = document.getElementById('filters-wrap');
-  const featuredBlock = document.getElementById('featured-block');
-  const moreBlock = document.getElementById('more-block');
-  const empty = document.getElementById('projects-empty');
-  const status = document.getElementById('filter-status');
-  const chips = Array.from(document.querySelectorAll<HTMLElement>('[data-filter].chip'));
-  const items = Array.from(document.querySelectorAll<HTMLElement>('#proyectos li[data-cats]'));
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  function applyFilter(raw: string, { scroll = false } = {}) {
-    const filter = VALID.includes(raw) ? raw : 'all';
-
-    chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.filter === filter)));
-
-    const shown = { featured: 0, more: 0 };
-    items.forEach((li) => {
-      const match = filter === 'all' || (li.dataset.cats ?? '').split(' ').includes(filter);
-      li.hidden = !match;
-      if (match) shown[li.dataset.group === 'featured' ? 'featured' : 'more']++;
-    });
-
-    if (featuredBlock) featuredBlock.hidden = shown.featured === 0;
-    if (moreBlock) moreBlock.hidden = shown.more === 0;
-    const total = shown.featured + shown.more;
-    if (empty) empty.hidden = total > 0;
-    if (status) {
-      status.textContent = total === 1 ? status.dataset.one ?? '' : (status.dataset.many ?? '').replace('{count}', String(total));
-    }
-
-    const url = new URL(window.location.href);
-    if (filter === 'all') url.searchParams.delete('cat');
-    else url.searchParams.set('cat', filter);
-    history.replaceState(null, '', url);
-
-    if (scroll && root) {
-      root.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
-    }
-  }
-
-  if (root && filtersWrap) {
-    filtersWrap.hidden = false;
-    chips.forEach((c) => c.addEventListener('click', () => applyFilter(c.dataset.filter ?? 'all')));
-    empty?.querySelector<HTMLElement>('[data-filter]')?.addEventListener('click', () => applyFilter('all'));
-
-    // Teclas del hero y links de Servicios emiten `kb:filter`
-    document.addEventListener('kb:filter', (e) => {
-      applyFilter((e as CustomEvent<{ filter: string }>).detail.filter, { scroll: true });
-    });
-
-    // Estado inicial desde ?cat=
-    const initial = new URL(window.location.href).searchParams.get('cat');
-    if (initial) applyFilter(initial);
-  }
-</script>
+<section class="sec" id="mas" aria-labelledby="more-title">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">{ed.archive}</span><span class="label">{ed.more.replace('{count}', number(others.length))}</span></div>
+    <div class="more-grid">
+      <h2 class="h2" id="more-title">{ui.moreProjects}</h2>
+      <ul class="more" role="list">
+        {others.map((project) => {
+          const slug = slugOf(project);
+          const external = slug === 'cpo-tech' ? clean(project.data.links?.[0]?.url) : null;
+          return <li data-project={slug} data-status={project.data.status}>
+            <a href={external ?? caseHref(slug, locale)} target={external ? '_blank' : undefined} rel={external ? 'noopener' : undefined}>
+              <strong>{titles[slug] ?? shortTitle(project)}</strong>
+              <span class="d">{external ? ed.homeCpo : subtitleOf(project) ?? summaryOf(project)}</span>
+              <span class="go" aria-hidden="true">{external ? '↗' : '→'}</span>
+            </a>
+          </li>;
+        })}
+      </ul>
+    </div>
+  </div>
+</section>

@@ -15,15 +15,15 @@ npm run shots          # capturas de las demos (corre en tu máquina, ver abajo)
 npm run todos          # lista los TODO: pendientes de config y proyectos
 ```
 
-Playwright usa el Chromium de `npx playwright install chromium` (o el de `PLAYWRIGHT_BROWSERS_PATH`).
+Playwright usa el Chromium de `npx playwright install chromium`.
 
 ## Dónde cambiar WhatsApp, email, redes y URL
 
-Todo está en **`src/config/site.ts`**: nombre, WhatsApp (formato E.164 sin `+`), mensaje por defecto, email, GitHub, LinkedIn, Instagram, `showDesignCredit`, `showPrices` y **`url`** (la URL pública del sitio).
+Todo está en **`src/config/site.ts`**: nombre, WhatsApp (formato E.164 sin `+`), mensaje por defecto, email, GitHub, LinkedIn, Instagram y **`url`** (la URL pública del sitio).
 
 - Un valor vacío o que empiece con `TODO:` hace que esa pieza **no se renderice**; el sitio nunca muestra "TODO".
 - `url` es el único lugar con el dominio: de ahí salen `site` de `astro.config.mjs`, los canonical, las imágenes Open Graph, el sitemap, `robots.txt` y el JSON-LD. Al cambiar de dominio se edita **una línea**.
-- Los servicios (títulos, textos, `fromPrice` opcional) están en `src/config/services.ts`. Los precios solo se muestran si `showPrices: true` y el servicio tiene `fromPrice`.
+- Los servicios se ordenan en `src/config/services.ts` y sus textos están en el diccionario de UI.
 
 ## Agregar un proyecto
 
@@ -41,7 +41,7 @@ links:
 
 `preview` elige qué captura va en cada marco cuando el proyecto tiene varios sitios (ver abajo): `preview: { desktop: ornella, mobile: rocio }`.
 
-`flow` es para proyectos **sin interfaz gráfica** (backend, integraciones, modelos): en lugar del placeholder muestra un diagrama "Cómo funciona" (3–4 pasos, con ramas opcionales). Solo se usa si el proyecto no tiene capturas, y todo su texto tiene que salir de datos reales del proyecto (el schema rechaza `TODO` y `%`, y `check:layout` exige que cada palabra y número esté en el `.md`):
+`flow` es para proyectos **sin interfaz gráfica** (backend, integraciones, modelos): en lugar del placeholder muestra un diagrama "Cómo funciona" (3–4 pasos, con ramas opcionales). Su texto sale del frontmatter y el schema rechaza TODO y porcentajes en el diagrama.
 
 ```yaml
 flow:
@@ -60,11 +60,16 @@ flow:
 
 Reglas: el estado se muestra tal cual (nunca se mejora); `results` solo con datos reales; `clientNamePublic: false` hasta tener permiso del cliente. Cualquier campo o párrafo que empiece con `TODO:` se oculta (y un heading que quede vacío también). Los destacados (`featured: true`) se ordenan por `order`.
 
+## Diseño Editorial
+
+La maqueta aprobada está en `docs/design/editorial/`. Los estilos compartidos viven en `src/styles/`. La home organiza los trabajos en casos destacados y archivo. Los enlaces antiguos con `?cat=` llevan a la misma home con todos los trabajos.
+
 ## Capturas de las demos (`npm run shots`)
 
 ```bash
 npm run shots                # todos los proyectos con demoUrl
 npm run shots -- mbarete     # solo algunos slugs
+npm run shots -- --full-only mbarete  # solo las vistas de página completa
 ```
 
 Captura cada sitio (`demoUrl` y cada `links[].url`) a 1440×900 y 390×844 (deviceScaleFactor 2), convierte a WebP con `sharp` y guarda en `src/assets/projects/<slug>/`:
@@ -74,24 +79,24 @@ Captura cada sitio (`demoUrl` y cada `links[].url`) a 1440×900 y 390×844 (devi
 
 Si el `.md` tiene `cover`/`coverMobile`, esa imagen manual tiene prioridad. También podés soltar capturas propias con esos nombres: para que queden parejas, **desktop ≈2,2:1** (ej. 1440×655) y **mobile ≈9:16 a 9:19,5** (ej. 738×1326 o 390×844 a @2x); otra proporción se recorta desde arriba sin deformarse.
 
-La card muestra siempre una escena 16/10 con navegador y teléfono (en mobile, el teléfono asoma recortado por abajo). Sin ninguna imagen, muestra un placeholder con el color y las iniciales del proyecto.
+La home muestra capturas grandes en AVIF y WebP. En escritorio se pueden ver juntas las vistas de escritorio y celular. En mobile se muestra la de celular, con Rocío y Ornella lado a lado. El caso incluye todas las vistas disponibles. Para agregar una galería secundaria, usá `desktop-alt.webp` y `mobile-alt.webp`, o `desktop-alt-<clave>.webp` y `mobile-alt-<clave>.webp` en proyectos con variantes.
+
+Las vistas de página completa se guardan como `mobile-full.webp` y `desktop-full.webp`, con sufijo del sitio cuando corresponde. Se capturan a 390 y 1440 px de viewport y se limitan a 6.000 y 5.000 px CSS de alto. Mbarete usa el panel de la demo pública para estas vistas.
 
 El script necesita salida a internet hacia las demos, así que se corre en tu máquina (en el entorno de cloud de Claude Code las demos están bloqueadas por la política de red).
 
 ## Imágenes Open Graph
 
-Se generan en el build (`src/pages/og/[slug].png.ts`): una por proyecto (`/og/<slug>.png`) y una para la home (`/og/home.png`), de 1200×630. Usan `satori` (SVG) + `@resvg/resvg-js` (PNG), que corren en Vercel sin servidor. Fuentes: `src/assets/fonts/Satoshi-Black.ttf`, Inter y Instrument Serif desde `@fontsource` (`woff`; satori no lee `woff2`). Son de colores planos para que pesen < 300 KB, porque WhatsApp ignora previews pesados.
+Se generan en el build (`src/pages/og/[slug].png.ts`): una por proyecto (`/og/<slug>.png`) y una para la home (`/og/home.png`), de 1200×630. Usan `satori` (SVG) + `@resvg/resvg-js` (PNG), que corren en Vercel sin servidor. Fuentes: `src/assets/fonts/Satoshi-Black.ttf`, Inter desde `@fontsource` (`woff`; satori no lee `woff2`). Son de colores planos para que pesen < 300 KB, porque WhatsApp ignora previews pesados.
 
 ## Verificación
 
-`npm run build && npm run check:layout` levanta `astro preview` y revisa, con Playwright:
+`npm run typecheck` verifica los tipos. `npm run build && npm run check:layout` sirve el build en local y usa Chromium con Playwright.
 
-- la home en 1440×810, 1440×1002, 1024×768, 768×1024, 390×844 y 360×740, y las 15 páginas de proyecto en 390×844 y 1440×810: sin overflow horizontal, cero errores de consola, cero 404;
-- teclado en arco: composición centrada (±4px), sin teclas superpuestas (SAT sobre polígonos rotados), cada tecla recibe el click en todo su interior (Enter incluido), lado ≥ 56px a 360 y 390, captions de 0px o ≥ 10px, fold completo a 1440×810, animación muestreada cada 50 ms (las 10 teclas, nunca 2 a la vez, ninguna trabada > 1 s);
-- hero: línea "Encarnación, Paraguay" sobre el titular, botón "Escribime por WhatsApp" solo en mobile (<700px) dentro del primer pantallazo y sticky CTA recién después del hero;
-- marquee: `translateX` siempre en `[-anchoGrupo, 0]`; `prefers-reduced-motion` sin movimiento;
-- filtros desde teclas, chips y Servicios, con `?cat=` en la URL;
-- CTA sticky mobile, links (`wa.me` con número y `text`, `mailto`, sin `href` vacío), SEO/OG/sitemap/robots y que no aparezca ningún `TODO`.
+- Home en seis tamaños, desde 360×740 hasta 1440×1002, y todos los casos en 390×844 y 1440×900. Verifica overflow, errores de consola, recursos e imágenes.
+- Índice de trabajos, nombre accesible y efecto de tipeo del título, navegación móvil, teléfono del hero, composiciones de dispositivos, reloj de Contacto, foco y movimiento reducido.
+- Texto principal desde 14px, enlaces de al menos 44×44, un CTA de WhatsApp durante el scroll, home de hasta 8.000px y comienzo del primer caso con un scroll a 390×844.
+- Rutas públicas, ausencia de drafts y TODO, estados, enlaces, SEO, Open Graph, robots y sitemap.
 
 Deja capturas en `.checks/` (no se versionan). Lighthouse mobile sobre el build:
 
@@ -108,7 +113,7 @@ Vercel detecta Astro solo. `vercel.json` fija `trailingSlash: true` para que las
 
 ## Créditos
 
-Diseño del hero inspirado en un prompt de ui.debbie (uso personal). Tipografías: Satoshi (Indian Type Foundry, licencia FFL en `public/fonts/Satoshi-LICENSE.txt`), Inter e Instrument Serif (self-hosted vía `@fontsource`).
+El sitio carga Schibsted Grotesk e IBM Plex Mono de forma local mediante `@fontsource`. Las imágenes Open Graph usan Satoshi e Inter.
 
 
 ### Idiomas y experiencia

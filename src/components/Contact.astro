@@ -1,131 +1,60 @@
 ---
-import { t } from '../i18n/ui';
 import { localeOf } from '../i18n/routes';
-import { site, whatsappHref, resolveValue } from '../config/site';
+import { t } from '../i18n/ui';
+import { site, resolveValue } from '../config/site';
+import WhatsAppLink from './WhatsAppLink.astro';
 
-const email = resolveValue(site.email);
-const hasWhatsapp = resolveValue(site.whatsapp) !== null;
-const locale = localeOf(Astro.currentLocale);
-const ui = t(locale);
+const ed = t(localeOf(Astro.currentLocale)).editorial;
+const channels = [
+  { label: ed.email, href: 'mailto:' + site.email, text: site.email, external: false },
+  ...[['GitHub', resolveValue(site.github)], ['LinkedIn', resolveValue(site.linkedin)]].flatMap(([label, href]) =>
+    label && href ? [{ label, href, text: new URL(href).pathname.split('/').filter(Boolean).at(-1), external: true }] : []),
+];
 ---
 
-<section id="contacto" class="contact section" aria-labelledby="contacto-title">
-  <div class="section-inner layout">
-    <h2 id="contacto-title">
-      <span class="line">{ui.contactHeading}</span>
-      <span class="line accent">{ui.contactAccent}</span>
-    </h2>
-
-    <div class="body">
-      <p>{ui.contactBody}</p>
-
-      <div class="actions">
-        {hasWhatsapp && (
-          <a class="btn btn-lg wa" href={whatsappHref(undefined, locale)} target="_blank" rel="noopener noreferrer">
-            {ui.whatsappCta}
-          </a>
-        )}
-        {email && <a class="mail" href={`mailto:${email}`}>{email}</a>}
+<section class="contact" id="contacto" aria-labelledby="contact-title">
+  <div class="wrap">
+    <div class="contact-plate">
+      <div class="sec-head"><span class="label">{ed.contactLabel}</span><span class="label">ES · EN</span></div>
+      <div class="contact-grid">
+        <div class="left">
+          <h2 class="h2" id="contact-title">{ed.contactTitle}</h2>
+          <p class="lead">{ed.contactBody}</p>
+          <WhatsAppLink inline />
+          <p class="localtime mono">
+            {ed.localTime} <b data-clock>--:--</b>.
+            <span data-mood data-night={ed.night} data-morning={ed.morning} data-work={ed.working} data-late={ed.late}></span>
+          </p>
+        </div>
+        <ul class="channels" role="list">
+          {channels.map(({ label, href, text, external }) => (
+            <li><a {href} target={external ? '_blank' : undefined} rel={external ? 'noopener' : undefined}>
+              <span class="label">{label}</span><span>{text}</span><i aria-hidden="true">{external ? '↗' : '→'}</i>
+            </a></li>
+          ))}
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<style>
-  .contact {
-    background-color: var(--color-bg-contact);
-    color: var(--color-text-contact);
-  }
-
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: var(--space-xl) var(--space-2xl);
-    align-items: end;
-    padding-block: var(--space-xl);
-  }
-
-  h2 {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: clamp(2.5rem, 6.5vw, 6rem);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-  }
-
-  .line {
-    display: block;
-  }
-
-  .accent {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-style: italic;
-    font-weight: 400;
-    color: var(--color-text-contact-link);
-  }
-
-  .body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
-
-  .body p {
-    max-width: 38ch;
-    font-size: clamp(1.125rem, 1.8vw, 1.375rem);
-    line-height: 1.55;
-  }
-
-  .actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
-  }
-
-  .wa {
-    background-color: var(--color-text-contact-link);
-    border-color: var(--color-text-contact-link);
-    color: var(--color-bg-contact);
-  }
-
-  .wa:hover {
-    background-color: #c9d0ff;
-    border-color: #c9d0ff;
-  }
-
-  .mail {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding-block: 0.5rem;
-    font-size: 1.0625rem;
-    font-weight: 500;
-    color: var(--color-text-contact-link);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    overflow-wrap: anywhere;
-  }
-
-  .mail:focus-visible,
-  .wa:focus-visible {
-    outline-color: var(--color-text-contact-link);
-  }
-
-  @media (max-width: 899px) {
-    .layout {
-      grid-template-columns: minmax(0, 1fr);
-      align-items: start;
+<script>
+  const clocks = document.querySelectorAll('[data-clock]');
+  const mood = document.querySelector<HTMLElement>('[data-mood]');
+  const format = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/Asuncion', hour: '2-digit', minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  function tick() {
+    const { hour, minute } = Object.fromEntries(
+      format.formatToParts(new Date()).map(({ type, value }) => [type, value]),
+    );
+    clocks.forEach((clock) => { clock.textContent = hour + ':' + minute; });
+    if (mood) {
+      const h = Number(hour);
+      mood.textContent = mood.dataset[h < 7 ? 'night' : h < 13 ? 'morning' : h < 20 ? 'work' : 'late'] ?? '';
     }
+    window.setTimeout(tick, 60000 - Date.now() % 60000);
   }
-
-  @media (max-width: 699px) {
-    .layout {
-      padding-block: var(--space-lg);
-    }
-
-    .wa {
-      width: 100%;
-    }
-  }
-</style>
+  tick();
+</script>

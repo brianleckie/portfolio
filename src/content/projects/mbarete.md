@@ -23,6 +23,7 @@ accent: "#ffc3a0"
 shots:
   default:
     waitFor: "#inicio h1"
+    stickyBottom: "nav.bottom-nav"
     alt:
       path: "https://app.mbarete.fit/?demo=1"
       click: 'body:has([role="status"]:text-matches("Estás entrando a la demo")) button:text-is("Ingresar")'

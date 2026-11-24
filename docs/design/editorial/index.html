@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brian Leckie · Desarrollador full-stack</title>
+<meta name="description" content="Brian Leckie (Leki), desarrollador full-stack en Encarnación, Paraguay. Sistemas de gestión, catálogos con pedido por WhatsApp e integraciones.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3efe6;
+  --paper-2:#ebe6da;
+  --card:#fbf9f4;
+  --ink:#17150f;
+  --ink-2:#3d3a33;
+  --muted:#5e594e;
+  --rule:#d6cfbf;
+  --rule-strong:#17150f;
+  --wa:#17150f;
+  --sans:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gut:16px;
+  --max:1312px;
+  /* acentos por proyecto (oscurecidos para AA sobre papel) */
+  --a-mbarete:#b8321b;
+  --a-flor:#a3214f;
+  --a-estacion:#2b6136;
+  --a-lhoney:#8a3a8f;
+  --a-eco:#1b6a60;
+  --a-avm:#38508a;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit}
+p{margin:0}
+h1,h2,h3{margin:0;font-weight:600}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--gut)}
+.mono{font-family:var(--mono);font-size:12px;line-height:1.45;letter-spacing:.02em}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+/* ---------- Header ---------- */
+.hdr{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule)}
+.hdr .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:-.01em;min-height:44px}
+.brand-key{width:26px;height:26px;border-radius:5px;background:#ff6b3d;box-shadow:0 2px 0 #c44a22;display:grid;place-items:center;font-size:14px;font-weight:700;color:#1a1410}
+.nav{display:none}
+.hdr-r{display:flex;align-items:center;gap:6px}
+.lang{display:flex;align-items:center;font-family:var(--mono);font-size:12px}
+.lang a{display:grid;place-items:center;min-width:44px;height:44px;text-decoration:none;color:var(--muted)}
+.lang a[aria-current]{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.lang span{color:var(--rule)}
+.hdr-wa{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;background:var(--ink);color:var(--paper);text-decoration:none;font-size:14px;font-weight:500;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .2s,transform .2s,visibility .2s;position:relative}
+.hdr-wa::after{content:"";position:absolute;inset:-2px -2px}
+.hdr-wa.on{opacity:1;visibility:visible;transform:none}
+.hdr-wa:not(.on){display:none}
+
+/* ---------- Hero ---------- */
+.hero{padding:24px 0 12px}
+.hero-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);flex-wrap:wrap}
+.clock b{font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.clock .sep{animation:blink 2s steps(1) infinite}
+@keyframes blink{50%{opacity:.2}}
+.ref-note{display:none;margin-top:16px;padding:12px 14px;border:1px solid var(--rule);background:var(--card);font-size:15px}
+.ref-note.on{display:block}
+.h1{font-size:clamp(76px,19.5vw,192px);line-height:.88;letter-spacing:-.055em;font-weight:600;margin:22px 0 0;margin-left:-.04em}
+.h1 span{display:block}
+.role{margin-top:18px;font-size:22px;line-height:1.25;letter-spacing:-.015em;font-weight:500}
+.role em{font-style:normal;color:var(--muted)}
+.intro{margin-top:14px;font-size:17px;color:var(--ink-2);max-width:34ch}
+.now{margin-top:22px;padding-top:14px;border-top:1px solid var(--rule);display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline}
+.now .label{padding-top:2px}
+.now p{font-size:15px;line-height:1.45}
+.now p span{white-space:nowrap}
+.now a{text-decoration-color:var(--rule);text-underline-offset:3px}
+.cta-row{margin-top:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.btn-wa{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 22px;border-radius:999px;background:var(--wa);color:var(--paper);text-decoration:none;font-size:16px;font-weight:500;letter-spacing:-.005em;transition:transform .15s}
+.btn-wa:hover{transform:translateY(-1px)}
+.btn-wa svg{width:18px;height:18px}
+.cta-row .link-arrow{display:none}
+.link-arrow{display:inline-flex;align-items:center;min-height:44px;font-size:15px;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:4px}
+
+/* ---------- Keyboard signature ---------- */
+.sig{margin-top:30px}
+.kb{display:grid;gap:7px;width:max-content;max-width:100%}
+.kb-row{display:flex;gap:5px}
+.kb-row.r1{padding-left:14px}
+.key{--face:#eee;--side:#bbb;--ink-k:#1a1410;position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:7px;background:var(--face);color:var(--ink-k);text-decoration:none;font-weight:700;font-size:18px;letter-spacing:0;box-shadow:0 4px 0 var(--side),0 6px 10px -4px rgba(23,21,15,.35);transform:translateY(0);transition:transform .07s ease-out,box-shadow .07s ease-out;-webkit-tap-highlight-color:transparent;user-select:none}
+.key::before{content:"";position:absolute;inset:3px 4px 5px;border-radius:5px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 60%);pointer-events:none}
+.key:hover{transform:translateY(1px);box-shadow:0 3px 0 var(--side),0 5px 8px -4px rgba(23,21,15,.35)}
+.key:active,.key.down{transform:translateY(4px);box-shadow:0 0 0 var(--side),0 1px 2px rgba(23,21,15,.3)}
+.key:focus-visible{outline-offset:5px}
+.key.enter{width:108px;justify-items:start;align-content:center;padding:0 10px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;gap:0}
+.key.enter i{font-style:normal;font-size:15px;line-height:1;justify-self:end;margin-top:-2px}
+.k-L{--face:#ff6b3d;--side:#c4471d}
+.k-E{--face:#ffc83d;--side:#c4951c}
+.k-K1{--face:#ff8fc8;--side:#c9679b}
+.k-I{--face:#276b4c;--side:#143f2c;--ink-k:#fff}
+.k-W{--face:#ffe2b5;--side:#cdac7c}
+.k-O{--face:#22b3a1;--side:#147a6d}
+.k-R{--face:#ff9a3d;--side:#c66d1c}
+.k-K2{--face:#8e3a6e;--side:#5a2246;--ink-k:#fff}
+.k-S{--face:#b48cff;--side:#8261cc}
+.k-EN{--face:#2a2140;--side:#0f0b19;--ink-k:#fff}
+.sig-cap{margin-top:14px;color:var(--muted);min-height:18px}
+.sig-cap b{color:var(--ink);font-weight:500}
+.hint-touch{display:inline}.hint-kbd{display:none}
+@media (min-width:1024px) and (hover:hover){.hint-touch{display:none}.hint-kbd{display:inline}}
+
+/* ---------- Sections ---------- */
+.sec{padding:36px 0 4px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--rule-strong);padding-top:12px}
+.h2{font-size:clamp(40px,7vw,96px);line-height:.95;letter-spacing:-.045em;margin-top:14px}
+
+/* ---------- Cases ---------- */
+.cases{list-style:none;margin:28px 0 0;padding:0}
+.case{--acc:var(--ink);border-top:1px solid var(--rule);padding:16px 0 28px}
+.case:first-child{border-top:0;padding-top:4px}
+.case-top{display:flex;justify-content:space-between;align-items:baseline}
+.num{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--acc)}
+.status{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+.status::before{content:"";width:7px;height:7px;background:var(--acc)}
+.case h3{font-size:clamp(34px,4.2vw,60px);line-height:1;letter-spacing:-.04em;margin-top:6px}
+.case .kicker{font-size:18px;line-height:1.3;letter-spacing:-.01em;font-weight:500;margin-top:8px}
+.case .desc{font-size:16px;color:var(--ink-2);margin-top:6px;max-width:46ch}
+.case .desc strong{font-weight:500;color:var(--ink)}
+.meta{display:grid;grid-template-columns:62px 1fr;gap:4px 12px;margin:14px 0 0;padding:0}
+.meta dt{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;line-height:20px}
+.meta dd{margin:0;font-family:var(--mono);font-size:13px;line-height:20px;color:var(--ink)}
+.case-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin:-12px 0 -12px;font-family:var(--sans);font-size:15px;color:var(--ink);font-weight:500;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:2px;text-underline-offset:5px}
+.media{margin-top:16px}
+.only-mob{display:inline}
+.frame{position:relative;background:var(--card);border:1px solid rgba(23,21,15,.16);overflow:hidden}
+.frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.frame.m{aspect-ratio:358/380}
+.frame.d{display:none;aspect-ratio:16/10}
+.fig{display:flex;justify-content:space-between;align-items:center;margin-top:8px;min-height:24px;color:var(--muted)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .frame.m{aspect-ratio:174/272}
+.case-body{display:block}
+.toc{display:none}
+.desk-only{display:none}
+
+/* Ecodespensa diagram */
+.flow{margin-top:20px;display:grid;gap:0;font-family:var(--mono)}
+.node{border:1px solid var(--ink);background:var(--card);padding:9px 12px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 10px}
+.node b{font-family:var(--sans);font-size:17px;font-weight:600;letter-spacing:-.01em}
+.node span{font-size:12px;color:var(--muted)}
+.node.iface{border-color:var(--acc);border-style:dashed;background:transparent;padding:10px 12px 12px}
+.node.iface b{color:var(--acc)}
+.ifs{flex-basis:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.ifs div{border:1px solid var(--acc);background:var(--card);padding:6px 8px;font-size:12px;color:var(--ink)}
+.ifs small{display:block;color:var(--muted);font-size:11px}
+.arrow{height:22px;display:grid;place-items:center;color:var(--acc);font-size:14px}
+.arrow::before{content:"↓"}
+.flow-note{margin-top:14px;font-size:15px;color:var(--ink-2);padding-left:12px;border-left:2px solid var(--acc);max-width:52ch}
+
+.case.text-only .case-body{display:block}
+
+/* ---------- More ---------- */
+.more{list-style:none;margin:20px 0 0;padding:0;border-top:1px solid var(--rule)}
+.more li{border-bottom:1px solid var(--rule)}
+.more a{display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:center;min-height:60px;padding:8px 0;text-decoration:none}
+.more strong{font-size:17px;line-height:1.3;font-weight:600;letter-spacing:-.01em}
+.more .d{grid-column:1;font-size:14px;color:var(--muted)}
+.more .go{grid-row:1/span 2;grid-column:2;font-family:var(--mono);font-size:14px;color:var(--muted)}
+.more a:hover strong{text-decoration:underline;text-underline-offset:4px}
+
+/* ---------- Experience ---------- */
+.cv{margin:24px 0 0;padding:0;list-style:none;border-top:1px solid var(--rule)}
+.cv li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:13px 0;border-bottom:1px solid var(--rule)}
+.cv li > *{grid-column:1/-1}
+.cv .what{grid-column:1;grid-row:1}
+.cv .when{grid-column:2;grid-row:1;align-self:baseline;text-align:right}
+.cv .when{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cv .what{font-size:18px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+.cv .org{font-size:15px;color:var(--ink)}
+.cv .org small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.cv .det{font-size:15px;color:var(--ink-2);margin-top:2px}
+.cv li.edu .what{font-weight:500}
+.cv-foot{display:none;flex-wrap:wrap;gap:4px 18px;margin-top:6px}
+
+/* ---------- Services ---------- */
+.svc-lead{font-size:22px;line-height:1.2;letter-spacing:-.02em;font-weight:500;margin-top:20px;max-width:22ch}
+.svc-lead + p{font-size:16px;color:var(--ink-2);margin-top:10px;max-width:46ch}
+.svc{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.svc li{display:block;padding:10px 0 14px;border-top:1px solid var(--rule)}
+.svc .n{display:block;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.svc b{display:block;line-height:1.25;margin-top:2px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.svc p{font-size:14px;line-height:1.4;color:var(--ink-2);margin-top:4px}
+
+/* ---------- Contact ---------- */
+.contact{padding:48px 0 32px}
+.contact .h2{max-width:11ch}
+.contact .lead{margin-top:16px;font-size:17px;color:var(--ink-2);max-width:40ch}
+.contact .btn-wa{margin-top:24px;width:100%;height:58px;font-size:17px}
+.channels{list-style:none;margin:28px 0 0;padding:0;border-top:1px solid var(--rule)}
+.channels a{display:grid;grid-template-columns:74px 1fr auto;align-items:center;min-height:56px;text-decoration:none;border-bottom:1px solid var(--rule);gap:8px}
+.channels .label{font-size:11px}
+.channels span:nth-child(2){font-size:15px;overflow-wrap:anywhere}
+.channels a:hover span:nth-child(2){text-decoration:underline;text-underline-offset:4px}
+.channels i{font-style:normal;font-family:var(--mono);color:var(--muted);font-size:13px}
+.localtime{margin-top:22px;color:var(--muted)}
+.localtime b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- Footer ---------- */
+.ftr{border-top:1px solid var(--rule-strong);padding:10px 0 24px}
+.ftr .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0 16px;color:var(--muted)}
+.ftr a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none}
+.ftr a:hover{color:var(--ink)}
+
+/* =========================================================
+   Desktop
+   ========================================================= */
+@media (min-width:760px){
+  :root{--gut:40px}
+  .frame.m{aspect-ratio:auto}
+}
+@media (min-width:1024px){
+  :root{--gut:64px}
+  body{font-size:18px}
+  .hdr .wrap{height:64px}
+  .nav{display:flex;gap:4px;font-size:15px}
+  .nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;text-decoration:none;color:var(--ink-2)}
+  .nav a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:5px}
+  html{scroll-padding-top:80px}
+
+  .hero{padding:36px 0 24px}
+  .h1{margin-top:44px}
+  .h1 span{display:inline}
+  .hero-grid{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;margin-top:40px;align-items:end}
+  .hero-l{grid-column:1/span 7}
+  .hero-r{grid-column:9/span 4;justify-self:end}
+  .role{font-size:30px;margin-top:0}
+  .intro{font-size:19px;max-width:40ch;margin-top:14px}
+  .now{grid-template-columns:auto 1fr;margin-top:28px;max-width:640px}
+  .now p{font-size:16px;white-space:nowrap}
+  .cta-row{margin-top:30px}
+  .cta-row .link-arrow{display:inline-flex}
+  .sig{margin-top:0}
+  .sig-cap{text-align:right}
+  .key{width:50px;height:50px;font-size:20px;border-radius:8px}
+  .key.enter{width:124px}
+  .kb{gap:8px}
+  .kb-row{gap:6px}
+  .kb-row.r1{padding-left:16px}
+
+  .sec{padding:80px 0 8px}
+  .only-mob{display:none}
+  .case-link{margin:0}
+  .sec-head{padding-top:14px}
+  .h2{margin-top:24px}
+  .proj-head{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:end}
+  .proj-head .h2{grid-column:1/span 6}
+  .desk-only{display:block}
+  .toc{display:block;grid-column:8/span 5;list-style:none;margin:0;padding:0;columns:2;column-gap:24px}
+  .toc li{break-inside:avoid}
+  .toc a{display:flex;gap:10px;min-height:44px;align-items:center;text-decoration:none;font-size:15px}
+  .toc a:hover span:last-child{text-decoration:underline;text-underline-offset:4px}
+  .toc .mono{color:var(--muted)}
+
+  .cases{margin-top:48px}
+  .case{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;padding:28px 0 72px}
+  .case:first-child{padding-top:28px;border-top:1px solid var(--rule)}
+  .case-body{grid-column:1/span 4;display:flex;flex-direction:column}
+  .case .media,.case .flow-wrap{grid-column:5/span 8;margin-top:0}
+  .case .kicker{font-size:22px;margin-top:10px}
+  .case .desc{font-size:18px;margin-top:12px;line-height:1.45}
+  .case .desc strong{display:block;font-size:24px;line-height:1.2;letter-spacing:-.015em;margin-bottom:10px}
+  .meta{margin-top:auto;padding-top:28px;grid-template-columns:72px 1fr}
+  .case h3{margin-top:14px}
+  .pair{display:grid;grid-template-columns:1fr .289fr;gap:16px;align-items:start}
+  .frame.d{display:block}
+  .frame.m{aspect-ratio:390/844}
+  .pair .fig{grid-column:1/-1}
+  .duo{display:none}
+  .media .only-m{display:none}
+
+  .flow{grid-template-columns:1fr 30px 1.5fr 30px 1.3fr 30px 1fr;align-items:stretch;margin-top:0}
+  .arrow{height:auto}
+  .arrow::before{content:"→"}
+  .node{padding:16px;display:block}
+  .node b{display:block}
+  .node span{display:block}
+  .node b{font-size:20px;margin-bottom:6px}
+  .flow-note{margin-top:20px}
+  .case.text-only{padding-bottom:56px}
+  .case.text-only .case-body{grid-column:1/span 4}
+  .case.text-only .side{grid-column:5/span 8;align-self:start}
+  .avm-desc{font-size:22px!important;line-height:1.35;color:var(--ink)!important;margin-top:44px!important;max-width:34ch!important}
+  .avm-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;border-top:1px solid var(--rule);padding-top:14px}
+  .avm-row p{font-size:16px;color:var(--ink-2)}
+
+  .more-grid{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px}
+  .more-grid .h2{grid-column:1/span 4;font-size:56px;margin-top:22px}
+  .more{grid-column:5/span 8;margin-top:24px}
+  .more a{grid-template-columns:220px 1fr auto;min-height:60px;padding:8px 0}
+  .more strong{font-size:20px}
+  .more .d{grid-column:2;font-size:16px}
+  .more .go{grid-row:1;grid-column:3}
+
+  .cv li > *{grid-column:auto;grid-row:auto}
+  .cv .what,.cv .when{grid-column:auto;grid-row:auto}
+  .cv .when{text-align:left}
+  .cv li{grid-template-columns:1.7fr 3.2fr 3.3fr 3.8fr;column-gap:24px;align-items:baseline;padding:18px 0}
+  .cv .when{font-size:13px}
+  .cv .what{font-size:20px}
+  .cv .org{font-size:16px}
+  .cv .det{font-size:16px;margin-top:0}
+  .cv-foot{margin-top:10px;display:flex}
+
+  .svc-grid{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px}
+  .svc-grid .left{grid-column:1/span 5}
+  .svc{grid-column:7/span 6;grid-template-columns:1fr 1fr;column-gap:24px;border-top:0;margin-top:24px}
+  .svc li{border-top:1px solid var(--rule);border-bottom:0;padding:16px 0 28px;display:grid;grid-template-columns:36px 1fr;gap:0 8px}
+  .svc li p{grid-column:2;font-size:16px}
+  .svc .n{padding-top:5px}
+  .svc-lead{font-size:30px;margin-top:28px}
+  .svc-lead + p{font-size:17px}
+
+  .contact{padding:120px 0 72px}
+  .contact-grid{display:grid;grid-template-columns:repeat(12,1fr);column-gap:24px;align-items:end}
+  .contact-grid .left{grid-column:1/span 7}
+  .contact-grid .right{grid-column:8/span 5}
+  .contact .h2{font-size:clamp(56px,8vw,120px)}
+  .contact .btn-wa{width:auto;padding:0 30px}
+  .channels{margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body id="top">
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Brian Leckie, inicio"><span class="brand-key" aria-hidden="true">L</span>Brian Leckie</a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#trabajos">Trabajos</a>
+      <a href="#experiencia">Experiencia</a>
+      <a href="#servicios">Cómo trabajo</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="hdr-r">
+      <div class="lang" aria-label="Idioma">
+        <a href="#" aria-current="true" lang="es">ES</a><span aria-hidden="true">/</span><a href="#" lang="en" hreflang="en">EN</a>
+      </div>
+      <a class="hdr-wa" id="hdrWa" href="https://wa.me/595983763890?text=Hola%20Brian%2C%20vi%20tu%20portfolio%20y%20quiero%20consultarte%20por%20un%20proyecto." target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-meta mono">
+      <span class="clock" aria-live="off"><b data-clock>21<span class="sep">:</span>34</b> en Encarnación, Paraguay</span>
+      <span>UTC−3</span>
+    </div>
+    <p class="ref-note" id="refNote">¿Llegaste desde el pie de un sitio que hice? Hola. Ese y otros están más abajo.</p>
+
+    <h1 class="h1"><span>Brian</span> <span>Leckie</span></h1>
+
+    <div class="hero-grid">
+      <div class="hero-l">
+        <p class="role">Desarrollador full-stack.</p>
+        <p class="intro">Hago sistemas de gestión, catálogos con pedido por WhatsApp e integraciones para negocios. Antes de cerrar nada, te muestro una demo funcionando.</p>
+        <div class="now">
+          <span class="label">Ahora</span>
+          <p>Software developer en Klien IT Systems (Países&nbsp;Bajos) · <span>Co-founder de CPO&nbsp;Tech</span></p>
+        </div>
+        <div class="cta-row">
+          <a class="btn-wa" id="heroWa" href="https://wa.me/595983763890?text=Hola%20Brian%2C%20vi%20tu%20portfolio%20y%20quiero%20consultarte%20por%20un%20proyecto." target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+            Escribime por WhatsApp
+          </a>
+          <a class="link-arrow" href="#trabajos">Ver trabajos ↓</a>
+        </div>
+      </div>
+
+      <div class="hero-r sig" aria-label="Firma: teclado LEKI WORKS. Cada tecla es un link.">
+        <div class="kb" id="kb">
+          <div class="kb-row r1">
+            <a class="key k-L" data-k="L" href="#trabajos" aria-label="L: Trabajos">L</a>
+            <a class="key k-E" data-k="E" href="#experiencia" aria-label="E: Experiencia">E</a>
+            <a class="key k-K1" data-k="K1" href="#servicios" aria-label="K: Cómo trabajo">K</a>
+            <a class="key k-I" data-k="I" href="#mas" aria-label="I: Más proyectos">I</a>
+          </div>
+          <div class="kb-row r2">
+            <a class="key k-W" data-k="W" href="https://github.com/brianleckie" target="_blank" rel="noopener" aria-label="W: GitHub">W</a>
+            <a class="key k-O" data-k="O" href="https://linkedin.com/in/brianleckie" target="_blank" rel="noopener" aria-label="O: LinkedIn">O</a>
+            <a class="key k-R" data-k="R" href="mailto:leckiebrian19@gmail.com" aria-label="R: Email">R</a>
+            <a class="key k-K2" data-k="K2" href="https://www.cpotech.com.py" target="_blank" rel="noopener" aria-label="K: CPO Tech">K</a>
+            <a class="key k-S" data-k="S" href="#" lang="en" aria-label="S: Switch to English">S</a>
+            <a class="key enter k-EN" data-k="ENTER" href="#contacto" aria-label="Enter: Hablemos"><i aria-hidden="true">↵</i>HABLEMOS</a>
+          </div>
+        </div>
+        <p class="sig-cap mono" id="sigCap"><span class="hint-touch">LEKI WORKS: cada tecla es un link.</span><span class="hint-kbd">Me dicen Leki. Tipeá L·E·K·I en tu teclado.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRABAJOS ================= -->
+<section class="sec" id="trabajos" aria-labelledby="t-trabajos">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">Trabajos seleccionados</span><span class="label">06 casos</span></div>
+    <div class="proj-head">
+      <h2 class="h2" id="t-trabajos">Trabajos</h2>
+      <ol class="toc">
+        <li><a href="#c-mbarete"><span class="mono">01</span><span>Mbarete</span></a></li>
+        <li><a href="#c-flor"><span class="mono">02</span><span>Florerías</span></a></li>
+        <li><a href="#c-estacion"><span class="mono">03</span><span>Estación de Carretera</span></a></li>
+        <li><a href="#c-lhoney"><span class="mono">04</span><span>Lhoney</span></a></li>
+        <li><a href="#c-eco"><span class="mono">05</span><span>Ecodespensa</span></a></li>
+        <li><a href="#c-avm"><span class="mono">06</span><span>AVM Gran Asunción</span></a></li>
+      </ol>
+    </div>
+
+    <ol class="cases">
+      <!-- 01 -->
+      <li class="case" id="c-mbarete" style="--acc:var(--a-mbarete)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">01</span><span class="status mono">En producción</span></div>
+          <h3>Mbarete</h3>
+          <p class="desc"><strong>Gestión para gimnasios. Lo usan 5 gimnasios en Argentina y Paraguay.</strong> Socios, cuotas, kiosco, cierre de caja y avisos por WhatsApp. Todos los gimnasios corren en una sola instancia.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Creador, full-stack</dd>
+            <dt>Stack</dt><dd>React · FastAPI · PostgreSQL</dd>
+          </dl>
+        </div>
+        <figure class="media" style="margin-left:0;margin-right:0;margin-bottom:0">
+          <div class="pair">
+            <div class="frame d"><img src="img/mbarete-d.webp" alt="Mbarete en escritorio: portada con el titular Dejá Excel, corré tu gimnasio" width="1440" height="900" loading="lazy" decoding="async"></div>
+            <div class="frame m"><img src="img/mbarete-m.webp" alt="Mbarete en el celular" width="390" height="844" decoding="async"></div>
+          </div>
+          <figcaption class="fig mono"><span>Fig. 01 · Producción</span><a class="case-link" href="/proyectos/mbarete">Ver el caso →</a></figcaption>
+        </figure>
+      </li>
+
+      <!-- 02 -->
+      <li class="case" id="c-flor" style="--acc:var(--a-flor)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">02</span><span class="status mono">Entregado</span></div>
+          <h3>Catálogo para florerías</h3>
+          <p class="desc"><strong>Un producto, dos clientes: Rocío Florería y Ornella Florería.</strong> Fotos, precios y pedido por WhatsApp. Cada florería carga sus productos desde un panel, sin pedirme nada.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Diseño y desarrollo</dd>
+            <dt>Stack</dt><dd>Vue 3 · Vite</dd>
+          </dl>
+        </div>
+        <figure class="media" style="margin-left:0;margin-right:0;margin-bottom:0">
+          <div class="pair">
+            <div class="frame d"><img src="img/ornella-d.webp" alt="Catálogo de Ornella Florería en escritorio" width="1440" height="900" loading="lazy" decoding="async"></div>
+            <div class="frame m desk-only"><img src="img/rocio-m.webp" alt="Catálogo de Rocío Florería en el celular" width="390" height="844" loading="lazy" decoding="async"></div>
+          </div>
+          <div class="duo">
+            <div><div class="frame m"><img src="img/rocio-m.webp" alt="Catálogo de Rocío Florería en el celular" width="390" height="844" loading="lazy" decoding="async"></div></div>
+            <div><div class="frame m"><img src="img/ornella-m.webp" alt="Catálogo de Ornella Florería en el celular" width="390" height="844" loading="lazy" decoding="async"></div></div>
+          </div>
+          <figcaption class="fig mono"><span class="only-mob">Fig. 02 · Rocío y Ornella</span><span class="desk-only">Fig. 02 · Ornella y Rocío, misma base</span><a class="case-link" href="/proyectos/floreria-catalogo">Ver el caso →</a></figcaption>
+        </figure>
+      </li>
+
+      <!-- 03 -->
+      <li class="case" id="c-estacion" style="--acc:var(--a-estacion)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">03</span><span class="status mono">En producción</span></div>
+          <h3>Estación de Carretera</h3>
+          <p class="desc"><strong>El mercado de los emprendedores de Hohenau, en la web.</strong> Marketplace y showroom inspirado en el modelo japonés Michi-no-eki. Es una iniciativa municipal; coordiné el proyecto.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Project Lead</dd>
+            <dt>Stack</dt><dd>React · FastAPI · PostgreSQL</dd>
+          </dl>
+        </div>
+        <figure class="media" style="margin-left:0;margin-right:0;margin-bottom:0">
+          <div class="pair">
+            <div class="frame d"><img src="img/estacion-d.webp" alt="Estación de Carretera en escritorio: El mercado de Hohenau en tu pantalla" width="1440" height="900" loading="lazy" decoding="async"></div>
+            <div class="frame m"><img src="img/estacion-m.webp" alt="Estación de Carretera en el celular" width="390" height="844" loading="lazy" decoding="async"></div>
+          </div>
+          <figcaption class="fig mono"><span>Fig. 03 · Producción</span><a class="case-link" href="/proyectos/estacion-de-carretera">Ver el caso →</a></figcaption>
+        </figure>
+      </li>
+
+      <!-- 04 -->
+      <li class="case" id="c-lhoney" style="--acc:var(--a-lhoney)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">04</span><span class="status mono">En producción</span></div>
+          <h3>Lhoney</h3>
+          <p class="desc"><strong>Boutique de regalos.</strong> Catálogo con varias categorías, carrito y pedido por WhatsApp. Vos elegís, el pedido le llega armado.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Diseño y desarrollo</dd>
+            <dt>Stack</dt><dd>Vue 3</dd>
+          </dl>
+        </div>
+        <figure class="media" style="margin-left:0;margin-right:0;margin-bottom:0">
+          <div class="pair">
+            <div class="frame d"><img src="img/lhoney-d.webp" alt="Lhoney en escritorio: catálogo con categorías" width="1440" height="900" loading="lazy" decoding="async"></div>
+            <div class="frame m"><img src="img/lhoney-m.webp" alt="Lhoney en el celular" width="390" height="844" loading="lazy" decoding="async"></div>
+          </div>
+          <figcaption class="fig mono"><span>Fig. 04 · Producción</span><a class="case-link" href="/proyectos/lhoney">Ver el caso →</a></figcaption>
+        </figure>
+      </li>
+
+      <!-- 05 -->
+      <li class="case" id="c-eco" style="--acc:var(--a-eco)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">05</span><span class="status mono">En producción</span></div>
+          <h3>Ecodespensa</h3>
+          <p class="desc"><strong>Bistrosoft a Tiendanube, sin cargar nada dos veces.</strong> Integración que sincroniza el sistema de gestión del local con su tienda online. No tiene pantalla: corre sola.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Backend</dd>
+            <dt>Stack</dt><dd>FastAPI · PostgreSQL · Railway</dd>
+          </dl>
+        </div>
+        <div class="flow-wrap">
+          <div class="flow" role="img" aria-label="Diagrama: Bistrosoft, interfaz de fuente de datos (ExcelSource o ApiSource), sincronizador en FastAPI y PostgreSQL, y Tiendanube.">
+            <div class="node"><b>Bistrosoft</b><span>Gestión del local</span></div>
+            <div class="arrow" aria-hidden="true"></div>
+            <div class="node iface"><b>Fuente de datos</b><span>Una interfaz, dos implementaciones</span>
+              <div class="ifs"><div>ExcelSource<small>exportación</small></div><div>ApiSource<small>API real</small></div></div>
+            </div>
+            <div class="arrow" aria-hidden="true"></div>
+            <div class="node"><b>Sincronizador</b><span>FastAPI · PostgreSQL · Railway</span></div>
+            <div class="arrow" aria-hidden="true"></div>
+            <div class="node"><b>Tiendanube</b><span>Tienda online</span></div>
+          </div>
+          <p class="flow-note">Las credenciales de la API tardaban. Con la interfaz armada avancé cerca del 80% sobre un Excel exportado; cuando llegaron, cambié la fuente y listo.</p>
+        </div>
+      </li>
+
+      <!-- 06 -->
+      <li class="case text-only" id="c-avm" style="--acc:var(--a-avm)">
+        <div class="case-body">
+          <div class="case-top"><span class="num">06</span><span class="status mono">En desarrollo</span></div>
+          <h3>AVM Gran Asunción</h3>
+          <p class="desc"><strong>Valuador automático de inmuebles.</strong> Es mi tesis: estima el precio de oferta en Gran Asunción con un intervalo de predicción.</p>
+          <dl class="meta">
+            <dt>Rol</dt><dd>Tesis, con Oscar Arce</dd>
+            <dt>Stack</dt><dd>Python · LightGBM</dd>
+          </dl>
+        </div>
+        <div class="side desk-only">
+          <p class="avm-desc">Para tasar, un número suelto no alcanza: el modelo devuelve un rango. Todavía sin demo pública.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= MÁS ================= -->
+<section class="sec" id="mas" aria-labelledby="t-mas">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">Archivo</span><span class="label">05 más</span></div>
+    <div class="more-grid">
+      <h2 class="h2" id="t-mas">Más proyectos</h2>
+      <ul class="more">
+        <li><a href="https://www.cpotech.com.py" target="_blank" rel="noopener"><strong>CPO Tech</strong><span class="d">Sitio de la empresa que cofundé</span><span class="go">↗</span></a></li>
+        <li><a href="/proyectos/kevjer"><strong>KEVJER</strong><span class="d">Catálogo de ropa de archivo y second hand</span><span class="go">→</span></a></li>
+        <li><a href="/proyectos/mercado-jopoi"><strong>Mercado Jopoi</strong><span class="d">Marketplace universitario</span><span class="go">→</span></a></li>
+        <li><a href="/proyectos/figus-mundial"><strong>Figus del Mundial</strong><span class="d">Intercambio de figuritas</span><span class="go">→</span></a></li>
+        <li><a href="/proyectos/dashboard-iot"><strong>Dashboard IoT</strong><span class="d">Monitoreo con MQTT, para la facu</span><span class="go">→</span></a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXPERIENCIA ================= -->
+<section class="sec" id="experiencia" aria-labelledby="t-exp">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">CV</span><span class="label">2026 – hoy</span></div>
+    <h2 class="h2" id="t-exp">Experiencia</h2>
+    <ul class="cv">
+      <li>
+        <span class="when">ago 2026 – hoy</span>
+        <span class="what">Software Developer</span>
+        <span class="org">Klien IT Systems <small>Países Bajos · remoto</small></span>
+        <span class="det">Media jornada, en inglés.</span>
+      </li>
+      <li>
+        <span class="when">oct 2026 – hoy</span>
+        <span class="what">Co-founder y Team Leader</span>
+        <span class="org">CPO Tech <small>Encarnación</small></span>
+        <span class="det">Empresa de desarrollo que fundamos entre 7 colegas. Software a medida y un ERP.</span>
+      </li>
+      <li>
+        <span class="when">2026 – hoy</span>
+        <span class="what">Desarrollo independiente</span>
+        <span class="org">Por mi cuenta</span>
+        <span class="det">Catálogos, sistemas e integraciones para negocios.</span>
+      </li>
+      <li>
+        <span class="when">2026</span>
+        <span class="what">Soporte técnico</span>
+        <span class="org">Grupo Empresarial Franz</span>
+        <span class="det">Acceso remoto corporativo en 15 sucursales, permisos por departamento en el NAS, FortiClient.</span>
+      </li>
+      <li class="edu">
+        <span class="when">egreso 2027</span>
+        <span class="what">Ingeniería en Informática</span>
+        <span class="org">Universidad Católica <small>Campus Itapúa</small></span>
+        <span class="det">Último año.</span>
+      </li>
+      <li class="edu">
+        <span class="when">Idiomas</span>
+        <span class="what">Español nativo, inglés profesional</span>
+        <span class="org desk-only">Lo uso a diario</span>
+      </li>
+    </ul>
+    <div class="cv-foot desk-only">
+      <a class="link-arrow" href="https://linkedin.com/in/brianleckie" target="_blank" rel="noopener">LinkedIn ↗</a>
+      <a class="link-arrow" href="https://github.com/brianleckie" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CÓMO TRABAJO ================= -->
+<section class="sec" id="servicios" aria-labelledby="t-svc">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">Servicios</span><span class="label">Demo primero</span></div>
+    <div class="svc-grid">
+      <div class="left">
+        <h2 class="h2" id="t-svc">Cómo trabajo</h2>
+        <p class="svc-lead">Antes de cerrar nada, ves una versión funcionando.</p>
+        <p>Así decidimos sobre algo que podés tocar, no sobre una promesa. Si te sirve, seguimos desde ahí.</p>
+      </div>
+      <ol class="svc">
+        <li><span class="n">01</span><b>Webs y catálogos</b><p>Con fotos, precios y pedido directo a tu WhatsApp.</p></li>
+        <li><span class="n">02</span><b>Sistemas a medida</b><p>Gestión hecha para cómo trabaja tu negocio.</p></li>
+        <li><span class="n">03</span><b>Integraciones</b><p>Conecto el sistema que ya usás con tu tienda u otras herramientas.</p></li>
+        <li><span class="n">04</span><b>IT y soporte</b><p>Accesos remotos, redes y permisos para empresas con sucursales.</p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONTACTO ================= -->
+<section class="contact" id="contacto" aria-labelledby="t-contact">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">Contacto</span><span class="label">ES · EN</span></div>
+    <div class="contact-grid">
+      <div class="left">
+        <h2 class="h2" id="t-contact">Contame qué necesitás.</h2>
+        <p class="lead">Por WhatsApp es lo más rápido. Te respondo yo y, si encaja, te armo una demo.</p>
+        <a class="btn-wa" id="contactWa" href="https://wa.me/595983763890?text=Hola%20Brian%2C%20vi%20tu%20portfolio%20y%20quiero%20consultarte%20por%20un%20proyecto." target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+          Escribime por WhatsApp
+        </a>
+        <p class="localtime mono" id="localTime">Acá son las <b data-clock>21:34</b>. <span data-mood>Estoy despierto.</span></p>
+      </div>
+      <div class="right">
+        <ul class="channels">
+          <li><a href="mailto:leckiebrian19@gmail.com"><span class="label">Email</span><span>leckiebrian19@gmail.com</span><i>→</i></a></li>
+          <li><a href="https://github.com/brianleckie" target="_blank" rel="noopener"><span class="label">GitHub</span><span>brianleckie</span><i>↗</i></a></li>
+          <li><a href="https://linkedin.com/in/brianleckie" target="_blank" rel="noopener"><span class="label">LinkedIn</span><span>brianleckie</span><i>↗</i></a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="ftr">
+  <div class="wrap mono">
+    <span>© 2026 Brian Leckie · Encarnación</span>
+    <a href="#top">Arriba ↑</a>
+  </div>
+</footer>
+
+<script>
+(() => {
+  /* ---- Reloj de Encarnación (UTC−3 fijo) ---- */
+  const pad = n => String(n).padStart(2, '0');
+  const tick = () => {
+    const d = new Date(Date.now() - 3 * 3600e3);
+    const h = d.getUTCHours(), m = d.getUTCMinutes();
+    document.querySelectorAll('[data-clock]').forEach((el, i) => {
+      el.innerHTML = i === 0 ? `${pad(h)}<span class="sep">:</span>${pad(m)}` : `${pad(h)}:${pad(m)}`;
+    });
+    const mood = document.querySelector('[data-mood]');
+    if (mood) mood.textContent =
+      h < 7 ? 'Seguro estoy durmiendo; te respondo a la mañana.' :
+      h < 13 ? 'Buen momento para escribir.' :
+      h < 20 ? 'Estoy en horario de trabajo.' :
+      'Si es tarde, te respondo mañana temprano.';
+  };
+  tick(); setInterval(tick, 15000);
+
+  /* ---- Nota para quien llega desde el pie de un sitio de cliente ---- */
+  try {
+    const ref = document.referrer ? new URL(document.referrer).host : '';
+    const q = new URLSearchParams(location.search).get('ref');
+    if (q || (ref && ref !== location.host)) document.getElementById('refNote').classList.add('on');
+  } catch (e) {}
+
+  /* ---- Teclado: tipear L-E-K-I hunde las teclas ---- */
+  const keyEl = id => document.querySelector(`.key[data-k="${id}"]`);
+  const cap = document.getElementById('sigCap');
+  const capDefault = cap.innerHTML;
+  let typed = '', capTimer;
+  const press = el => { if (!el) return; el.classList.add('down'); };
+  const release = el => { if (!el) return; el.classList.remove('down'); };
+  const say = html => { cap.innerHTML = html; clearTimeout(capTimer); capTimer = setTimeout(() => cap.innerHTML = capDefault, 3200); };
+  const map = (k) => {
+    if (k === 'K') return /WOR$/.test(typed) ? 'K2' : 'K1';
+    if (k === 'ENTER') return 'ENTER';
+    return 'LEIWORS'.includes(k) ? k : null;
+  };
+  const held = new Map();
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    if (/input|textarea|select/i.test(document.activeElement?.tagName || '')) return;
+    const k = e.key.toUpperCase();
+    if (k === 'ENTER' && document.activeElement?.classList?.contains('key')) return;
+    const id = map(k);
+    if (!id) { typed = ''; return; }
+    if (id === 'ENTER' && !/WORKS$/.test(typed)) return;
+    const el = keyEl(id); press(el); held.set(e.code, el);
+    typed = (typed + (id === 'ENTER' ? '⏎' : k)).slice(-9);
+    const label = el.getAttribute('aria-label').split(': ')[1];
+    if (typed.endsWith('LEKI')) say('<b>LEKI.</b> Así me dicen. Ahora W·O·R·K·S.');
+    else if (typed.endsWith('WORKS')) say('<b>LEKI WORKS.</b> Enter y hablamos.');
+    else if (id === 'ENTER') { say('<b>Hablemos.</b> Te llevo al contacto.'); setTimeout(() => location.hash = '#contacto', 380); }
+    else say(`<b>${k}</b> · ${label}`);
+  });
+  addEventListener('keyup', e => { const el = held.get(e.code); if (el) { setTimeout(() => release(el), 40); held.delete(e.code); } });
+  addEventListener('blur', () => { document.querySelectorAll('.key.down').forEach(release); held.clear(); });
+  document.querySelectorAll('.key').forEach(el => {
+    el.addEventListener('pointerenter', () => { if (matchMedia('(hover:hover)').matches) say(`<b>${el.textContent.trim().replace('↵','')}</b> · ${el.getAttribute('aria-label').split(': ')[1]}`); });
+  });
+
+  /* ---- Un solo CTA de WhatsApp por pantalla: el del header aparece
+         solo cuando no se ve ni el del hero ni el del contacto ---- */
+  const hdrWa = document.getElementById('hdrWa');
+  const vis = new Map();
+  const upd = () => {
+    const on = ![...vis.values()].some(Boolean);
+    hdrWa.classList.toggle('on', on);
+    hdrWa.tabIndex = on ? 0 : -1; hdrWa.setAttribute('aria-hidden', String(!on));
+  };
+  const io = new IntersectionObserver(es => { es.forEach(en => vis.set(en.target.id, en.isIntersecting)); upd(); });
+  ['heroWa', 'contactWa'].forEach(id => { const el = document.getElementById(id); vis.set(id, true); io.observe(el); });
+})();
+</script>
+</body>
+</html>

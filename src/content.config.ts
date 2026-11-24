@@ -50,6 +50,8 @@ const projects = defineCollection({
       click: z.string().min(1).optional(),
       delay: z.number().int().min(0).max(30_000).optional(),
       hideText: z.array(z.string().min(1)).optional(),
+      // Barra o botón fijo al pie: se oculta en la captura full y se guarda aparte (mobile-full-bar).
+      stickyBottom: z.string().min(1).optional(),
       css: z.string().optional(),
       alt: z.object({
         path: z.string().min(1).optional(),

@@ -81,6 +81,18 @@ No abre con "estudiante". ES: "Soy Brian, desarrollador full-stack de Encarnaci�
 
 Texto visible ≥ 14px salvo metadatos; touch targets ≥ 44px; máx. 3 chips de stack por card; un solo CTA de WhatsApp por pantallazo; primer proyecto visible en ≤ 1 scroll a 390×844; home a 390 ≤ 7.000px; capturas grandes (en mobile el teléfono ocupa la card). Todas las capturas se rehacen (Jopoi sin modal, KEVJER sin splash, desktop de Ornella/Rocío/Lhoney, Estación sin la línea de la inauguración). Maqueta 390 y 1440 aprobada por Brian antes de implementar.
 
+### R.8b Dirección visual aprobada: "Editorial" (Brian, 24/11/2026)
+
+Referencia visual y de comportamiento: la maqueta A (`docs/design/editorial/index.html` + `shot-390.png` / `shot-1440.png`). Elegida entre tres direcciones (Editorial, Taller, Cuaderno). Esta sección reemplaza §4, §5, §6 (salvo colores de teclas), §7 y §8.3 del SPEC original donde choquen.
+
+- **Tono:** CV con aire de revista. Fondo papel cálido, casi monocromo; el color aparece solo en las teclas y en el número/estado/subrayado de cada caso.
+- **Tipografía:** Schibsted Grotesk (todo) + IBM Plex Mono (metadatos), self-hosted vía `@fontsource`. Se retiran Satoshi, Inter e Instrument Serif del sitio (la OG puede seguir usando lo que tenga hasta que se rehaga).
+- **Hero tipográfico:** reloj "HH:MM en Encarnación, Paraguay · UTC−3" en vivo; "Brian Leckie" muy grande; "Desarrollador full-stack."; párrafo corto con el demo-first; línea "AHORA" con Klien IT Systems y CPO Tech; botón "Escribime por WhatsApp" + "Ver trabajos ↓".
+- **Teclado LEKI WORKS como firma compacta** (teclas ~44–50px, links reales, se hunden al tocarlas; tipear L-E-K-I / W-O-R-K-S en el teclado físico las hunde). Se retira el teclado en arco gigante, la animación automática y el marquee.
+- **Trabajos:** índice numerado 01–06 + casos grandes (número, estado, título, bajada, texto, ROL/STACK en mono, captura desktop + captura mobile al lado en desktop; en mobile la captura ocupa casi todo el ancho). "Fig. 0N · Producción" bajo la captura y "Ver el caso →".
+- **Experiencia** como tabla tipo CV; **Cómo trabajo** y **Contacto** breves; un solo CTA de WhatsApp por pantallazo (el del header aparece solo cuando no se ven ni el del hero ni el de contacto).
+- Las páginas de caso adoptan el mismo sistema.
+
 ### R.9 Fases del rediseño (cada una: `npm run build` + `npm run check:layout` + resumen, y se espera el OK)
 
 - **R1 — Contenido y estructura:** este §R en el SPEC; i18n plumbing (config, diccionario ES, helpers de rutas, selector oculto hasta R3); `experience.ts` + sección Experiencia con el estilo actual; línea de rol; K2; jerarquía y `draft`; años fuera; copy limpio; JSON-LD con `worksFor` (Klien, CPO Tech) y `knowsLanguage`; `check:layout` actualizado a estos cambios.

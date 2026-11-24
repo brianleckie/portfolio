@@ -1,7 +1,11 @@
 ---
+import schibsted from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url';
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
 import '../styles/tokens.css';
 import '../styles/base.css';
 import '../styles/ui.css';
+import '../styles/objects.css';
 import { t } from '../i18n/ui';
 import type { AlternateRoutes, Locale } from '../i18n/routes';
 import { site } from '../config/site';
@@ -47,9 +51,9 @@ const imageUrl = new URL(ogImage, Astro.site).href;
     {alternates && (['es', 'en', 'x-default'] as const).map((lang) => (
       <link rel="alternate" hreflang={lang} href={new URL(alternates[lang === 'x-default' ? 'es' : lang], Astro.site).href} />
     ))}
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#f3efe6" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preload" href="/fonts/Satoshi-Black.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={schibsted} as="font" type="font/woff2" crossorigin />
 
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={site.name} />
@@ -71,7 +75,7 @@ const imageUrl = new URL(ogImage, Astro.site).href;
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
-  <body>
+  <body id="top">
     <slot />
   </body>
 </html>
