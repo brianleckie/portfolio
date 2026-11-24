@@ -1,14 +1,16 @@
 ---
-const TEXT = "Catálogos con pedido por WhatsApp. · Sistemas a medida. · Integraciones que ahorran horas. · Webs que se ven bien en el celular. · Elegí una tecla.";
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
+const ui = t(localeOf(Astro.currentLocale));
 ---
 
 <div class="marquee-strip">
   <div class="marquee-track" id="marquee-track">
     <div class="marquee-group" id="marquee-g1">
-      <span class="marquee-item">{TEXT}<span class="marquee-sep" aria-hidden="true">·</span></span>
+      <span class="marquee-item">{ui.marquee}<span class="marquee-sep" aria-hidden="true">·</span></span>
     </div>
     <div class="marquee-group" id="marquee-g2" aria-hidden="true">
-      <span class="marquee-item">{TEXT}<span class="marquee-sep">·</span></span>
+      <span class="marquee-item">{ui.marquee}<span class="marquee-sep">·</span></span>
     </div>
   </div>
 </div>

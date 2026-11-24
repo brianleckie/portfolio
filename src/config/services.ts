@@ -1,3 +1,5 @@
+import { t } from '../i18n/ui';
+import type { Locale } from '../i18n/routes';
 import type { Category } from '../lib/projects';
 
 export interface Service {
@@ -12,34 +14,36 @@ export interface Service {
   fromPrice?: string;
 }
 
-export const services: Service[] = [
-  {
-    id: 'webs',
-    title: 'Webs y catálogos para negocios',
-    description:
-      'Catálogo con fotos, precios y pedido por WhatsApp, más un panel para que el negocio actualice sus productos.',
-    filter: 'web',
-    accent: '#ffd98e',
-  },
-  {
-    id: 'sistemas',
-    title: 'Sistemas a medida',
-    description: 'Gestión, cobros, turnos, roles y permisos.',
-    filter: 'sistemas',
-    accent: '#b9f2df',
-  },
-  {
-    id: 'integraciones',
-    title: 'Integraciones y automatización',
-    description: 'Conectar sistemas existentes (por ejemplo, gestión ↔ tienda online) y automatizar tareas.',
-    filter: 'integraciones',
-    accent: '#ffc3a0',
-  },
-  {
-    id: 'it',
-    title: 'IT y soporte para empresas',
-    description: 'Acceso remoto, redes de sucursales, permisos y almacenamiento.',
-    filter: 'it',
-    accent: '#f4b8ff',
-  },
-];
+export function getServices(locale: Locale): Service[] {
+  const ui = t(locale);
+  return [
+    {
+      id: 'webs',
+      title: ui.websTitle,
+      description: ui.websDescription,
+      filter: 'web',
+      accent: '#ffd98e',
+    },
+    {
+      id: 'sistemas',
+      title: ui.sistemasTitle,
+      description: ui.sistemasDescription,
+      filter: 'sistemas',
+      accent: '#b9f2df',
+    },
+    {
+      id: 'integraciones',
+      title: ui.integracionesTitle,
+      description: ui.integracionesDescription,
+      filter: 'integraciones',
+      accent: '#ffc3a0',
+    },
+    {
+      id: 'it',
+      title: ui.itTitle,
+      description: ui.itDescription,
+      filter: 'it',
+      accent: '#f4b8ff',
+    },
+  ];
+}

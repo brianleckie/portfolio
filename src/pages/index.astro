@@ -1,8 +1,11 @@
 ---
+import { localeOf } from '../i18n/routes';
+import { t } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import ProjectGrid from '../components/ProjectGrid.astro';
+import Experience from '../components/Experience.astro';
 import Services from '../components/Services.astro';
 import Process from '../components/Process.astro';
 import About from '../components/About.astro';
@@ -11,16 +14,22 @@ import Footer from '../components/Footer.astro';
 import StickyCta from '../components/StickyCta.astro';
 import { site, resolveValue } from '../config/site';
 
-const title = `${site.name} — ${site.role} en ${site.location}`;
-const description = `${site.name} (${site.nickname}), ${site.role.toLowerCase()} en ${site.location}. Catálogos con pedido por WhatsApp, sistemas a medida e integraciones.`;
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const title = ui.siteTitle.replace('{name}', site.name).replace('{role}', ui.siteRole).replace('{location}', site.location);
+const description = ui.siteDescription.replace('{name}', site.name).replace('{nickname}', site.nickname).replace('{location}', site.location);
 
-// JSON-LD Person (sin empleador: Klien IT Systems solo aparece en "Sobre mí")
 const person = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: site.name,
   alternateName: site.nickname,
-  jobTitle: site.role,
+  jobTitle: ['Software Developer', 'Co-founder y Team Leader'],
+  worksFor: [
+    { '@type': 'Organization', name: site.employer },
+    { '@type': 'Organization', name: site.company, url: site.cpoTechUrl },
+  ],
+  knowsLanguage: ['es', 'en'],
   description,
   url: site.url,
   address: {
@@ -32,12 +41,13 @@ const person = {
 };
 ---
 
-<BaseLayout title={title} description={description} jsonLd={person}>
+<BaseLayout {locale} title={title} description={description} jsonLd={person}>
   <Header />
   <main>
     <Hero />
 
     <ProjectGrid />
+    <Experience />
 
     <Services />
     <Process />

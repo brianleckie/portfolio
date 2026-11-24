@@ -1,0 +1,23 @@
+---
+import { t } from '../i18n/ui';
+import type { AlternateRoutes, Locale } from '../i18n/routes';
+
+interface Props { locale: Locale; alternates: AlternateRoutes }
+const { locale, alternates } = Astro.props;
+const languages = { es: 'Español', en: 'English' } as const;
+const locales = ['es', 'en'] as const;
+---
+
+<div class="languages" role="group" aria-label={t(locale).languageNav}>
+  {locales.map((id) => (
+    <a href={alternates[id]} lang={id} hreflang={id} aria-label={languages[id]} aria-current={id === locale ? 'page' : undefined}>
+      {id.toUpperCase()}
+    </a>
+  ))}
+</div>
+
+<style>
+  .languages { display: flex; }
+  .languages a { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; }
+  [aria-current] { font-weight: 700; text-decoration: underline; }
+</style>

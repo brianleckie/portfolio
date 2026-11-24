@@ -1,10 +1,10 @@
 ---
 title: "Dashboard IoT con MQTT"
-summary: "Dashboard de monitoreo IoT con MQTT y emulador en Python — trabajo universitario."
+summary: "Dashboard de monitoreo IoT con MQTT y emulador en Python. Trabajo universitario."
 category: ["academico"]
 status: "academico"
 featured: false
-order: 18
+order: 11
 clientNamePublic: false
 clientGeneric: "Trabajo universitario"
 role: "Desarrollo completo"

@@ -45,9 +45,17 @@ const ANIM_VIEWPORTS = ['1440x810', '390x844'];
 const CATEGORIES = ['web', 'sistemas', 'integraciones', 'it', 'academico'];
 const FILTER_KEYS = { W: 'web', O: 'sistemas', R: 'integraciones', S: 'it' };
 
-const SLUGS = readdirSync(path.join(ROOT, 'src/content/projects'))
+const projectRaw = (slug) => readFileSync(path.join(ROOT, 'src/content/projects', slug + '.md'), 'utf8');
+const projectFrontmatter = (slug) => projectRaw(slug).split(/^---\s*$/m)[1] ?? '';
+const projectFlag = (slug, name, value) =>
+  new RegExp('^' + name + ':\\s*' + value + '\\s*(?:#.*)?$', 'm').test(projectFrontmatter(slug));
+
+const ALL_SLUGS = readdirSync(path.join(ROOT, 'src/content/projects'))
   .filter((f) => f.endsWith('.md'))
   .map((f) => f.replace(/\.md$/, ''));
+const DRAFT_SLUGS = ALL_SLUGS.filter((slug) => projectFlag(slug, 'draft', true));
+const SLUGS = ALL_SLUGS.filter((slug) => !DRAFT_SLUGS.includes(slug));
+const GRID_SLUGS = SLUGS.filter((slug) => !projectFlag(slug, 'inGrid', false));
 
 // ---------------------------------------------------------------- helpers
 
@@ -120,9 +128,9 @@ async function checkBasics(page, errors, failed) {
 const KEY_ORDER = ['L', 'E', 'K1', 'I', 'W', 'O', 'R', 'K2', 'S', 'Enter'];
 const KEY_LABELS = {
   L: 'Proyectos', E: 'Servicios', K1: 'Stack', I: 'Sobre mí', W: 'Webs y catálogos', O: 'Sistemas',
-  R: 'Integraciones', K2: 'Mi proceso', S: 'IT y soporte', Enter: 'Hablemos por WhatsApp',
+  R: 'Integraciones', K2: 'Experiencia', S: 'IT y soporte', Enter: 'Hablemos por WhatsApp',
 };
-const KEY_HREFS = { L: '#proyectos', E: '#servicios', K1: '#stack', I: '#sobre-mi', W: '#proyectos', O: '#proyectos', R: '#proyectos', K2: '#proceso', S: '#proyectos' };
+const KEY_HREFS = { L: '#proyectos', E: '#servicios', K1: '#stack', I: '#sobre-mi', W: '#proyectos', O: '#proyectos', R: '#proyectos', K2: '#experiencia', S: '#proyectos' };
 const MIN_KEY_SIDE = 56;
 const MOBILE_MAX = 699; // el botón de WhatsApp del hero existe solo por debajo de 700px
 const LOCATION = readFileSync(path.join(ROOT, 'src/config/site.ts'), 'utf8').match(/^\s*location:\s*"([^"]+)"/m)[1];
@@ -190,6 +198,11 @@ async function checkKeyboardStatic(page, viewport) {
       headerBottom: rect('.site-header').bottom,
       locationTop: rect('.hero-location')?.top ?? null,
       h1Top: rect('#hero h1').top,
+      h1Bottom: rect('#hero h1').bottom,
+      roleTop: rect('.hero-role')?.top ?? null,
+      roleBottom: rect('.hero-role')?.bottom ?? null,
+      roleText: document.querySelector('.hero-role')?.textContent.trim(),
+      k2Caption: document.querySelector('#key-K2 .key-caption')?.textContent.trim(),
       kbBottom: Math.max(...Array.from(document.querySelectorAll('#kb-stage .key')).map((k) => k.getBoundingClientRect().bottom)),
       ctaShown: !!cta && getComputedStyle(cta).display !== 'none' && cta.getBoundingClientRect().height > 0,
       ctaTop: cta?.getBoundingClientRect().top ?? null,
@@ -197,6 +210,26 @@ async function checkKeyboardStatic(page, viewport) {
       vh: window.innerHeight,
     };
   });
+  if (fold.roleText !== 'Software developer en Klien IT Systems (Países Bajos) · Co-founder de CPO Tech'
+      || fold.roleTop < fold.h1Bottom || fold.roleBottom > fold.kbBottom) {
+    issues.push('la línea de rol debe estar debajo del h1 y antes del final del teclado');
+  }
+  if (fold.k2Caption !== 'EXPERIENCIA') issues.push('K2 debe decir EXPERIENCIA');
+  if (viewport.width <= MOBILE_MAX) {
+    console.log('Fold ' + viewport.name + ': ' + JSON.stringify(fold));
+    const undersized = await page.evaluate(() => {
+      const groups = [
+        ['.nav-mobile a', 4],
+        ['#sobre-mi .links a', 2],
+        ['#contacto a[href^="mailto:"]', 1],
+      ];
+      return groups.flatMap(([selector, count]) => {
+        const links = [...document.querySelectorAll(selector)];
+        return links.length < count || links.some((a) => a.getBoundingClientRect().height < 44) ? [selector] : [];
+      });
+    });
+    if (undersized.length) issues.push('faltan touch targets de 44px: ' + undersized.join(', '));
+  }
   if (fold.locationTop === null) issues.push(`falta la línea de ubicación (.hero-location)`);
   else if (fold.locationTop < fold.headerBottom - 0.5) issues.push(`fold: la línea de ubicación queda bajo el header (${fold.locationTop.toFixed(0)} < ${fold.headerBottom.toFixed(0)})`);
   if (fold.h1Top < fold.headerBottom - 0.5) issues.push(`fold: el titular queda bajo el header (${fold.h1Top.toFixed(0)} < ${fold.headerBottom.toFixed(0)})`);
@@ -469,7 +502,11 @@ async function expectFilter(page, filter, via) {
   const cat = await page.evaluate(() => new URL(location.href).searchParams.get('cat'));
   if (cat !== filter) issues.push(`${via}: URL debería tener ?cat=${filter} (tiene ${cat})`);
   const cards = await visibleCards(page);
-  if (cards.length === 0) issues.push(`${via}: ningún proyecto visible con ${filter}`);
+  const expected = await page.locator('#proyectos li[data-cats~="' + filter + '"]').count();
+  if (cards.length !== expected) issues.push(via + ': ' + cards.length + ' cards visibles, se esperaban ' + expected);
+  if ((await page.locator('#projects-empty').isVisible()) !== (expected === 0)) {
+    issues.push(via + ': estado vacío incorrecto');
+  }
   const wrong = cards.filter((c) => !c.includes(filter));
   if (wrong.length) issues.push(`${via}: ${wrong.length} cards visibles sin la categoría ${filter}`);
   const pressed = await page.evaluate(() => document.querySelector('.chip[aria-pressed="true"]')?.dataset.filter);
@@ -582,16 +619,26 @@ async function checkSections(browser) {
   const viewport = VIEWPORTS.find((v) => v.name === '1440x810');
   const { ctx, page } = await openPage(browser, viewport, `${BASE_URL}/`);
   const data = await page.evaluate(() => {
-    const textOutside = Array.from(document.body.children)
-      .map((el) => el.innerText ?? '')
-      .join('\n');
-    const about = document.getElementById('sobre-mi');
+    const experience = document.querySelector('#experiencia');
+    const sections = [...document.querySelectorAll('main > section')];
+    const portfolio = experience?.querySelector('a[href="https://www.cpotech.com.py"]');
+    const franzCase = experience?.querySelector('a[href="/proyectos/it-sucursales/"]');
+    const klienScope = ['#hero', '#experiencia', '#sobre-mi'];
+    const klienOutside = [...document.querySelectorAll('body *')].some((el) =>
+        !el.closest(klienScope.join(', ') + ', script, style') &&
+        [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && /Klien IT Systems/.test(node.textContent)));
     const mail = document.querySelector('#contacto a[href^="mailto:"]');
     const stackChips = Array.from(document.querySelectorAll('#stack .chips li')).map((li) => li.textContent.trim());
     return {
-      ids: ['proyectos', 'servicios', 'proceso', 'sobre-mi', 'contacto', 'stack'].filter((id) => !document.getElementById(id)),
-      klienTotal: (textOutside.match(/Klien IT Systems/g) ?? []).length,
-      klienInAbout: ((about?.innerText ?? '').match(/Klien IT Systems/g) ?? []).length,
+      ids: ['proyectos', 'experiencia', 'servicios', 'proceso', 'sobre-mi', 'contacto', 'stack'].filter((id) => !document.getElementById(id)),
+      klienOutside,
+      experienceAfterGrid: sections[sections.indexOf(experience) - 1]?.id === 'proyectos',
+      experienceItems: experience?.querySelectorAll('ol > li').length,
+      datedItems: experience?.querySelectorAll('ol > li time[datetime]').length,
+      cpoLink: portfolio?.textContent.trim() === 'Ver portfolio de CPO Tech ↗'
+        && portfolio.getAttribute('target') === '_blank'
+        && ['noopener', 'noreferrer'].every((rel) => portfolio.relList.contains(rel)),
+      franzLink: franzCase?.textContent.trim() === 'Ver caso',
       steps: document.querySelectorAll('#proceso ol > li').length,
       featuredStep: document.querySelector('#proceso li.featured h3')?.textContent?.trim(),
       services: document.querySelectorAll('#servicios li').length,
@@ -600,16 +647,18 @@ async function checkSections(browser) {
       mailDecoration: mail ? getComputedStyle(mail).textDecorationLine : null,
       contactBg: getComputedStyle(document.getElementById('contacto')).backgroundColor,
       contactTitle: document.querySelector('#contacto h2')?.textContent?.replace(/\s+/g, ' ').trim(),
-      credit: /ui\.debbie/.test(document.querySelector('footer')?.textContent ?? ''),
+      credit: document.querySelector('footer .credit')?.textContent.trim() === 'Teclado inspirado en un diseño de ui.debbie',
       year: new RegExp(String(new Date().getFullYear())).test(document.querySelector('footer')?.textContent ?? ''),
       stackGroups: Array.from(document.querySelectorAll('#stack .group h4')).map((h) => h.textContent.trim()),
       stackChips,
     };
   });
   if (data.ids.length) issues.push(`faltan secciones: ${data.ids.join(', ')}`);
-  if (data.klienTotal !== data.klienInAbout || data.klienInAbout !== 1) {
-    issues.push(`"Klien IT Systems" debe aparecer solo en #sobre-mi (total ${data.klienTotal}, en sobre-mi ${data.klienInAbout})`);
+  if (data.klienOutside) issues.push('Klien IT Systems aparece fuera de hero, experiencia y sobre mí');
+  if (!data.experienceAfterGrid || data.experienceItems !== 5 || data.datedItems !== 5) {
+    issues.push('Experiencia debe seguir al grid y tener cinco entradas con fechas');
   }
+  if (!data.cpoLink || !data.franzLink) issues.push('enlaces incompletos en Experiencia (CPO Tech o Grupo Franz)');
   if (data.steps !== 4) issues.push(`el proceso debe tener 4 pasos (hay ${data.steps})`);
   if (data.featuredStep !== 'Te muestro una demo') issues.push(`el paso destacado debería ser "Te muestro una demo" (es ${data.featuredStep})`);
   if (data.services !== 4) issues.push(`debe haber 4 servicios (hay ${data.services})`);
@@ -620,7 +669,7 @@ async function checkSections(browser) {
   if (!/Tu próximo proyecto/.test(data.contactTitle ?? '') || !/empieza con un hola/.test(data.contactTitle ?? '')) issues.push(`titular de contacto: ${data.contactTitle}`);
   if (!data.credit) issues.push('falta el crédito ui.debbie en el footer');
   if (!data.year) issues.push('el footer no muestra el año actual');
-  if (data.stackGroups.join() !== 'Frontend,Backend,Infra y herramientas,IA') issues.push(`grupos del stack: ${data.stackGroups.join()}`);
+  if (data.stackGroups.join() !== 'Frontend,Backend,Infra y herramientas') issues.push(`grupos del stack: ${data.stackGroups.join()}`);
 
   // "Ver ejemplos" de Servicios aplica el filtro
   await page.locator('#servicios a[data-filter="integraciones"]').click();
@@ -697,7 +746,8 @@ async function checkSeo(metas, api) {
       if (!ld || ld['@type'] !== 'Person' || !ld.name) issues.push('/: falta JSON-LD Person válido');
       else {
         if (ld.url !== SITE_URL) issues.push(`/: JSON-LD url ${ld.url} ≠ ${SITE_URL}`);
-        if (/Klien/.test(JSON.stringify(ld))) issues.push('/: el JSON-LD no debe incluir al empleador');
+        if (ld.worksFor?.map((org) => org.name).join() !== 'Klien IT Systems,CPO Tech') issues.push('/: JSON-LD worksFor incorrecto');
+        if (ld.knowsLanguage?.join() !== 'es,en' || !ld.jobTitle?.length) issues.push('/: faltan idiomas o rol en JSON-LD');
         for (const link of ld.sameAs ?? []) if (!/^https:\/\//.test(link)) issues.push(`/: sameAs inválido (${link})`);
       }
     } else if (meta.jsonLd.length) {
@@ -714,6 +764,16 @@ async function checkSeo(metas, api) {
   const smText = sm.status() === 200 ? await sm.text() : '';
   if (!smText) issues.push(`sitemap-0.xml → ${sm.status()}`);
   for (const { pagePath } of metas) if (!smText.includes(`<loc>${SITE_URL}${pagePath}</loc>`)) issues.push(`el sitemap no incluye ${pagePath}`);
+  for (const slug of DRAFT_SLUGS) {
+    const casePath = '/proyectos/' + slug + '/';
+    const ogPath = '/og/' + slug + '.png';
+    if (smText.includes('<loc>' + SITE_URL + casePath + '</loc>')) issues.push('draft presente en sitemap: ' + slug);
+    for (const route of [casePath, ogPath]) {
+      const response = await api.request.get(BASE_URL + route);
+      if (response.status() !== 404) issues.push('ruta de draft ' + route + ' → ' + response.status());
+    }
+  }
+  if ((await api.request.get(BASE_URL + '/en/')).status() !== 404) issues.push('/en/ se publicó antes de R3');
   return issues;
 }
 
@@ -770,13 +830,14 @@ const KNOWN_PORTALS = /infocasas|clasipar|mercado ?libre|\bolx\b|encuentra24|rem
 function checkContent(slug, html, text) {
   const issues = [];
   for (const [re, msg] of FORBIDDEN_EVERYWHERE) if (re.test(html)) issues.push(`${slug}: ${msg}`);
+  if (/\bprompt\b|mi diferencial/i.test(text)) issues.push(slug + ': aparece copy retirado');
   if (slug === 'valuador-inmuebles') {
     if (!/precio de oferta/i.test(text)) issues.push('valuador: no dice "precio de oferta"');
     if (!/<blockquote/.test(html)) issues.push('valuador: falta el bloque visible de limitación');
     if (/\d\s?%|R²|\bMAE\b|\bRMSE\b/.test(text)) issues.push('valuador: contiene una métrica');
     if (KNOWN_PORTALS.test(text)) issues.push('valuador: nombra un portal inmobiliario');
   }
-  if (slug === 'mbarete' && !text.includes('Usado por gimnasios en Buenos Aires y en distintas partes de Paraguay.')) {
+  if (slug === 'mbarete' && !text.includes('Lo usan 5 gimnasios en Argentina y Paraguay.')) {
     issues.push('mbarete: falta la frase de resultado');
   }
   return issues;
@@ -786,7 +847,6 @@ function checkContent(slug, html, text) {
 
 // ---------------------------------------------------------------- diagramas (proyectos sin captura)
 
-const projectRaw = (slug) => readFileSync(path.join(ROOT, 'src/content/projects', `${slug}.md`), 'utf8');
 
 /** Texto del .md SIN el bloque `flow:` (si no, todo lo del diagrama "estaría" en el .md). */
 function factsSource(slug) {
@@ -809,9 +869,9 @@ const hasImages = (slug) => {
   return existsSync(dir) && readdirSync(dir).some((f) => /^(desktop|mobile)/.test(f));
 };
 const DIAGRAM_SLUGS = SLUGS.filter((s) => /^flow:/m.test(projectRaw(s)) && !hasImages(s));
-const FEATURED_DIAGRAMS = DIAGRAM_SLUGS.filter((s) => /^featured:\s*true/m.test(projectRaw(s)));
+const FEATURED_DIAGRAMS = DIAGRAM_SLUGS.filter((slug) => GRID_SLUGS.includes(slug) && projectFlag(slug, 'featured', true));
 
-async function checkDiagrams(page, viewport, expected) {
+async function checkDiagrams(page, expected) {
   const issues = [];
   const found = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-diagram]')).map((fig) => {
@@ -1045,7 +1105,7 @@ async function main() {
   let previewProc = null;
   if (!process.env.CHECK_URL) {
     console.log('▶ Starting astro preview on port 4322…');
-    previewProc = spawn('node', ['node_modules/.bin/astro', 'preview', '--port', '4322', '--host'], {
+    previewProc = spawn(process.execPath, [path.join(ROOT, 'node_modules/astro/astro.js'), 'preview', '--port', '4322', '--host'], {
       cwd: ROOT,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -1094,6 +1154,19 @@ async function main() {
         contentIssues.push(
           ...checkContent('home', await page.content(), await page.evaluate(() => document.body.innerText)),
         );
+        const homeProjects = await page.evaluate(() => ({
+          allLinks: [...document.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+          gridLinks: [...document.querySelectorAll('#proyectos article a')].map((a) => a.getAttribute('href')),
+          titles: [...document.querySelectorAll('#proyectos article .title')].map((h) => h.textContent.trim()),
+          years: [...document.querySelectorAll('#proyectos article .meta')].some((meta) => /\b\d{4}\b/.test(meta.textContent)),
+        }));
+        for (const slug of ALL_SLUGS) {
+          const route = '/proyectos/' + slug + '/';
+          if (DRAFT_SLUGS.includes(slug) && homeProjects.allLinks.includes(route)) contentIssues.push('draft enlazado desde home: ' + slug);
+          if (homeProjects.gridLinks.includes(route) !== GRID_SLUGS.includes(slug)) contentIssues.push('card inesperada o ausente: ' + slug);
+        }
+        if (homeProjects.titles.some((title) => title.includes(' — '))) contentIssues.push('raya en título de card');
+        if (homeProjects.years) contentIssues.push('año en metadatos de card');
         const eco = await page.evaluate(() => {
           const card = Array.from(document.querySelectorAll('#proyectos article')).find((a) => a.textContent.includes('Ecodespensa'));
           return card?.querySelector('.badge')?.textContent?.trim() ?? null;
@@ -1101,14 +1174,14 @@ async function main() {
         if (eco !== 'En producción') contentIssues.push(`home: badge de Ecodespensa = ${JSON.stringify(eco)} (se esperaba "En producción")`);
       }
       if (viewport.name === '1440x810' || viewport.name === '390x844') {
-        for (const slug of SLUGS) issues.push(...(await checkProjectLinks(page, slug, 'card', 'card en la home')));
+        for (const slug of GRID_SLUGS.filter((id) => projectFlag(id, 'featured', true))) issues.push(...(await checkProjectLinks(page, slug, 'card', 'card en la home')));
         const lhoney = await page.evaluate(() => {
           const card = [...document.querySelectorAll('#featured-block article')].find((a) => a.querySelector('a[href="/proyectos/lhoney/"]'));
           return card?.querySelector('.badge')?.textContent?.trim() ?? null;
         });
         if (lhoney !== 'En producción') issues.push(`badge de Lhoney = ${JSON.stringify(lhoney)} (se esperaba "En producción")`);
       }
-      issues.push(...(await checkDiagrams(page, viewport, FEATURED_DIAGRAMS)));
+      issues.push(...(await checkDiagrams(page, FEATURED_DIAGRAMS)));
       if (viewport.name === '1440x810') issues.push(...(await checkDiagramMotion(page)).map((i) => `diagramas: ${i}`));
       // última comprobación de la home: scrollea la página para disparar las imágenes lazy
       issues.push(...(await checkProjectMedia(page, viewport)).map((i) => `previews: ${i}`));
@@ -1125,6 +1198,9 @@ async function main() {
         const issues = await checkBasics(page, errors, failed);
         await shot(page, `${name}-${slug}`);
         if (name === '1440x810') {
+          const caseLabels = await page.locator('#caso-hero .meta dt').allTextContents();
+          if (caseLabels.some((label) => /^(?:año|year)$/i.test(label.trim()))) contentIssues.push(slug + ': año en metadatos del caso');
+          if ((await page.locator('#caso-hero h1').innerText()).includes(' — ')) contentIssues.push(slug + ': raya en título del caso');
           links.push({ pagePath, links: await collectLinks(page) });
           metas.push({ pagePath, meta: await collectMeta(page) });
           idsByPath.set(pagePath, new Set(await page.evaluate(() => Array.from(document.querySelectorAll('[id]')).map((e) => e.id))));
@@ -1133,7 +1209,7 @@ async function main() {
           );
         }
         issues.push(...(await checkProjectLinks(page, slug, 'case', 'página del caso')));
-        issues.push(...(await checkDiagrams(page, viewport, DIAGRAM_SLUGS.includes(slug) ? [slug] : [])));
+        issues.push(...(await checkDiagrams(page, DIAGRAM_SLUGS.includes(slug) ? [slug] : [])));
         if (['mbarete', 'estacion-de-carretera', 'kevjer', 'floreria-catalogo', 'lhoney'].includes(slug)) {
           issues.push(...(await checkProjectMedia(page, viewport, { scope: 'main', featured: false })).map((i) => `previews: ${i}`));
         }

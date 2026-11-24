@@ -1,21 +1,23 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
+const ui = t(localeOf(Astro.currentLocale));
 const steps = [
-  { title: 'Charlamos', text: 'Me contás qué necesita tu negocio.' },
-  { title: 'Te muestro una demo', text: 'Antes de comprometerte, ves una versión funcionando.', featured: true },
-  { title: 'Desarrollo y ajustes', text: 'Construimos con tu feedback.' },
-  { title: 'Lanzamiento y mantenimiento', text: 'Queda online y te acompaño después.' },
+  { title: ui.step1, text: ui.step1Body },
+  { title: ui.step2, text: ui.step2Body, featured: true },
+  { title: ui.step3, text: ui.step3Body },
+  { title: ui.step4, text: ui.step4Body },
 ];
 ---
 
 <section id="proceso" class="section" aria-labelledby="proceso-title">
   <div class="section-inner">
-    <h2 id="proceso-title" class="section-title">Cómo trabajo</h2>
-    <p class="section-lead">Cuatro pasos, de la primera charla al lanzamiento.</p>
+    <h2 id="proceso-title" class="section-title">{ui.process}</h2>
+    <p class="section-lead">{ui.processLead}</p>
 
     <ol class="steps">
       {steps.map((s, i) => (
         <li class:list={['step', { featured: s.featured }]}>
-          {s.featured && <span class="tag">Mi diferencial</span>}
           <span class="num" aria-hidden="true">{i + 1}</span>
           <h3>{s.title}</h3>
           <p>{s.text}</p>
@@ -84,21 +86,6 @@ const steps = [
   .featured h3,
   .featured p {
     color: #fff;
-  }
-
-  .tag {
-    position: absolute;
-    top: -14px;
-    left: var(--space-md);
-    padding: 0.2rem 0.75rem;
-    border: 2px solid #111;
-    border-radius: 999px;
-    background: #ffd98e;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #111;
   }
 
   @media (max-width: 1100px) {

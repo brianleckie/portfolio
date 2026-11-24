@@ -1,28 +1,30 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 import { whatsappHref } from '../config/site';
-import { KEYS, ENTER } from '../config/keyboard';
+import { getKeys } from '../config/keyboard';
 
-// Nombre accesible = caption en minúscula con excepciones de siglas/tildes
-const LABEL_OVERRIDES: Record<string, string> = { 'IT Y SOPORTE': 'IT y soporte' };
-const labelFor = (caption: string) =>
-  LABEL_OVERRIDES[caption] ?? caption.charAt(0) + caption.slice(1).toLowerCase();
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const keys = getKeys(locale);
+const enterHref = locale === 'en' ? '#contact' : whatsappHref(undefined, locale);
 ---
 
-<nav class="kb-section" aria-label="Teclado de navegación">
+<nav class="kb-section" aria-label={ui.keyboardNav}>
   <div class="kb" id="kb-wrapper">
     <div class="kb-stage" id="kb-stage">
-      {KEYS.map((key) => (
-        <a href={key.href} class="key" id={`key-${key.id}`} aria-label={labelFor(key.caption)} data-filter={key.filter ?? undefined}>
+      {keys.map((key) => (
+        <a href={key.href} class="key" id={`key-${key.id}`} aria-label={key.label} data-filter={key.filter ?? undefined}>
           <span class="key-face" aria-hidden="true">
             <span class="key-letter">{key.letter}</span>
             <span class="key-caption">{key.caption}</span>
           </span>
         </a>
       ))}
-      <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" class="key key-enter" id="key-Enter" aria-label="Hablemos por WhatsApp">
+      <a href={enterHref} target={locale === 'es' ? '_blank' : undefined} rel={locale === 'es' ? 'noopener noreferrer' : undefined} class="key key-enter" id="key-Enter" aria-label={ui.keyboardEnterLabel}>
         <span class="key-face" aria-hidden="true">
           <svg class="key-enter-icon" viewBox="0 0 64 44" focusable="false"><path d="M54 5v21H12" /><path d="M24 13 11 26l13 13" /></svg>
-          <span class="key-enter-caption">{ENTER.caption}</span>
+          <span class="key-enter-caption">{ui.keyboardEnter}</span>
         </span>
       </a>
     </div>

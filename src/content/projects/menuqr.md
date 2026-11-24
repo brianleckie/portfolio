@@ -1,10 +1,12 @@
 ---
-title: "MenuQR — menús digitales para gastronomía"
+title: "MenuQR"
+subtitle: "menús digitales para gastronomía"
+draft: true
 summary: "Menús digitales bilingües ES/EN para restaurantes y cafés, accesibles por código QR."
 category: ["web"]
 status: "en-desarrollo"
 featured: false
-order: 15
+order: 14
 clientNamePublic: false
 clientGeneric: "Restaurantes en Paraguay"
 role: "TODO: rol"

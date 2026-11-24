@@ -1,29 +1,26 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 import { site, resolveValue } from '../config/site';
 
 const github = resolveValue(site.github);
 const linkedin = resolveValue(site.linkedin);
 
+const ui = t(localeOf(Astro.currentLocale));
 const stack = [
-  { group: 'Frontend', items: ['Vue 3', 'Quasar', 'React', 'Vite', 'TypeScript'] },
-  { group: 'Backend', items: ['Python', 'FastAPI', 'PostgreSQL', 'Supabase'] },
-  { group: 'Infra y herramientas', items: ['Railway', 'Vercel', 'Cloudinary', 'GitHub Actions', 'n8n'] },
-  { group: 'IA', items: ['Claude API', 'MCP'] },
+  { group: ui.frontend, items: ['Vue 3', 'Quasar', 'React', 'Vite', 'TypeScript'] },
+  { group: ui.backend, items: ['Python', 'FastAPI', 'PostgreSQL', 'Supabase'] },
+  { group: ui.infra, items: ['Railway', 'Vercel', 'Cloudinary', 'GitHub Actions', 'n8n'] },
 ];
 ---
 
 <section id="sobre-mi" class="section tint" aria-labelledby="sobre-mi-title">
   <div class="section-inner layout">
     <div class="text">
-      <h2 id="sobre-mi-title" class="section-title">Sobre mí</h2>
-      <p>
-        Soy estudiante de 4º año de Ingeniería en Informática y desarrollador full-stack,
-        con base en {site.location}.
-      </p>
-      <p>
-        Tengo experiencia en IT empresarial: hoy trabajo como desarrollador en {site.employer} (remoto)
-        y, por mi cuenta, desarrollo webs, sistemas e integraciones para negocios de todo Paraguay.
-      </p>
+      {site.photo && <img src={site.photo} alt={site.name} />}
+      <h2 id="sobre-mi-title" class="section-title">{ui.about}</h2>
+      <p>{ui.aboutBody}</p>
+      <p>{ui.languages}</p>
 
       {(github || linkedin) && (
         <p class="links">
@@ -34,7 +31,7 @@ const stack = [
     </div>
 
     <div id="stack" class="stack" aria-labelledby="stack-title">
-      <h3 id="stack-title">Stack</h3>
+      <h3 id="stack-title">{ui.stack}</h3>
       <div class="groups">
         {stack.map((g) => (
           <div class="group">
@@ -84,6 +81,10 @@ const stack = [
   }
 
   .links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 0.5rem;
     font-weight: 600;
     color: var(--color-accent);
   }

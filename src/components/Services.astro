@@ -1,13 +1,18 @@
 ---
-import { services } from '../config/services';
+import { t } from '../i18n/ui';
+import { homeHref, localeOf } from '../i18n/routes';
+import { getServices } from '../config/services';
 import { site } from '../config/site';
 import { clean } from '../lib/todo';
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const services = getServices(locale);
 ---
 
 <section id="servicios" class="section tint" aria-labelledby="servicios-title">
   <div class="section-inner">
-    <h2 id="servicios-title" class="section-title">Servicios</h2>
-    <p class="section-lead">Lo que puedo hacer por tu negocio.</p>
+    <h2 id="servicios-title" class="section-title">{ui.services}</h2>
+    <p class="section-lead">{ui.servicesLead}</p>
 
     <ul class="grid">
       {services.map((s, i) => {
@@ -18,8 +23,8 @@ import { clean } from '../lib/todo';
             <h3>{s.title}</h3>
             <p>{s.description}</p>
             {price && <p class="price">{price}</p>}
-            <a class="examples" href={`/?cat=${s.filter}#proyectos`} data-filter={s.filter}>
-              Ver ejemplos<span class="sr-only"> de {s.title.toLowerCase()}</span> →
+            <a class="examples" href={`${homeHref(locale)}?cat=${s.filter}#proyectos`} data-filter={s.filter}>
+              {ui.viewExamples}<span class="sr-only"> {ui.examplesOf} {s.title.toLowerCase()}</span> →
             </a>
           </li>
         );

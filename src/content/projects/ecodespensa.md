@@ -1,17 +1,18 @@
 ---
-title: "Ecodespensa — sincronización con Tiendanube"
-summary: "TODO: Integración que sincroniza el sistema de gestión del local con la tienda online en Tiendanube."
+title: "Ecodespensa"
+subtitle: "sincronización con Tiendanube"
+summary: "Integración que sincroniza el sistema de gestión del local con la tienda online en Tiendanube."
 category: ["integraciones", "sistemas"]
 status: "en-produccion"
 featured: true
-order: 6
+order: 5
 clientNamePublic: false
 clientGeneric: "TODO: tienda con sistema de gestión local"
 role: "TODO: desarrollador backend"
 stack: ["FastAPI", "PostgreSQL", "Railway"]
 highlights:
   - "Integración OAuth con la API de Tiendanube para sincronizar catálogo y stock"
-  - "Interfaz ExcelSource/ApiSource que permitió avanzar ~80% del desarrollo antes de tener credenciales reales de la API"
+  - "Interfaz ExcelSource/ApiSource que permitió avanzar ~80% del desarrollo antes de tener credenciales reales de la API de Tiendanube"
   - "Deploy en Railway con PostgreSQL como base de datos"
 flow:
   steps:

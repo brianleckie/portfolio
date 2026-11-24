@@ -1,10 +1,11 @@
 ---
-title: "KEVJER. — catálogo de archivo y second hand"
+title: "KEVJER."
+subtitle: "catálogo de archivo y second hand"
 summary: "Dealer de piezas de archivo y second hand. Catálogo con carrito, modal de detalle por prenda y checkout por WhatsApp."
 category: ["web"]
 status: "entregado"
 featured: false
-order: 10
+order: 8
 clientNamePublic: false
 clientGeneric: "Marca de ropa de archivo, Paraguay"
 role: "Diseño + desarrollo completo"
@@ -13,11 +14,19 @@ highlights:
   - "Catálogo con carrito multi-producto y modal de detalle por prenda"
   - "Checkout directo por WhatsApp"
   - "Panel admin con autenticación para gestión de inventario"
-cover: ../../assets/projects/kevjer/cover.jpeg
-coverMobile: ../../assets/projects/kevjer/coverMobile.jpeg
 demoUrl: "https://kevjer.vercel.app/"
 year: 2024
 accent: "#d8624c"
+shots:
+  default:
+    waitFor: 'a[href="#archivo"]'
+    delay: 4500
+    css: |
+      @media (min-width: 768px) {
+        main > section:has(.hero-scroll-link) img { width: min(46vh, 780px) !important; }
+      }
+    alt:
+      scrollTo: "#archivo"
 ---
 
 ## Contexto

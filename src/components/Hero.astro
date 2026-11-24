@@ -1,24 +1,29 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 import { site, whatsappHref } from '../config/site';
 import Keyboard from './Keyboard.astro';
 import Marquee from './Marquee.astro';
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
-<section class="hero" id="hero" aria-label="Presentación">
+<section class="hero" id="hero" aria-label={ui.intro}>
   <div class="hero-inner">
     <p class="hero-location">{site.location}</p>
     <h1 class="hero-title">
-      <span class="hero-hello">Hola, soy <span class="name-key">Brian</span><span class="sr-only">.</span></span>
-      <span class="hero-line">Hago webs y sistemas que <em class="accent-word">trabajan</em> para tu negocio.</span>
+      <span class="hero-hello">{ui.hello} <span class="name-key">Brian</span><span class="sr-only">.</span></span>
+      <span class="hero-line">{ui.heroLead} <em class="accent-word">{ui.heroEmphasis}</em> {ui.heroEnd}</span>
     </h1>
+    <p class="hero-role">{ui.roleIntro} <strong>{site.employer}</strong> {ui.roleContinuation} <strong>{site.company}</strong></p>
   </div>
 
   <Keyboard />
 
   <!-- Solo mobile (<700px): el Enter ya es el CTA en desktop; acá el botón de texto es más claro para un dueño de PyME -->
   <div class="hero-cta">
-    <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
-      Escribime por WhatsApp
+    <a href={whatsappHref(undefined, locale)} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
+      {ui.whatsappCta}
     </a>
   </div>
 
@@ -26,6 +31,7 @@ import Marquee from './Marquee.astro';
 </section>
 
 <style>
+  .hero-role { font-size: 0.875rem; text-wrap: balance; }
   .hero {
     --hero-dot-gap: 24px;
     padding-top: clamp(20px, 4svh, 40px);

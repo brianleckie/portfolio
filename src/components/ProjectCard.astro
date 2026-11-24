@@ -1,6 +1,8 @@
 ---
+import { t } from '../i18n/ui';
+import { caseHref, localeOf } from '../i18n/routes';
 import type { Project } from '../lib/projects';
-import { STATUS_LABEL, caseHref, initials, stackChips, summaryOf, shortTitle } from '../lib/projects';
+import { slugOf, subtitleOf, initials, stackChips, summaryOf, shortTitle } from '../lib/projects';
 import { clean, cleanList } from '../lib/todo';
 import { projectImages } from '../lib/project-images';
 import ProjectMedia from './ProjectMedia.astro';
@@ -17,9 +19,11 @@ const summary = summaryOf(project);
 const { shown, extra } = stackChips(project);
 const result = cleanList(data.results)[0];
 const title = shortTitle(project);
-const tagline = data.title.includes(' — ') ? data.title.split(' — ').slice(1).join(' — ') : null;
+const tagline = subtitleOf(project);
 const demoUrl = clean(data.demoUrl);
 const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
 <article class="card" style={`--accent: ${data.accent}`}>
@@ -35,8 +39,7 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
 
   <div class="body">
     <div class="meta">
-      <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
-      <span class="year">{data.year}</span>
+      <span class="badge" data-status={data.status}>{ui.status[data.status]}</span>
     </div>
 
     <h3 class="title">{title}</h3>
@@ -48,22 +51,22 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
     )}
 
     {shown.length > 0 && (
-      <ul class="chips" aria-label="Tecnologías">
+      <ul class="chips" aria-label={ui.technologies}>
         {shown.map((s) => <li>{s}</li>)}
         {extra > 0 && <li class="more">+{extra}</li>}
       </ul>
     )}
 
     <div class="actions">
-      <a class="btn btn-primary" href={caseHref(project)} aria-label={`Ver caso: ${data.title}`}>Ver caso</a>
+      <a class="btn btn-primary" href={caseHref(slugOf(project), locale)} aria-label={`${ui.viewCase}: ${title}`}>{ui.viewCase}</a>
       {demoUrl && (
         <a
           class="btn btn-ghost"
           href={demoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Ver demo de ${title} (se abre en una pestaña nueva)`}
-        >Ver demo ↗</a>
+          aria-label={`${ui.viewDemoOf} ${title} (${ui.newTab})`}
+        >{ui.viewDemo}</a>
       )}
       {links.map((l) => (
         <a
@@ -71,8 +74,8 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
           href={l.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Ver ${l.label} (se abre en una pestaña nueva)`}
-        >Ver {l.label} ↗</a>
+          aria-label={`${ui.view} ${l.label} (${ui.newTab})`}
+        >{ui.view} {l.label} ↗</a>
       ))}
     </div>
   </div>
@@ -99,11 +102,6 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
     display: flex;
     align-items: center;
     gap: 0.75rem;
-  }
-
-  .year {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
   }
 
   .title {

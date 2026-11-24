@@ -109,3 +109,12 @@ Vercel detecta Astro solo. `vercel.json` fija `trailingSlash: true` para que las
 ## Créditos
 
 Diseño del hero inspirado en un prompt de ui.debbie (uso personal). Tipografías: Satoshi (Indian Type Foundry, licencia FFL en `public/fonts/Satoshi-LICENSE.txt`), Inter e Instrument Serif (self-hosted vía `@fontsource`).
+
+
+### Idiomas y experiencia
+
+El sitio publica español en `/` y reserva `/en/` para la versión inglesa. Los textos de interfaz viven en `src/i18n/ui.ts`. El selector se habilita con `site.enableEnglish` cuando se publican las páginas equivalentes.
+
+Las entradas de Experiencia se editan en `src/config/experience.ts`, con texto en ambos idiomas.
+
+En el frontmatter de proyectos, `draft: true` excluye el proyecto de publicación. `inGrid: false` conserva su página y la omite del grid. `subtitle` separa el subtítulo del título. Si se omite, se conserva el subtítulo después de la raya en títulos anteriores.

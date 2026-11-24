@@ -67,6 +67,6 @@
 
 @media (max-width: 700px) {
   :root {
-    --header-h: 113px; /* wordmark + CTA (64px) y fila de links scrolleable debajo */
+    --header-h: 122px; /* wordmark + CTA (64px) y fila de links scrolleable debajo */
   }
 }

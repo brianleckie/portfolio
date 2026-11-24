@@ -4,6 +4,92 @@
 
 ---
 
+## R. Rediseño 2026-11 (esta sección manda sobre el resto del documento donde lo contradiga)
+
+Pedido de Brian (14–17/11/2026): más profesional, mobile primero de verdad, jerarquía de proyectos nueva, experiencia laboral visible, bilingüe ES/EN, divertido sin parecer "portfolio hecho con IA". Auditorías de respaldo: `docs/audit/` (no se versiona).
+
+### R.1 Hechos confirmados por Brian (usar tal cual; nada más)
+
+| Dato | Valor |
+|---|---|
+| Trabajo actual | **Software Developer** en **Klien IT Systems** (Países Bajos), remoto, **media jornada**, desde **agosto 2026** |
+| Empresa propia | **Co-founder y Team Leader** de **CPO Tech** (Paraguay), fundada en **octubre 2026** entre **7 colegas**; tiene portfolio propio en https://www.cpotech.com.py |
+| Empleo anterior | **Soporte técnico** en **Grupo Empresarial Franz**, 2026 (antes de Klien). Es el proyecto "IT para red de sucursales" (RustDesk en 15 sucursales, NAS QNAP, FortiClient) |
+| Independiente | Proyectos propios para negocios (lo que muestra el portfolio) |
+| Estudios | Ingeniería en Informática, **Universidad Católica "Nuestra Señora de la Asunción", Campus Itapúa**. Le faltan 2 semestres; **egreso estimado 2027**. Nunca "Ingeniero", "Graduate" ni "B.Sc." |
+| Idiomas | Español nativo; inglés conversacional y profesional (lo usa a diario en el trabajo) |
+| Mbarete | Lo usan **5 gimnasios** en Argentina y Paraguay |
+| Años de proyectos | **No se muestran** (todo empezó en 2026; el campo `year` queda opcional en el schema y no se renderiza) |
+| Foto, dominio, testimonios | Sin foto por ahora (slot oculto si `site.photo` está vacío). Sin dominio propio todavía (`site.url` sigue siendo la única línea a cambiar). Sin testimonios: no hay sección |
+| Búsqueda de empleo | No confirmada: no se muestra "open to work" (`site.openToWork: false`) |
+
+### R.2 Idioma y rutas
+
+- **Español en `/`** (idioma por defecto, sin prefijo) e **inglés en `/en/`**. Casos: `/proyectos/<slug>/` (ES) y `/en/projects/<slug>/` (EN). Los slugs no se traducen.
+- Astro i18n: `locales: ['es','en']`, `defaultLocale: 'es'`, `routing.prefixDefaultLocale: false`. Salida estática.
+- Selector ES/EN visible en el header (≥ 44×44, `aria-current` en el activo, lleva a la página equivalente). **Sin redirección automática** por idioma del navegador.
+- `hreflang` recíproco (`es`, `en`, `x-default` → ES), canonical propio por idioma, `og:locale` `es_PY` / `en_US`, OG por idioma.
+- Textos de UI en un diccionario tipado (`src/i18n/ui.ts`: `es` completo, `en` con las mismas claves; build falla si falta una clave EN cuando se generan páginas EN). Proyectos: los `.md` de `src/content/projects/` son ES y canónicos para datos compartidos (estado, orden, stack, links, capturas); la traducción EN (R3) va en `src/content/projects-en/<slug>.md` solo con campos traducibles + cuerpo.
+- Uso: a clientes se comparte `/` o el caso en ES; LinkedIn, CV y postulaciones apuntan a `/en/`.
+- La versión EN reordena: experiencia antes que servicios, contacto con email · LinkedIn · CV primero y WhatsApp después, "Cómo trabajo" reducido. El Enter del teclado en EN va a `#contact` (no a WhatsApp).
+
+### R.3 Jerarquía de proyectos (por peso)
+
+Destacados (`featured: true`), en este orden: **1. Mbarete · 2. Catálogo para florerías · 3. Estación de Carretera · 4. Lhoney · 5. Ecodespensa · 6. AVM Gran Asunción**.
+Más proyectos (en este orden): **CPO Tech** (nuevo, `links` al portfolio de CPO Tech, rol "Co-founder y Team Leader"), KEVJER, Mercado Jopoi, Figus del Mundial, Dashboard IoT.
+**Ocultos** hasta tener contenido completo (`draft: true`: sin card, sin página, fuera del sitemap): Chapa, MenuQR, Mírame, Turnos psicología.
+**IT para red de sucursales** sale del grid y se enlaza desde la entrada de Grupo Empresarial Franz en Experiencia (su página `/proyectos/it-sucursales/` se mantiene; campo `inGrid: false`). Cliente nombrado: Grupo Empresarial Franz.
+
+### R.4 Hero y teclado (R1: cambios de contenido; el rediseño visual es R2)
+
+- Debajo de la línea del `<h1>`: **línea de rol** chica: "Software developer en **Klien IT Systems** (Países Bajos) · Co-founder de **CPO Tech**" / EN: "Software developer at **Klien IT Systems** (Netherlands) · Co-founder of **CPO Tech**".
+- El teclado se mantiene como firma. Tecla **K2: "MI PROCESO" → "EXPERIENCIA"** (`#experiencia`; EN "EXPERIENCE" → `#experience`). Se sigue leyendo LEKI WORKS.
+- Easter egg (R2): tipear letras en el teclado físico hunde la tecla correspondiente en pantalla (sin navegar; Enter físico no hace nada). Respeta `prefers-reduced-motion` y no captura teclas si el foco está en un input o hay modificadores.
+- Reloj de Encarnación (R2): "Son las 21:34 en Encarnación · UTC−3" (`America/Asuncion`), texto real, actualizado por minuto, sin layout shift.
+
+### R.5 Sección Experiencia (`#experiencia` / `#experience`), nueva, inmediatamente después de Proyectos
+
+Datos en `src/config/experience.ts` (tipado, campos `{ es, en }`). Orden y copy:
+
+1. **Software Developer — Klien IT Systems** · Países Bajos, remoto · media jornada · ago 2026 – hoy
+   ES: "Desarrollo de software para una empresa de IT de Países Bajos, en equipo remoto y en inglés." EN: "Software development for a Dutch IT company, working remotely in an English-speaking team."
+2. **Co-founder y Team Leader — CPO Tech** · Paraguay · oct 2026 – hoy · link "Ver portfolio de CPO Tech ↗"
+   ES: "Empresa de desarrollo que fundamos entre 7 colegas. Lidero el equipo técnico." EN: "Software company founded by 7 colleagues. I lead the technical team."
+3. **Desarrollo independiente** · Paraguay · 2026 – hoy
+   ES: "Catálogos, sistemas e integraciones para negocios: los proyectos de este sitio." EN: "Catalogs, systems and integrations for businesses — the projects on this site."
+4. **Soporte técnico — Grupo Empresarial Franz** · Paraguay · 2026 · link "Ver caso" → `/proyectos/it-sucursales/`
+   ES: "Acceso remoto corporativo en 15 sucursales, permisos por departamento en NAS y despliegues de FortiClient." EN: "Corporate remote access across 15 branches, per-department NAS permissions and FortiClient rollouts."
+5. **Ingeniería en Informática — Universidad Católica, Campus Itapúa** · egreso estimado 2027
+   ES: "Último año de la carrera." EN: "Computer Engineering — final year, expected 2027."
+
+Estructura: lista ordenada semántica (`<ol>`), fechas en `<time>`. Sin logos inventados ni porcentajes.
+
+### R.6 Sobre mí (reescrito)
+
+No abre con "estudiante". ES: "Soy Brian, desarrollador full-stack de Encarnación. Trabajo como software developer para Klien IT Systems, una empresa de Países Bajos, y lidero el equipo de CPO Tech, la empresa que armamos con colegas en Paraguay. Por mi cuenta hago catálogos, sistemas e integraciones para negocios de todo el país, siempre con una demo funcionando antes de cerrar nada. Estoy en el último año de Ingeniería en Informática en la Universidad Católica." + línea de idiomas ("Español nativo · Inglés profesional, lo uso a diario"). Bloque Stack sin "MCP"/"Claude API" salvo que haya proyecto que los use (se quitan). GitHub y LinkedIn ≥ 44px de alto.
+
+### R.7 Reglas de copy (anti "hecho con IA")
+
+- Sin raya "—" dentro de títulos visibles: título + subtítulo como campos/elementos separados (las cards mini también).
+- Sin la fórmula "X, no Y"; sin frases de folleto ("ahorran horas", "100% construido en…", "demanda replicable"); sin etiqueta "MI DIFERENCIAL" (el paso 2 se destaca solo con el diseño).
+- Un solo recurso de itálica serif por pantalla.
+- `↗` solo en links que salen del sitio.
+- Crédito del footer: "Teclado inspirado en un diseño de ui.debbie" (nunca la palabra "prompt").
+- Cada frase con un dato que solo Brian puede escribir (nombre, número, lugar, decisión). Nada inventado: si falta un dato, se omite.
+
+### R.8 Mobile y profesionalismo (objetivos medibles, R2)
+
+Texto visible ≥ 14px salvo metadatos; touch targets ≥ 44px; máx. 3 chips de stack por card; un solo CTA de WhatsApp por pantallazo; primer proyecto visible en ≤ 1 scroll a 390×844; home a 390 ≤ 7.000px; capturas grandes (en mobile el teléfono ocupa la card). Todas las capturas se rehacen (Jopoi sin modal, KEVJER sin splash, desktop de Ornella/Rocío/Lhoney, Estación sin la línea de la inauguración). Maqueta 390 y 1440 aprobada por Brian antes de implementar.
+
+### R.9 Fases del rediseño (cada una: `npm run build` + `npm run check:layout` + resumen, y se espera el OK)
+
+- **R1 — Contenido y estructura:** este §R en el SPEC; i18n plumbing (config, diccionario ES, helpers de rutas, selector oculto hasta R3); `experience.ts` + sección Experiencia con el estilo actual; línea de rol; K2; jerarquía y `draft`; años fuera; copy limpio; JSON-LD con `worksFor` (Klien, CPO Tech) y `knowsLanguage`; `check:layout` actualizado a estos cambios.
+- **R2 — Rediseño visual + mobile** (§R.4 easter egg y reloj, §R.8).
+- **R3 — Inglés** completo en `/en/` (§R.2).
+- **R4 — Pulido:** check final, Lighthouse, CV PDF ES/EN, preview en Vercel.
+
+---
+
 ## 0. Rol y reglas de trabajo (para Claude Code)
 
 Construí el portfolio completo, funcional y desplegable de Brian Leckie ("Leki"), desarrollador full-stack en Encarnación, Paraguay. No entregues conceptos, wireframes ni explicaciones: entregá código funcionando.

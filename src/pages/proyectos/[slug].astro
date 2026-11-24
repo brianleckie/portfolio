@@ -1,4 +1,6 @@
 ---
+import { caseHref, homeHref, localeOf } from '../../i18n/routes';
+
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
@@ -6,14 +8,13 @@ import ProjectMedia from '../../components/ProjectMedia.astro';
 import Footer from '../../components/Footer.astro';
 import StickyCta from '../../components/StickyCta.astro';
 import {
-  STATUS_LABEL,
-  caseHref,
   descriptionOf,
   getFeatured,
   getProjects,
   initials,
   projectWhatsappHref,
   shortTitle,
+  subtitleOf,
   slugOf,
   summaryOf,
   type Project,
@@ -21,6 +22,9 @@ import {
 import { projectImages } from '../../lib/project-images';
 import { clean, cleanList } from '../../lib/todo';
 import { site } from '../../config/site';
+import { t } from '../../i18n/ui';
+const routeLocale = localeOf(Astro.currentLocale);
+const ui = t(routeLocale);
 
 export async function getStaticPaths() {
   const projects = await getProjects();
@@ -50,6 +54,8 @@ const { data } = entry;
 const { Content } = await render(entry);
 
 const images = projectImages(entry);
+const title = shortTitle(entry);
+const subtitle = subtitleOf(entry);
 const summary = summaryOf(entry);
 const role = clean(data.role);
 const stack = cleanList(data.stack);
@@ -62,26 +68,27 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
 
 <BaseLayout
   title={`${shortTitle(entry)} — ${site.name}`}
-  description={descriptionOf(entry)}
+  description={descriptionOf(entry, routeLocale)}
   ogImage={`/og/${slugOf(entry)}.png`}
-  ogImageAlt={`${data.title} — caso de estudio de ${site.name}`}
+  ogImageAlt={`${data.title} — ${ui.caseStudyBy} ${site.name}`}
   type="article"
+  locale={routeLocale}
 >
   <Header />
   <main class="case" style={`--accent: ${data.accent}`}>
     <section id="caso-hero" class="hero">
-      <a class="back" href="/#proyectos">← Todos los proyectos</a>
-      <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
-      <h1>{data.title}</h1>
+      <a class="back" href={homeHref(routeLocale) + '#proyectos'}>{ui.allProjectsBack}</a>
+      <span class="badge" data-status={data.status}>{ui.status[data.status]}</span>
+      <h1>{title}</h1>
+      {subtitle && <p class="tagline">{subtitle}</p>}
       {summary && <p class="lead">{summary}</p>}
 
       <dl class="meta">
-        <div><dt>Año</dt><dd>{data.year}</dd></div>
-        {role && <div><dt>Rol</dt><dd>{role}</dd></div>}
-        <div><dt>Estado</dt><dd>{STATUS_LABEL[data.status]}</dd></div>
+        {role && <div><dt>{ui.role}</dt><dd>{role}</dd></div>}
+        <div><dt>{ui.statusLabel}</dt><dd>{ui.status[data.status]}</dd></div>
         {stack.length > 0 && (
           <div class="meta-stack">
-            <dt>Stack</dt>
+            <dt>{ui.stack}</dt>
             <dd>
               <ul class="chips">{stack.map((s) => <li>{s}</li>)}</ul>
             </dd>
@@ -92,15 +99,15 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
       {(demoUrl || repoUrl || links.length > 0) && (
         <div class="links">
           {demoUrl && (
-            <a class="btn btn-primary" href={demoUrl} target="_blank" rel="noopener noreferrer">Ver demo ↗</a>
+            <a class="btn btn-primary" href={demoUrl} target="_blank" rel="noopener noreferrer">{ui.viewDemo}</a>
           )}
           {links.map((l, i) => (
             <a class:list={['btn', !demoUrl && i === 0 ? 'btn-primary' : 'btn-ghost']} href={l.url} target="_blank" rel="noopener noreferrer">
-              Ver {l.label} ↗
+              {ui.view} {l.label} ↗
             </a>
           ))}
           {repoUrl && (
-            <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">Ver código ↗</a>
+            <a class="btn btn-ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">{ui.viewCode}</a>
           )}
         </div>
       )}
@@ -122,7 +129,7 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
     <section class="content">
       {highlights.length > 0 && (
         <div class="highlights">
-          <h2>Lo más importante</h2>
+          <h2>{ui.highlights}</h2>
           <ul>{highlights.map((h) => <li>{h}</li>)}</ul>
         </div>
       )}
@@ -133,45 +140,46 @@ const links = (data.links ?? []).filter((l) => clean(l.label) && clean(l.url));
 
       {results.length > 0 && (
         <aside class="results" aria-labelledby="resultado-title">
-          <h2 id="resultado-title">Resultado</h2>
+          <h2 id="resultado-title">{ui.results}</h2>
           <ul>{results.map((r) => <li>{r}</li>)}</ul>
         </aside>
       )}
     </section>
 
     <section id="caso-cta" class="cta" aria-labelledby="cta-title">
-      <h2 id="cta-title">¿Querés algo así para tu negocio?</h2>
-      <p>Contame qué necesitás y te digo cómo lo encararía.</p>
-      <a class="btn btn-primary btn-lg" href={projectWhatsappHref(entry)} target="_blank" rel="noopener noreferrer">
-        Escribime por WhatsApp
+      <h2 id="cta-title">{ui.caseCta}</h2>
+      <p>{ui.caseCtaBody}</p>
+      <a class="btn btn-primary btn-lg" href={projectWhatsappHref(entry, routeLocale)} target="_blank" rel="noopener noreferrer">
+        {ui.whatsappCta}
       </a>
     </section>
 
-    <nav class="pager" aria-label="Otros proyectos">
+    <nav class="pager" aria-label={ui.otherProjects}>
       {prev ? (
-        <a class="pager-link" href={caseHref(prev)} rel="prev">
-          <span class="pager-dir">← Anterior</span>
+        <a class="pager-link" href={caseHref(slugOf(prev), routeLocale)} rel="prev">
+          <span class="pager-dir">{ui.previous}</span>
           <span class="pager-title">{shortTitle(prev)}</span>
         </a>
       ) : (
-        <a class="pager-link" href="/#proyectos">
+        <a class="pager-link" href={homeHref(routeLocale) + '#proyectos'}>
           <span class="pager-dir">←</span>
-          <span class="pager-title">Todos los proyectos</span>
+          <span class="pager-title">{ui.allProjects}</span>
         </a>
       )}
       {next && (
-        <a class="pager-link pager-next" href={caseHref(next)} rel="next">
-          <span class="pager-dir">Siguiente →</span>
+        <a class="pager-link pager-next" href={caseHref(slugOf(next), routeLocale)} rel="next">
+          <span class="pager-dir">{ui.next}</span>
           <span class="pager-title">{shortTitle(next)}</span>
         </a>
       )}
     </nav>
   </main>
   <Footer />
-  <StickyCta after="#caso-hero" until="#caso-cta" message={`Hola Brian, vi el proyecto "${shortTitle(entry)}" en tu portfolio y quiero algo parecido para mi negocio.`} />
+  <StickyCta after="#caso-hero" until="#caso-cta" message={ui.projectMessage.replace('{title}', shortTitle(entry))} />
 </BaseLayout>
 
 <style>
+  .tagline { margin: 0.25rem 0; }
   .case {
     padding: var(--space-xl) var(--pad-desktop) var(--space-2xl);
   }

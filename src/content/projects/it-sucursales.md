@@ -4,10 +4,12 @@ summary: "Infraestructura IT para red de sucursales: acceso remoto corporativo, 
 category: ["it"]
 status: "entregado"
 featured: false
-order: 17
-clientNamePublic: false
+inGrid: false
+order: 12
+clientNamePublic: true
+client: "Grupo Empresarial Franz"
 clientGeneric: "Empresa con red de sucursales en Paraguay"
-role: "IT Engineer"
+role: "Soporte técnico"
 stack: ["RustDesk", "QNAP NAS", "FortiClient", "GitHub Actions"]
 highlights:
   - "APK de RustDesk personalizado con servidor corporativo fijo, firmado con keystore corporativo"
@@ -31,4 +33,10 @@ year: 2024
 accent: "#ffd98e"
 ---
 
-TODO: caso de estudio. (No nombrar la empresa hasta confirmar permiso del cliente.)
+## Qué hice
+
+Trabajé como soporte técnico en Grupo Empresarial Franz, una empresa con red de sucursales en Paraguay.
+
+Para el acceso remoto armé un APK de RustDesk con el servidor corporativo fijo, firmado con el keystore corporativo, y lo desplegué en 15 sucursales con GitHub Actions. El diagrama muestra cómo se desplegó.
+
+Además configuré permisos ACL por departamento en el NAS QNAP y realicé despliegues de FortiClient para la VPN corporativa.

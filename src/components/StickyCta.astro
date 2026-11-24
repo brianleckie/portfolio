@@ -1,4 +1,6 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 import { whatsappHref } from '../config/site';
 
 interface Props {
@@ -10,11 +12,13 @@ interface Props {
 }
 
 const { after, until, message } = Astro.props;
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
 <div class="sticky-cta" id="sticky-cta" data-after={after} data-until={until}>
-  <a class="btn btn-primary" href={whatsappHref(message)} target="_blank" rel="noopener noreferrer">
-    Escribime por WhatsApp
+  <a class="btn btn-primary" href={whatsappHref(message, locale)} target="_blank" rel="noopener noreferrer">
+    {ui.whatsappCta}
   </a>
 </div>
 

@@ -1,35 +1,49 @@
 ---
-import { whatsappHref } from '../config/site';
+import { t } from '../i18n/ui';
+import { homeHref, type AlternateRoutes, localeOf } from '../i18n/routes';
+import LanguageSelector from './LanguageSelector.astro';
+import { site, whatsappHref } from '../config/site';
 
-const waHref = whatsappHref();
+interface Props { alternates?: AlternateRoutes }
+
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const home = homeHref(locale);
+const waHref = whatsappHref(undefined, locale);
+const experienceHash = locale === 'en' ? '#experience' : '#experiencia';
+const { alternates } = Astro.props;
 ---
 
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="wordmark" aria-label="leki. — Brian Leckie, ir al inicio">
+    <a href={home} class="wordmark" aria-label={ui.wordmarkLabel}>
       leki<span class="dot">.</span>
     </a>
 
-    <nav class="nav-desktop" aria-label="Navegación principal">
-      <a href="/#proyectos">Proyectos</a>
-      <a href="/#servicios">Servicios</a>
-      <a href="/#sobre-mi">Sobre mí</a>
+    <nav class="nav-desktop" aria-label={ui.primaryNav}>
+      <a href={home + '#proyectos'}>{ui.projects}</a>
+      <a href={home + experienceHash}>{ui.experience}</a>
+      <a href={home + '#servicios'}>{ui.services}</a>
+      <a href={home + '#sobre-mi'}>{ui.about}</a>
       <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
-        Hablemos ↗
+        {ui.letsTalk}
       </a>
+      {site.enableEnglish && alternates && <LanguageSelector {locale} {alternates} />}
     </nav>
 
     <div class="mobile-right">
+      {site.enableEnglish && alternates && <LanguageSelector {locale} {alternates} />}
       <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
-        Hablemos ↗
+        {ui.letsTalk}
       </a>
     </div>
   </div>
 
-  <nav class="nav-mobile" aria-label="Navegación secundaria">
-    <a href="/#proyectos">Proyectos</a>
-    <a href="/#servicios">Servicios</a>
-    <a href="/#sobre-mi">Sobre mí</a>
+  <nav class="nav-mobile" aria-label={ui.secondaryNav}>
+    <a href={home + '#proyectos'}>{ui.projects}</a>
+    <a href={home + experienceHash}>{ui.experience}</a>
+    <a href={home + '#servicios'}>{ui.services}</a>
+    <a href={home + '#sobre-mi'}>{ui.about}</a>
   </nav>
 </header>
 
@@ -128,8 +142,8 @@ const waHref = whatsappHref();
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
-      gap: var(--space-lg);
-      padding: 0.5rem var(--pad-mobile);
+      gap: clamp(0.5rem, 3vw, var(--space-lg));
+      padding: 6px var(--pad-mobile);
       border-top: 1px solid rgba(0, 0, 0, 0.06);
       scrollbar-width: none;
     }
@@ -139,12 +153,15 @@ const waHref = whatsappHref();
     }
 
     .nav-mobile a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
       scroll-snap-align: start;
       white-space: nowrap;
       font-size: 0.875rem;
       text-decoration: none;
       color: var(--color-text-secondary);
-      padding: 0.25rem 0;
+      padding: 0.5rem 0;
       flex-shrink: 0;
     }
   }

@@ -1,12 +1,18 @@
+import { t } from '../i18n/ui';
+import type { Locale } from '../i18n/routes';
+
 export const site = {
   name: "Brian Leckie",
   nickname: "Leki",
   wordmark: "leki.",
-  role: "Desarrollador full-stack",
   employer: "Klien IT Systems",
+  company: "CPO Tech",
+  photo: "",
+  openToWork: false,
+  enableEnglish: false,
+  cpoTechUrl: "https://www.cpotech.com.py",
   location: "Encarnación, Paraguay",
   whatsapp: "595983763890",
-  whatsappMessage: "Hola Brian, vi tu portfolio y quiero consultarte por un proyecto.",
   email: "leckiebrian19@gmail.com",
   github: "https://github.com/brianleckie",
   linkedin: "https://linkedin.com/in/brianleckie",
@@ -16,8 +22,8 @@ export const site = {
   url: "https://portfolio-alpha-henna-61.vercel.app", // ÚNICO lugar con la URL del sitio (canonical, OG, sitemap, robots)
 };
 
-export function whatsappHref(message: string = site.whatsappMessage): string {
-  return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`;
+export function whatsappHref(message?: string, locale: Locale = 'es'): string {
+  return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message ?? t(locale).whatsappMessage)}`;
 }
 
 export function isTodo(value: string): boolean {

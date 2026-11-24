@@ -1,24 +1,28 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 import { site, whatsappHref, resolveValue } from '../config/site';
 
 const email = resolveValue(site.email);
 const hasWhatsapp = resolveValue(site.whatsapp) !== null;
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
 <section id="contacto" class="contact section" aria-labelledby="contacto-title">
   <div class="section-inner layout">
     <h2 id="contacto-title">
-      <span class="line">Tu próximo proyecto</span>
-      <span class="line accent">empieza con un hola.</span>
+      <span class="line">{ui.contactHeading}</span>
+      <span class="line accent">{ui.contactAccent}</span>
     </h2>
 
     <div class="body">
-      <p>¿Tenés un negocio, una idea a medio armar o solo querés consultar? Escribime.</p>
+      <p>{ui.contactBody}</p>
 
       <div class="actions">
         {hasWhatsapp && (
-          <a class="btn btn-lg wa" href={whatsappHref()} target="_blank" rel="noopener noreferrer">
-            Escribime por WhatsApp
+          <a class="btn btn-lg wa" href={whatsappHref(undefined, locale)} target="_blank" rel="noopener noreferrer">
+            {ui.whatsappCta}
           </a>
         )}
         {email && <a class="mail" href={`mailto:${email}`}>{email}</a>}
@@ -91,6 +95,10 @@ const hasWhatsapp = resolveValue(site.whatsapp) !== null;
   }
 
   .mail {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 0.5rem;
     font-size: 1.0625rem;
     font-weight: 500;
     color: var(--color-text-contact-link);

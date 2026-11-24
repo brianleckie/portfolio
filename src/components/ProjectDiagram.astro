@@ -1,6 +1,8 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
 // Esquema de "cómo funciona" para proyectos sin interfaz (backend, integraciones, modelos).
-// No es una captura: lleva la etiqueta "Diagrama" y su contenido es texto real (lista ordenada).
+// No es una captura: lleva la etiqueta "{ui.diagram}" y su contenido es texto real (lista ordenada).
 // Todo sale del campo `flow` del .md (validado en src/content.config.ts).
 import type { Flow } from '../lib/projects';
 import { FLOW_ICON_PATHS } from '../lib/flow';
@@ -13,11 +15,12 @@ interface Props {
 
 const { flow, title, variant = 'card' } = Astro.props;
 const n = flow.steps.length;
+const ui = t(localeOf(Astro.currentLocale));
 ---
 
 <figure class="diagram" data-diagram data-variant={variant}>
   <figcaption class="head">
-    <span class="tag">Diagrama</span><span class="sr-only">: </span>
+    <span class="tag">{ui.diagram}</span><span class="sr-only">: </span>
     <span class="title">{flow.title}</span>
     {variant === 'card' && <span class="sr-only"> — {title}</span>}
   </figcaption>

@@ -1,10 +1,12 @@
 ---
-title: "Mírame — showroom para emprendedores"
+title: "Mírame"
+subtitle: "showroom para emprendedores"
+draft: true
 summary: "MVP de showroom digital para emprendedores, mobile-first, con imágenes vía Cloudinary."
 category: ["web"]
 status: "demo"
 featured: false
-order: 13
+order: 15
 clientNamePublic: false
 clientGeneric: "Proyecto propio / MVP"
 role: "Diseño + desarrollo"

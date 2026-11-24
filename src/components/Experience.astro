@@ -1,0 +1,43 @@
+---
+import { experience } from '../config/experience';
+import { caseHref, localeOf } from '../i18n/routes';
+import { t } from '../i18n/ui';
+
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const id = locale === 'en' ? 'experience' : 'experiencia';
+---
+
+<section id={id} class="section tint" aria-labelledby="experience-title">
+  <div class="section-inner">
+    <h2 id="experience-title" class="section-title">{ui.experience}</h2>
+    <ol class="entries">
+      {experience.map((entry) => {
+        const [title, organization] = entry.title[locale].split(' — ');
+        return (
+          <li>
+            <h3>{title}</h3>
+            {organization && <p class="organization">{organization}</p>}
+            <p class="details">
+              {entry.context && <>{entry.context[locale]} · </>}
+              <time datetime={entry.datetime}>{entry.date[locale]}</time>{entry.ongoing && ui.dateOngoing}
+            </p>
+            <p>{entry.description[locale]}</p>
+            {entry.external && <a href={entry.external} target="_blank" rel="noopener noreferrer">{ui.cpoPortfolio}</a>}
+            {entry.project && <a href={caseHref(entry.project, locale)}>{ui.viewCase}</a>}
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .tint { background-color: var(--color-bg-hero-to); }
+  .entries { display: grid; gap: var(--space-md); padding-left: 1.5rem; margin-top: var(--space-lg); }
+  .entries li { padding: var(--space-md); background: white; border-radius: 16px; }
+  .entries h3, .entries p { margin: 0 0 0.375rem; }
+  .organization { font-weight: 600; }
+  .details { font-size: 0.875rem; }
+  .entries a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+</style>

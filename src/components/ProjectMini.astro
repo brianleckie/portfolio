@@ -1,6 +1,8 @@
 ---
+import { t } from '../i18n/ui';
+import { caseHref, localeOf } from '../i18n/routes';
 import type { Project } from '../lib/projects';
-import { STATUS_LABEL, caseHref, stackChips, summaryOf } from '../lib/projects';
+import { slugOf, subtitleOf, stackChips, summaryOf, shortTitle } from '../lib/projects';
 
 interface Props {
   project: Project;
@@ -9,23 +11,26 @@ interface Props {
 const { project } = Astro.props;
 const { data } = project;
 const summary = summaryOf(project);
+const subtitle = subtitleOf(project);
 const { shown, extra } = stackChips(project, 3);
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
 <article class="mini" style={`--accent: ${data.accent}`}>
   <div class="meta">
-    <span class="badge" data-status={data.status}>{STATUS_LABEL[data.status]}</span>
-    <span class="year">{data.year}</span>
+    <span class="badge" data-status={data.status}>{ui.status[data.status]}</span>
   </div>
 
   <h4 class="title">
-    <a href={caseHref(project)}>{data.title}</a>
+    <a href={caseHref(slugOf(project), locale)}>{shortTitle(project)}</a>
   </h4>
 
-  {summary && <p class="summary">{summary}</p>}
+  {subtitle && <p class="tagline">{subtitle}</p>}
+  {summary && summary !== subtitle && <p class="summary">{summary}</p>}
 
   {shown.length > 0 && (
-    <ul class="chips" aria-label="Tecnologías">
+    <ul class="chips" aria-label={ui.technologies}>
       {shown.map((s) => <li>{s}</li>)}
       {extra > 0 && <li class="more">+{extra}</li>}
     </ul>
@@ -33,6 +38,7 @@ const { shown, extra } = stackChips(project, 3);
 </article>
 
 <style>
+  .tagline { margin: 0.25rem 0; }
   .mini {
     position: relative;
     display: flex;
@@ -53,11 +59,6 @@ const { shown, extra } = stackChips(project, 3);
     display: flex;
     align-items: center;
     gap: 0.6rem;
-  }
-
-  .year {
-    font-size: 0.8125rem;
-    color: var(--color-text-secondary);
   }
 
   .title {

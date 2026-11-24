@@ -1,10 +1,11 @@
 ---
-title: "Figus del Mundial — intercambio de figuritas"
+title: "Figus del Mundial"
+subtitle: "intercambio de figuritas"
 summary: "Plataforma de intercambio de figuritas del mundial con reservas seguras ante concurrencia."
 category: ["sistemas", "web"]
 status: "en-desarrollo"
 featured: false
-order: 12
+order: 10
 clientNamePublic: false
 clientGeneric: "Proyecto propio"
 role: "Desarrollo completo"

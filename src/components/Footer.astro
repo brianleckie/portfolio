@@ -1,25 +1,29 @@
 ---
+import { t } from '../i18n/ui';
+import { homeHref, localeOf } from '../i18n/routes';
 import { site, resolveValue } from '../config/site';
 
 const github = resolveValue(site.github);
 const linkedin = resolveValue(site.linkedin);
 const year = new Date().getFullYear();
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
 ---
 
 <footer class="footer">
   <div class="inner">
     <p>© {year} {site.name}</p>
 
-    <nav class="links" aria-label="Pie de página">
-      <a href="/#proyectos">Proyectos</a>
-      <a href="/#servicios">Servicios</a>
-      <a href="/#contacto">Contacto</a>
+    <nav class="links" aria-label={ui.footerNav}>
+      <a href={homeHref(locale) + '#proyectos'}>{ui.projects}</a>
+      <a href={homeHref(locale) + '#servicios'}>{ui.services}</a>
+      <a href={homeHref(locale) + '#contacto'}>{ui.contact}</a>
       {github && <a href={github} target="_blank" rel="noopener noreferrer">GitHub</a>}
       {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>}
     </nav>
 
     {site.showDesignCredit && (
-      <p class="credit">Diseño inspirado en un prompt de ui.debbie</p>
+      <p class="credit">{ui.designCredit}</p>
     )}
   </div>
 </footer>

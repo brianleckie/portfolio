@@ -1,31 +1,35 @@
 // Teclado del hero (SPEC §6). Acá vive el CONTENIDO en orden de lectura.
 // Colores y geometría del arco viven en src/styles/tokens.css (fuente única): el CSS los usa directo
 // y la imagen OG de la home los lee de ese mismo archivo con kbToken().
+import { t } from '../i18n/ui';
+import type { Locale } from '../i18n/routes';
 import tokensCss from '../styles/tokens.css?raw';
 
 export interface KeyDef {
   id: string;
   letter: string;
+  label: string;
   caption: string;
   href: string;
   filter: string | null;
 }
 
 /** Orden de lectura = orden del DOM = tabulación. Las 4 primeras son la fila de arriba. */
-export const KEYS: KeyDef[] = [
-  { id: 'L', letter: 'L', caption: 'PROYECTOS', href: '#proyectos', filter: null },
-  { id: 'E', letter: 'E', caption: 'SERVICIOS', href: '#servicios', filter: null },
-  { id: 'K1', letter: 'K', caption: 'STACK', href: '#stack', filter: null },
-  { id: 'I', letter: 'I', caption: 'SOBRE MÍ', href: '#sobre-mi', filter: null },
-  { id: 'W', letter: 'W', caption: 'WEBS Y CATÁLOGOS', href: '#proyectos', filter: 'web' },
-  { id: 'O', letter: 'O', caption: 'SISTEMAS', href: '#proyectos', filter: 'sistemas' },
-  { id: 'R', letter: 'R', caption: 'INTEGRACIONES', href: '#proyectos', filter: 'integraciones' },
-  { id: 'K2', letter: 'K', caption: 'MI PROCESO', href: '#proceso', filter: null },
-  { id: 'S', letter: 'S', caption: 'IT Y SOPORTE', href: '#proyectos', filter: 'it' },
-];
-
-/** El Enter abre WhatsApp: el href lo arma quien lo renderiza (whatsappHref()). */
-export const ENTER = { id: 'Enter', caption: 'HABLEMOS' } as const;
+export function getKeys(locale: Locale): KeyDef[] {
+  const ui = t(locale);
+  const keys = [
+    { id: 'L', letter: 'L', label: ui.projects, href: '#proyectos', filter: null },
+    { id: 'E', letter: 'E', label: ui.services, href: '#servicios', filter: null },
+    { id: 'K1', letter: 'K', label: ui.stack, href: '#stack', filter: null },
+    { id: 'I', letter: 'I', label: ui.about, href: '#sobre-mi', filter: null },
+    { id: 'W', letter: 'W', label: ui.filters.web, href: '#proyectos', filter: 'web' },
+    { id: 'O', letter: 'O', label: ui.filters.sistemas, href: '#proyectos', filter: 'sistemas' },
+    { id: 'R', letter: 'R', label: ui.filters.integraciones, href: '#proyectos', filter: 'integraciones' },
+    { id: 'K2', letter: 'K', label: ui.experience, href: locale === 'en' ? '#experience' : '#experiencia', filter: null },
+    { id: 'S', letter: 'S', label: ui.filters.it, href: '#proyectos', filter: 'it' },
+  ];
+  return keys.map((key) => ({ ...key, caption: key.label.toLocaleUpperCase(locale) }));
+}
 
 /** Valor de `--<name>` en tokens.css. Si falta, falla el build (la OG nunca se desincroniza). */
 export function kbToken(name: string): string {

@@ -1,4 +1,7 @@
 ---
+import { t } from '../i18n/ui';
+import { localeOf } from '../i18n/routes';
+const ui = t(localeOf(Astro.currentLocale));
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import type { Flow } from '../lib/projects';
@@ -45,7 +48,7 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
     <div class="frame browser">
       <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="screen">
-        <Picture src={desktop} alt={`Captura de escritorio de ${title}`} formats={['avif', 'webp']}
+        <Picture src={desktop} alt={`${ui.desktopScreenshot} ${title}`} formats={['avif', 'webp']}
           fallbackFormat="webp" widths={[480, 800, 1200]} sizes={desktopSizes} loading={loading} decoding="async" />
       </div>
     </div>
@@ -53,7 +56,7 @@ const mobileSizes = shot === 'both' ? sizesFor(0.22, 0.3) : sizesFor(0.3, 0.3);
   {mobile && (
     <div class="frame phone">
       <div class="screen" style={`aspect-ratio: ${phoneRatio}`}>
-        <Picture src={mobile} alt={`Captura mobile de ${title}`} formats={['avif', 'webp']}
+        <Picture src={mobile} alt={`${ui.mobileScreenshot} ${title}`} formats={['avif', 'webp']}
           fallbackFormat="webp" widths={[240, 360, 480]} sizes={mobileSizes} loading={loading} decoding="async" />
       </div>
     </div>

@@ -7,11 +7,14 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { KEYS, ENTER, ARC, kbToken, keyColors, keyPlacement } from '../../config/keyboard';
+import { getKeys, ARC, kbToken, keyColors, keyPlacement } from '../../config/keyboard';
 import { site } from '../../config/site';
-import { STATUS_LABEL, getProjects, shortTitle, slugOf, summaryOf, type Project } from '../../lib/projects';
+import { getProjects, shortTitle, slugOf, summaryOf, type Project } from '../../lib/projects';
 import { cleanList } from '../../lib/todo';
 
+import { t } from '../../i18n/ui';
+
+const ui = t('es');
 const W = 1200;
 const H = 630;
 const INK = '#1d2033';
@@ -107,7 +110,7 @@ function projectCard(p: Project): OgNode {
           wordmark(52),
           div(
             { background: badgeBg, color: badgeFg, fontSize: 26, fontWeight: 600, padding: '8px 22px', borderRadius: 999 },
-            STATUS_LABEL[data.status],
+            ui.status[data.status],
           ),
         ]),
         div({ flexDirection: 'column', gap: 20 }, [
@@ -168,7 +171,7 @@ function ogKey(c: { face: string; side: string }, box: Style, rotate: number, u:
 function homeCard(): OgNode {
   const u = 104; // lado de la tecla en px de la imagen (composición ≈ 611×361)
   const stageW = ARC.w * u;
-  const keys = KEYS.map((k, index) => {
+  const keys = getKeys('es').map((k, index) => {
     const { x, y, rotate } = keyPlacement(index);
     const c = keyColors(k.id);
     return ogKey(
@@ -191,7 +194,7 @@ function homeCard(): OgNode {
       { flexGrow: 1, alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'flex-end', padding: `${u * 0.08}px ${u * 0.12}px` },
       [
         returnIcon(ec.ink, u * 0.58, u * 0.4),
-        div({ fontFamily: 'Inter', fontWeight: 600, fontSize: 17, letterSpacing: 2.4, color: kbToken('key-enter-caption') }, ENTER.caption),
+        div({ fontFamily: 'Inter', fontWeight: 600, fontSize: 17, letterSpacing: 2.4, color: kbToken('key-enter-caption') }, ui.keyboardEnter),
       ],
     ),
   );
@@ -220,13 +223,13 @@ function homeCard(): OgNode {
       div({ position: 'absolute', left: 48, top: 36 }, wordmark(44)),
       div({ position: 'absolute', right: 48, bottom: 30, fontFamily: 'Inter', fontSize: 20, fontWeight: 600, color: MUTED }, host),
       div({ alignItems: 'center', gap: 18, fontFamily: 'Satoshi', fontWeight: 900, fontSize: 64, lineHeight: 1.1, letterSpacing: -1.9, color: INK }, [
-        div({}, 'Hola, soy'),
+        div({}, ui.hello),
         pill,
       ]),
       div({ marginTop: 10, alignItems: 'baseline', fontFamily: 'Inter', fontSize: 28, color: MUTED }, [
-        div(pre, 'Hago webs y sistemas que '),
-        div({ ...pre, fontFamily: 'Instrument Serif', fontStyle: 'italic', fontSize: 34, color: ACCENT }, 'trabajan'),
-        div(pre, ' para tu negocio.'),
+        div(pre, ui.heroLead + ' '),
+        div({ ...pre, fontFamily: 'Instrument Serif', fontStyle: 'italic', fontSize: 34, color: ACCENT }, ui.heroEmphasis),
+        div(pre, ' ' + ui.heroEnd),
       ]),
       div({ position: 'relative', marginTop: 26, width: stageW, height: ARC.h * u + 6, flexShrink: 0 }, [...keys, enter]),
     ],
