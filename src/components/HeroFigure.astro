@@ -1,0 +1,178 @@
+---
+import { caseHref, localeOf } from '../i18n/routes';
+import { getProjects, shortTitle, slugOf } from '../lib/projects';
+import { projectFullImages, projectImages, projectStickyBar } from '../lib/project-images';
+import { t } from '../i18n/ui';
+import DeviceScreen from './DeviceScreen.astro';
+
+const locale = localeOf(Astro.currentLocale);
+const ed = t(locale).editorial;
+const projects = await getProjects();
+const sites = [
+  { slug: 'mbarete' },
+  { slug: 'floreria-catalogo', variant: 'rocio', title: ed.rocioStore },
+  { slug: 'floreria-catalogo', variant: 'ornella', title: ed.ornellaStore },
+  { slug: 'lhoney' },
+  { slug: 'estacion-de-carretera' },
+  { slug: 'cpo-tech' },
+];
+const slides = sites.flatMap(({ slug, variant, title }) => {
+  const project = projects.find((entry) => slugOf(entry) === slug);
+  if (!project) return [];
+  const full = projectFullImages(project, { mobile: variant }).mobile;
+  const image = full ?? projectImages(project, { variant }).mobile;
+  return image ? [{
+    image, full: Boolean(full), href: caseHref(slug, locale), accent: project.data.accent,
+    title: title ?? shortTitle(project), slug, variant,
+    bar: full ? projectStickyBar(project, variant) : undefined,
+  }] : [];
+});
+---
+
+<div class="hero-figure" data-hero-figure>
+  {slides.map(({ image, full, href, title, accent, slug, variant, bar }, i) => (
+    <figure data-hero-slide data-site={variant ?? slug} class:list={[i === 0 && 'current']}
+      style={`--device-accent:${accent}`} inert={i > 0}>
+      <DeviceScreen {image} {title} device="mobile" {full} {bar} eager={i === 0} deferred={i > 0} cycle />
+      <a class="device-label" {href}>{title}</a>
+    </figure>
+  ))}
+</div>
+
+<script>
+  const figure = document.querySelector('[data-hero-figure]');
+  const slides = Array.from(figure?.querySelectorAll<HTMLElement>('[data-hero-slide]') ?? []);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let visible = false;
+  let current = 0;
+  let ready = slides[0]?.querySelector('img')?.complete ?? false;
+  let advancePending = false;
+  let loading = false;
+  let pan: Animation | undefined;
+
+  // Ritmo de lectura: tramos rápidos con ease-out y pausas leves, determinísticos.
+  const STEPS = [.72, .64, .8, .68, .76, .7];
+  const PAUSES = [1.2, 1.0, 1.5, 1.1, 1.4, 1.3];
+  const MOVE = [.6, .55, .7, .6, .65, .55];
+  const TOP_PAUSE = 1.8;
+  const END_PAUSE = 2.4;
+
+  /** Recorrido real: alto renderizado de la captura menos el alto de la pantalla. */
+  function travelOf(slide: HTMLElement) {
+    const image = slide.querySelector<HTMLImageElement>('.device-scroll');
+    const screen = slide.querySelector<HTMLElement>('.device-window');
+    if (!image || !screen) return 0;
+    return Math.max(0, Math.round(image.offsetHeight - screen.clientHeight));
+  }
+  function buildPan(slide: HTMLElement) {
+    const image = slide.querySelector<HTMLImageElement>('.device-scroll');
+    const screen = slide.querySelector<HTMLElement>('.device-window');
+    if (!image || !screen) return undefined;
+    const travel = travelOf(slide);
+    const view = screen.clientHeight;
+    const stops: number[] = [0];
+    for (let i = 0; stops[stops.length - 1] < travel; i++) {
+      stops.push(Math.min(travel, Math.round(stops[stops.length - 1] + view * STEPS[i % STEPS.length])));
+    }
+    const frames: { at: number; y: number; easing: string }[] = [{ at: 0, y: 0, easing: 'linear' }];
+    let time = TOP_PAUSE;
+    frames.push({ at: time, y: 0, easing: 'cubic-bezier(.15,.7,.25,1)' });
+    for (let i = 1; i < stops.length; i++) {
+      time += MOVE[(i - 1) % MOVE.length];
+      const last = i === stops.length - 1;
+      frames.push({ at: time, y: stops[i], easing: 'linear' });
+      time += last ? END_PAUSE : PAUSES[(i - 1) % PAUSES.length];
+      frames.push({ at: time, y: stops[i], easing: 'cubic-bezier(.15,.7,.25,1)' });
+    }
+    if (stops.length === 1) frames.push({ at: time + 3, y: 0, easing: 'linear' });
+    const total = frames[frames.length - 1].at;
+    const animation = image.animate(
+      frames.map(({ at, y, easing }) => ({ transform: `translateY(${-y}px)`, offset: at / total, easing })),
+      { duration: total * 1000, fill: 'both' },
+    );
+    animation.pause();
+    animation.onfinish = () => {
+      image.dispatchEvent(new CustomEvent('hero-pan-end', { bubbles: true }));
+    };
+    return animation;
+  }
+  function restartPan() {
+    pan?.cancel();
+    pan = reduced.matches ? undefined : buildPan(slides[current]);
+    sync();
+  }
+
+  function canPlay() {
+    return visible && ready && !reduced.matches && !document.hidden &&
+      !figure?.matches(':hover, :focus-within');
+  }
+  async function advance() {
+    const next = (current + 1) % slides.length;
+    const image = slides[next]?.querySelector('img');
+    if (!image || loading) return;
+    loading = true;
+    if (image.dataset.deviceSrc) {
+      image.loading = 'eager';
+      image.src = image.dataset.deviceSrc;
+      delete image.dataset.deviceSrc;
+    }
+    try { await image.decode(); } catch {
+      advancePending = false;
+      // Reinicia la vuelta con la imagen actual si falló la siguiente.
+      figure?.classList.remove('playing');
+      slides[current].classList.remove('current');
+      requestAnimationFrame(() => {
+        slides[current].classList.add('current');
+        restartPan();
+      });
+      return;
+    } finally {
+      loading = false;
+    }
+    if (!canPlay()) return;
+    advancePending = false;
+    pan?.cancel();
+    slides[current].classList.remove('current');
+    slides[current].inert = true;
+    slides[next].classList.add('current');
+    slides[next].inert = false;
+    current = next;
+    restartPan();
+  }
+  function sync() {
+    const playing = canPlay();
+    figure?.classList.toggle('playing', playing);
+    if (playing) pan?.play(); else pan?.pause();
+    if (playing && advancePending && slides.length > 1) void advance();
+  }
+  if (figure && slides.length) {
+    const first = slides[0].querySelector('img');
+    const start = () => { ready = true; restartPan(); };
+    first?.addEventListener('load', start);
+    if (first?.complete && first.naturalWidth) start();
+    // El recorrido depende del alto real: se recalcula al cambiar el tamaño de imagen o pantalla.
+    const resize = new ResizeObserver(() => {
+      if (!ready) return;
+      const at = pan?.currentTime ?? 0;
+      const playing = figure.classList.contains('playing');
+      restartPan();
+      if (pan) { pan.currentTime = at; if (playing) pan.play(); }
+    });
+    for (const slide of slides) {
+      slide.querySelector('.device-scroll')?.addEventListener('load', () => {
+        if (slide === slides[current]) restartPan();
+      });
+    }
+    resize.observe(slides[0].querySelector('.device-window') as Element);
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      sync();
+    }, { threshold: .15 }).observe(figure);
+    figure.addEventListener('hero-pan-end', () => { advancePending = true; sync(); });
+    for (const event of ['pointerenter', 'pointerleave', 'focusin', 'focusout']) {
+      figure.addEventListener(event, () => requestAnimationFrame(sync));
+    }
+    reduced.addEventListener('change', restartPan);
+    document.addEventListener('visibilitychange', sync);
+  }
+</script>

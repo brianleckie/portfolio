@@ -4,24 +4,31 @@ summary: "Marketplace y showroom digital para los emprendedores de Hohenau, basa
 category: ["web", "sistemas"]
 status: "en-produccion"
 featured: true
-order: 4
+order: 3
 clientNamePublic: false
-clientGeneric: "Municipalidad de Hohenau — iniciativa pública"
+clientGeneric: "Municipalidad de Hohenau, iniciativa pública"
 role: "Project Lead"
 stack: ["React", "Python", "FastAPI", "PostgreSQL", "REST API"]
 highlights:
   - "Marketplace que conecta artesanos y productores locales con compradores"
   - "Dashboard de vendedor para gestión de inventario y pedidos"
-  - "100% construido en Itapúa, Paraguay"
-cover: ../../assets/projects/estacion-de-carretera/cover.jpeg
+  - "Autenticación por roles (admin, vendedor, comprador) sobre una API REST en FastAPI"
 demoUrl: "https://www.estaciondecarretera.store"
 year: 2024
 accent: "#d9f28f"
+shots:
+  default:
+    waitFor: 'main h1:not(:has-text("Estamos mejorando la plataforma"))'
+    hideText:
+      - 'text=/^Inaugurada\b/i'
+    alt:
+      path: "/showroom"
+      waitFor: 'main h1:not(:has-text("Estamos mejorando la plataforma"))'
 ---
 
 ## Contexto
 
-La Municipalidad de Hohenau impulsó una iniciativa para digitalizar la venta de productos locales: artesanías, alimentos, productos del campo. El modelo es el *Michi-no-eki* japonés — estaciones de carretera que funcionan como vitrinas de la producción regional.
+La Municipalidad de Hohenau impulsó una iniciativa para digitalizar la venta de productos locales: artesanías, alimentos, productos del campo. El modelo es el *Michi-no-eki* japonés: estaciones de carretera que funcionan como vitrinas de la producción regional.
 
 ## Problema
 

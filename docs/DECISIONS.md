@@ -129,3 +129,38 @@
 - **Capturas desktop pendientes:** no estaban `lhoney/desktop.webp` ni `floreria-catalogo/desktop-ornella.webp` (ni en `main`, ni en ramas remotas ni en los uploads); esas cards siguen mostrando solo el teléfono hasta que se agreguen (se completan solas).
 - **Nombres de las florerías:** el usuario confirmó que "Rocío Florería" y "Ornella Florería" se publican en los botones.
 - **Lighthouse mobile (13.5.0, simulate) tras el teclado en arco:** home 99/100/100/100 (LCP 1,9 s, TBT 0, CLS 0,009; igual que antes del rediseño); casos Mbarete (capturas), AVM (diagrama) y Florería 100/100/100/100. Lighthouse 13 marca `label-content-name-mismatch` (peso 0, no afecta el puntaje) en las 9 teclas: el texto visible es "L" + caption y el nombre accesible es solo el caption, como pide el SPEC §6 (misma estructura que antes del rediseño; no se cambia sin decisión del usuario).
+
+## Rediseño 2026-11 (fases R1–R4, ver SPEC §R)
+
+- **R1 (24/11/2026):** hechos de §R.1; ES en `/`, EN en `/en/` sin redirección automática; Experiencia nueva; Klien IT Systems y CPO Tech visibles en hero, experiencia, sobre mí y JSON-LD (reemplaza la regla "Klien solo en Sobre mí"); años de proyectos ocultos; `draft`/`inGrid`/`subtitle`; capturas regeneradas con ajustes por sitio (`shots` en el frontmatter).
+- **Dirección visual "Editorial" elegida por Brian** entre tres maquetas (Editorial, Taller, Cuaderno). Maqueta de referencia en `docs/design/editorial/`. Motivo: es la que mejor lee un reclutador y sigue siendo cálida; el teclado queda como firma compacta.
+
+- **R2 (24/11/2026).** Se publica Editorial en la home y los casos. Se mantiene el orden de los destacados y la verdad del frontmatter para estado, rol y stack. El índice de seis casos se muestra a partir de 1024px, como en la maqueta. Se retiran los filtros y se conserva el ancla `#proyectos` para los enlaces anteriores.
+- **Teclado.** K2 conserva el destino Experiencia de R1. S lleva a CPO Tech hasta publicar inglés. Enter de la firma enlaza a Contacto y el Enter físico funciona como activación normal de un enlace enfocado según §R.4.
+- **Capturas y casos.** Florerías combina Ornella en desktop y Rocío en el teléfono, con ambas vistas mobile lado a lado a menos de 1024px. Cada galería separa las capturas principales y alternativas por cliente. AVM queda como texto en la home y conserva su diagrama en el caso. La navegación anterior/siguiente recorre los casos publicados por `order`.
+- **Tipografía e imágenes sociales.** Las fuentes nuevas cargan localmente desde Fontsource en subconjunto latín. Se conserva el generador OG y se aísla la geometría histórica de su teclado en configuración propia.
+- **Contacto.** El WhatsApp del header alterna con los botones del hero y del contacto según el espacio visible debajo del header. El caso tiene un CTA final con mensaje contextual. El reloj usa `America/Asuncion` con un ancho reservado para la hora.
+- **Ajustes de Brian sobre R2 (24/11/2026):** se retira el teclado LEKI WORKS (reemplazo: "figura" con capturas reales que rotan en el hero desktop); vuelve el wordmark "leki." como logo; navbar nuevo; el h1 se tipea "Ingenier", se borra y se escribe "Brian Leckie" (guiño honesto: todavía no es ingeniero; el texto real del h1 es siempre "Brian Leckie"); Estación con encuadre más cerrado.
+
+### Ajustes ronda 2
+
+- El wordmark vuelve a `leki.` con punto índigo. La cabecera fija usa papel translúcido, borde al iniciar el scroll e indicador de sección desde 900 px. En mobile, una hoja modal contiene los enlaces de sección y el CTA de WhatsApp. Al cerrar, vuelve el foco al botón Menú.
+- El H1 accesible y su caja conservan el nombre completo. El guiño «Ingenier» se escribe una vez, se borra y da paso al nombre. El nombre se sirve completo en el HTML y queda estático con movimiento reducido o sin JavaScript.
+- La firma de teclado da paso a una figura de escritorio. Rota entre Mbarete, Rocío y Lhoney cada cuatro segundos y pausa fuera de la pestaña, con foco o al pasar el puntero. La OG de la home usa una composición editorial con el nombre, el rol y el wordmark.
+- Mbarete abre con las vistas de app disponibles. La landing pasa a la galería secundaria hasta que Brian entregue capturas nuevas. Estación usa un recorte de escritorio con prioridad para el titular y el edificio.
+
+
+### Ronda 3
+
+- Los bordes de 3 px, las sombras duras y el color se aplican a dispositivos, botones, estados, menú y placa de Contacto. Los títulos, la experiencia y la grilla conservan la composición editorial. El texto visible parte de 14 px y el hero se compacta a 360 px.
+- La secuencia del H1 usa 58 ms por letra, 42 ms por borrado y 1,2 s en «Ingenier». Se retira la fila de hora y huso del hero. El reloj de Contacto conserva su propia lógica.
+- El teléfono del hero aparece también en mobile y alterna seis sitios. Solo la primera captura tiene prioridad de red. Las restantes se cargan cerca del cambio. Las pantallas se desplazan por transform y se pausan fuera de vista, con interacción, con la pestaña oculta o si se reduce el movimiento.
+- Las vistas de caso muestran laptop y teléfono en composición superpuesta. Florerías combina Ornella en laptop y Rocío en teléfono. En mobile el teléfono se desplaza hacia la esquina inferior para preservar el titular de Ornella. Los diagramas de Ecodespensa y AVM se presentan en la home y en los casos.
+- Las capturas de sitio completo se guardan en WebP con límite de alto y peso. Mbarete expande el panel interno de la demo pública para fotografiar el contenido. Estación conserva las capturas archivadas mientras la portada y el showroom públicos estén en mantenimiento.
+
+### Ronda 4
+
+- Todos los teléfonos (hero y casos) toman silueta de iPhone moderno en versión chunky: esquinas muy redondeadas proporcionales al ancho, Dynamic Island (pastilla negra, sin notch), bisel negro parejo, botones laterales como bloques que sobresalen (volumen a la izquierda, encendido a la derecha), borde #111 de 3 px y sombra dura. Sin logos.
+- Solo el teléfono del hero se desplaza. Laptop y teléfono de los casos quedan estáticos mostrando el comienzo de la página; se retiró el CSS de animación de los casos y check-layout verifica que no tengan animación.
+- El teléfono del hero se ve de costado con perspectiva 3D (1400 px, rotateY -22deg en desktop y -14deg en mobile, rotateX 5deg, leve rotateZ). El canto y la carcasa trasera son caras sólidas del color accent del sitio activo con borde #111, y la sombra dura sale de la carcasa trasera para seguir el ángulo. Al pasar el puntero en desktop se endereza con transición; con reduced motion queda inclinado y estático. Un margen derecho compensa el canto para no desbordar a 360 px.
+- Ronda 4c (hero): el recorrido del scroll se mide en runtime (alto de la imagen menos alto de la pantalla) y se anima con la Web Animations API solo con transform, con ritmo de lectura (tramos rápidos con ease-out y pausas de 1 a 1,5 s). Las capturas full recortan automáticamente el fondo uniforme del final. Los elementos fijos al pie (barra de Mbarete, botón de WhatsApp de Rocío) salen de la captura full por el campo opcional `stickyBottom` del frontmatter y se guardan aparte (`mobile-full-bar`) para superponerlos fijos en el teléfono del hero.

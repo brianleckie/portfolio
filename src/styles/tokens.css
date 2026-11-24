@@ -1,72 +1,29 @@
 :root {
-  /* Backgrounds */
-  --color-bg: #ffffff;
-  --color-bg-hero-from: #f7f9ff;
-  --color-bg-hero-to: #f3f0ff;
-  --color-bg-contact: #151a33;
-
-  /* Text */
-  --color-text-primary: #1d2033;
-  --color-text-secondary: #55586b;
-  --color-text-key: #111111;
-  --color-text-contact: #eef0ff;
-  --color-text-contact-link: #a9b4ff;
-
-  /* Accent */
-  --color-accent: #4f5bd5;
-
-  /* Hero */
-  --color-bg-hero: #fbf8f2;
-  --color-hero-dot: rgba(29, 32, 51, 0.14);
-
-  /* Teclado — colores (cara / pared / letra). Fuente única: el CSS los usa y la imagen OG los lee con kbToken(). */
-  --kb-line: #111111;
-  --key-l-face: #ff6b3d;  --key-l-side: #c4441c;  --key-l-ink: #111111;   /* tomate     6.67:1 */
-  --key-e-face: #ffc83d;  --key-e-side: #c98a00;  --key-e-ink: #111111;   /* maíz      12.21:1 */
-  --key-k1-face: #ff8fc8; --key-k1-side: #cc4c8e; --key-k1-ink: #111111;  /* lapacho    9.01:1 */
-  --key-i-face: #276b4c;  --key-i-side: #17402e;  --key-i-ink: #fff4df;   /* yerba      5.85:1 */
-  --key-w-face: #ffe2b5;  --key-w-side: #d29a55;  --key-w-ink: #111111;   /* arena     15.10:1 */
-  --key-o-face: #22b3a1;  --key-o-side: #12786b;  --key-o-ink: #111111;   /* río        7.22:1 */
-  --key-r-face: #ff9a3d;  --key-r-side: #c9670e;  --key-r-ink: #111111;   /* mandarina  8.94:1 */
-  --key-k2-face: #8e3a6e; --key-k2-side: #5a1f45; --key-k2-ink: #fff4df;  /* mora       6.46:1 */
-  --key-s-face: #b48cff;  --key-s-side: #7a52d1;  --key-s-ink: #111111;   /* jacarandá  7.32:1 */
-  --key-enter-face: #2a2140; --key-enter-side: #141020; --key-enter-ink: #ffc83d; --key-enter-caption: #ffe2b5; /* 9.77 / 12.08 */
-
-  /* Marquee */
-  --color-marquee-bg: #ffdfa0;
-  --color-marquee-text: #7a4318;
-
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 32px;
-  --space-xl: 48px;
-  --space-2xl: 96px;
-  --pad-mobile: 20px;
-  --pad-tablet: 32px;
-  --pad-desktop: 48px;
-  --max-w: 1440px;
-  --header-h: 64px; /* mobile: ver media query abajo (header en dos filas) */
-
-  /* Teclado — arco DESKTOP en unidades de tecla (u = lado). El override mobile vive en Keyboard.astro.
-     Si cambiás pitch/tilt/sag/row recalculá: w = 4·pitch + cos(2·tilt) + sin(2·tilt);
-     y0 = 0.5·(cos(tilt/2) + sin(tilt/2)) − sag/4;  h = y0 + row + enter-dy + 0.5 */
-  --kb-pitch: 1.18;
-  --kb-tilt: 5;
-  --kb-sag: 0.075;
-  --kb-row: 1.2;
-  --kb-y0: 0.503;
-  --kb-enter-w: 3.36;
-  --kb-enter-dy: 1.27;
-  --kb-w: 5.88;
-  --kb-h: 3.473;
-  --kb-u-max: 140px;
-  --kb-reserve: 330px; /* header + línea de ubicación + titular + aire: lo que el teclado deja libre del alto de pantalla */
-}
-
-@media (max-width: 700px) {
-  :root {
-    --header-h: 113px; /* wordmark + CTA (64px) y fila de links scrolleable debajo */
-  }
+  --brand-accent: #4f5bd5;
+  --paper: #f3efe6;
+  --paper-2: #ebe6da;
+  --card: #fbf9f4;
+  --ink: #17150f;
+  --ink-2: #3d3a33;
+  --muted: #5e594e;
+  --rule: #d6cfbf;
+  --rule-strong: #17150f;
+  --grid: repeat(12, minmax(0, 1fr));
+  --column-gap: 24px;
+  --space-sm: 12px;
+  --space-md: 24px;
+  --space-lg: 36px;
+  --type-section: clamp(40px, 7vw, 96px);
+  --type-display: clamp(70px, 19.5vw, 192px);
+  --sans: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --gut: 16px;
+  --max: 1312px;
+  /* acentos por proyecto (oscurecidos para AA sobre papel) */
+  --a-mbarete: #b8321b;
+  --a-flor: #a3214f;
+  --a-estacion: #2b6136;
+  --a-lhoney: #8a3a8f;
+  --a-eco: #1b6a60;
+  --a-avm: #38508a;
 }

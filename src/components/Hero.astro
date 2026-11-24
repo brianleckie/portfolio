@@ -1,137 +1,82 @@
 ---
-import { site, whatsappHref } from '../config/site';
-import Keyboard from './Keyboard.astro';
-import Marquee from './Marquee.astro';
+import { localeOf } from '../i18n/routes';
+import { t } from '../i18n/ui';
+import { site } from '../config/site';
+import HeroFigure from './HeroFigure.astro';
+import WhatsAppLink from './WhatsAppLink.astro';
+
+const ui = t(localeOf(Astro.currentLocale));
+const ed = ui.editorial;
+const [firstName, ...lastName] = site.name.split(' ');
 ---
 
-<section class="hero" id="hero" aria-label="Presentación">
-  <div class="hero-inner">
-    <p class="hero-location">{site.location}</p>
-    <h1 class="hero-title">
-      <span class="hero-hello">Hola, soy <span class="name-key">Brian</span><span class="sr-only">.</span></span>
-      <span class="hero-line">Hago webs y sistemas que <em class="accent-word">trabajan</em> para tu negocio.</span>
-    </h1>
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <p class="ref-note" data-ref-note hidden>{ed.referral}</p>
+    <div class="hero-grid">
+      <div class="hero-l">
+        <h1 class="h1" id="hero-title" data-typing={ed.typing}>
+          <span class="sr-only">{site.name}</span>
+          <span class="hero-name-reserve" aria-hidden="true"><span>{firstName}</span>{' '}<span>{lastName.join(' ')}</span></span>
+          <span class="hero-name-visual" data-typing-visual aria-hidden="true"><span>{firstName}</span>{' '}<span>{lastName.join(' ')}</span></span>
+        </h1>
+        <p class="role">{ui.siteRole}.</p>
+        <p class="intro">{ed.intro}</p>
+        <div class="now">
+          <span class="label">{ed.now}</span>
+          <p>{ui.roleIntro} {site.employer} {ui.roleContinuation} <span>{site.company}</span></p>
+        </div>
+        <div class="cta-row">
+          <WhatsAppLink inline />
+          <a class="link-arrow" href="#trabajos">{ed.viewWork} ↓</a>
+        </div>
+      </div>
+      <HeroFigure />
+    </div>
   </div>
-
-  <Keyboard />
-
-  <!-- Solo mobile (<700px): el Enter ya es el CTA en desktop; acá el botón de texto es más claro para un dueño de PyME -->
-  <div class="hero-cta">
-    <a href={whatsappHref()} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
-      Escribime por WhatsApp
-    </a>
-  </div>
-
-  <Marquee />
 </section>
 
-<style>
-  .hero {
-    --hero-dot-gap: 24px;
-    padding-top: clamp(20px, 4svh, 40px);
-    overflow: hidden;
-    background-color: var(--color-bg-hero);
-    background-image: radial-gradient(circle, var(--color-hero-dot) 1.1px, transparent 1.6px);
-    background-position: 50% 0;
-    background-size: var(--hero-dot-gap) var(--hero-dot-gap);
-  }
-
-  .hero-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(8px, 1.5svh, 14px);
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding-inline: var(--pad-desktop);
-    text-align: center;
-  }
-
-  .hero-title {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: clamp(8px, 1.5svh, 14px);
-  }
-
-  /* Renglón chico sobre el titular: da el dónde sin competir con él */
-  .hero-location {
-    font-family: 'Inter Variable', system-ui, sans-serif;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-  }
-
-  /* flex: el alto de la fila lo pone la pastilla (en em), no las métricas de la fuente → sin CLS al cargar Satoshi */
-  .hero-hello {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    column-gap: 0.25em;
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-size: clamp(2.375rem, 1.6rem + 3vw, 4rem);
-    font-weight: 900;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    color: var(--color-text-primary);
-  }
-
-  /* "Brian" en una tecla: cara maíz, base visible abajo, bisel y sombra dura (anatomía del teclado) */
-  .name-key {
-    padding: 0.02em 0.24em 0.11em;
-    border: 2px solid var(--kb-line);
-    border-radius: 0.22em;
-    background-color: var(--key-e-face);
-    box-shadow:
-      inset 0 -0.09em 0 var(--key-e-side),
-      inset 0 0.05em 0 rgb(255 255 255 / 0.45),
-      0 0.07em 0 var(--kb-line);
-    color: var(--key-e-ink);
-    white-space: nowrap;
-    transform: rotate(-2deg);
-  }
-
-  .hero-line {
-    max-width: 40rem;
-    font-family: 'Inter Variable', system-ui, sans-serif;
-    font-size: clamp(1.0625rem, 0.9rem + 0.5vw, 1.375rem);
-    font-weight: 500;
-    line-height: 1.35;
-    color: var(--color-text-secondary);
-    text-wrap: balance;
-  }
-
-  .accent-word {
-    font-family: 'Instrument Serif', Georgia, serif;
-    font-size: 1.2em;
-    font-style: italic;
-    font-weight: 400;
-    line-height: 1;
-    color: var(--color-accent);
-  }
-
-  .hero-cta {
-    display: none;
-  }
-
-  @media (max-width: 1024px) {
-    .hero-inner { padding-inline: var(--pad-tablet); }
-  }
-
-  @media (max-width: 699px) {
-    .hero-cta {
-      display: flex;
-      justify-content: center;
-      padding: 4px var(--pad-mobile) var(--space-lg);
+<script>
+  const title = document.querySelector<HTMLElement>('[data-typing]');
+  const display = title?.querySelector<HTMLElement>('[data-typing-visual]');
+  const reservation = title?.querySelector('.hero-name-reserve');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  if (title && display && reservation && !reduced.matches) {
+    const joke = title.dataset.typing ?? '';
+    const words = Array.from(reservation.querySelectorAll('span'), (word) => word.textContent ?? '');
+    const name = words.join(' ');
+    let timer: number;
+    const finish = () => {
+      clearTimeout(timer);
+      display.replaceChildren(...Array.from(reservation.childNodes, (node) => node.cloneNode(true)));
+      display.classList.remove('is-typing');
+    };
+    const steps = [
+      ...Array.from(joke, (_, i) => ({ text: joke.slice(0, i + 1), delay: i === joke.length - 1 ? 1200 : 58 })),
+      ...Array.from(joke, (_, i) => ({ text: joke.slice(0, joke.length - i - 1), delay: 42 })),
+      ...Array.from(name, (_, i) => ({ text: name.slice(0, i + 1), delay: 60 })),
+    ];
+    function play(index: number) {
+      const step = steps[index];
+      if (!step || reduced.matches || document.hidden) return finish();
+      const [first, ...rest] = step.text.split(' ');
+      const lines = rest.length ? [first, rest.join(' ')] : [first];
+      display!.replaceChildren(...lines.flatMap((line, i) => {
+        const element = document.createElement('span');
+        element.textContent = line;
+        return i ? [document.createTextNode(' '), element] : [element];
+      }));
+      timer = window.setTimeout(() => play(index + 1), step.delay);
     }
+    display.classList.add('is-typing');
+    play(0);
+    reduced.addEventListener('change', finish, { once: true });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) finish(); });
   }
 
-  @media (max-width: 700px) {
-    .hero { --hero-dot-gap: 20px; }
-    .hero-inner { padding-inline: var(--pad-mobile); }
+  const source = new URLSearchParams(location.search).get('ref');
+  const referrer = document.referrer && new URL(document.referrer).origin;
+  if (source || (referrer && referrer !== location.origin)) {
+    document.querySelector('[data-ref-note]')?.removeAttribute('hidden');
   }
-</style>
+</script>

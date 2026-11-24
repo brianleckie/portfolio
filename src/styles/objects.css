@@ -1,0 +1,272 @@
+/* Bordes y sombras se reservan para objetos. */
+:root {
+  --object-ink: #111;
+  --object-shadow: 4px;
+  --object-yellow: #ffd98e;
+  --object-mint: #9be7a8;
+}
+.btn-wa, .hdr-wa, .link-arrow, .case-link, .menu-toggle, .mobile-menu button, .device-label {
+  border: 3px solid var(--object-ink);
+  border-radius: 6px;
+  box-shadow: var(--object-shadow) var(--object-shadow) 0 var(--object-ink);
+  min-width: 44px;
+  min-height: 44px;
+  text-decoration: none;
+}
+.btn-wa, .hdr-wa {
+  background: var(--object-yellow);
+  color: var(--object-ink);
+}
+.link-arrow, .case-link, .menu-toggle, .mobile-menu button, .device-label {
+  padding-inline: 12px;
+  background: var(--card);
+  color: var(--object-ink);
+}
+.case-link { margin: 0 4px 5px 0; }
+.btn-wa:hover { transform: none; }
+.btn-wa:active, .hdr-wa:active, .link-arrow:active, .case-link:active,
+.menu-toggle:active, .mobile-menu button:active, .device-label:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.hdr-r { padding-right: 4px; }
+.mobile-menu {
+  position: fixed;
+  border: 3px solid var(--object-ink);
+  box-shadow: inset -6px -6px 0 var(--object-ink);
+  padding-inline: 4px;
+}
+.mobile-menu form { padding-right: 4px; }
+.mobile-menu nav a:active { background: var(--object-yellow); }
+.status {
+  padding: 3px 7px;
+  border: 3px solid var(--object-ink);
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--object-ink);
+  box-shadow: var(--object-shadow) var(--object-shadow) 0 var(--object-ink);
+  font-size: 14px;
+}
+.contact-plate {
+  margin: 0 var(--object-shadow) var(--object-shadow) 0;
+  padding: clamp(12px, 2.8vw, 34px);
+  border: 3px solid var(--object-ink);
+  border-radius: 7px;
+  box-shadow: var(--object-shadow) var(--object-shadow) 0 var(--object-ink);
+  background: var(--object-mint);
+}
+.contact-plate .channels a, .contact-plate .channels {
+  border-color: color-mix(in srgb, var(--object-ink) 45%, transparent);
+}
+.contact-plate .label, .contact-plate .localtime, .contact-plate .channels i {
+  color: var(--ink-2);
+}
+.contact-plate .channels a { grid-template-columns: minmax(54px, auto) 1fr auto; }
+.contact-plate .btn-wa { max-width: calc(100% - var(--object-shadow)); }
+
+.device {
+  position: relative;
+  min-width: 0;
+  border: 3px solid var(--object-ink);
+  box-shadow: var(--object-shadow) var(--object-shadow) 0 var(--object-ink);
+  background: var(--device-accent, var(--object-yellow));
+}
+.device-window {
+  height: 100%;
+  overflow: hidden;
+  background: var(--card);
+  container-type: size;
+}
+.device-image { display: block; width: 100%; height: auto; }
+.device-crop { height: 100%; object-fit: cover; object-position: top center; }
+.device-front { height: 100%; }
+.device-phone {
+  --bezel: 5px;
+  --edge: 0px;
+  border-width: 2px;
+  padding: var(--bezel);
+  border-radius: 17% / 9%;
+  aspect-ratio: 9 / 18.5;
+  background: var(--object-ink);
+  transform-style: preserve-3d;
+}
+.device-phone .device-window { border-radius: 12% / 6.4%; }
+/* Dynamic Island: pastilla negra centrada sobre la pantalla. */
+.device-phone::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--bezel) + 3px);
+  left: 50%;
+  width: 26%;
+  aspect-ratio: 3.4;
+  border-radius: 99px;
+  background: var(--object-ink);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+/* Botones laterales: volumen a la izquierda (dos bloques), encendido a la derecha. */
+.phone-buttons { position: absolute; inset: 0; pointer-events: none; }
+.phone-buttons::before, .phone-buttons::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  background: var(--object-ink);
+}
+.phone-buttons::before {
+  left: -7px;
+  top: 21%;
+  height: 20%;
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(var(--object-ink) 0 42%, transparent 42% 58%, var(--object-ink) 58%);
+}
+.phone-buttons::after {
+  right: -7px;
+  top: 27%;
+  height: 12%;
+  border-radius: 0 3px 3px 0;
+}
+/* Carcasa trasera y canto: solo se ven en el teléfono del hero (3D). */
+.phone-edge, .phone-side { display: none; }
+.device-laptop {
+  aspect-ratio: 16 / 10;
+  padding: 5px 5px 9px;
+  border-radius: 7px 7px 3px 3px;
+}
+.device-laptop::after {
+  content: "";
+  position: absolute;
+  inset: auto -2px -9px;
+  height: 9px;
+  border: 3px solid var(--object-ink);
+  border-radius: 0 0 8px 8px;
+  background: var(--paper-2);
+}
+[data-project="estacion-de-carretera"] .device-laptop .device-crop { object-position: 9% top; }
+.device-pair { position: relative; padding: 0 6px 60px 0; }
+.device-pair .device-phone {
+  position: absolute;
+  right: 3%;
+  bottom: 5px;
+  width: 29%;
+  max-width: 170px;
+}
+.device-pair.phone-only { display: grid; justify-items: center; padding-bottom: 6px; }
+.device-pair.phone-only .device-phone { position: relative; inset: auto; width: min(55%, 170px); }
+.device-pair.laptop-only { padding-bottom: 15px; }
+
+.hero-figure {
+  display: grid;
+  width: min(65vw, 310px);
+  margin: 23px auto 4px;
+}
+.hero-figure figure {
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .4s;
+  perspective: 1400px;
+}
+.hero-figure figure.current { opacity: 1; pointer-events: auto; }
+.device-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font: 600 14px var(--sans);
+  background: var(--device-accent, var(--object-yellow));
+}
+
+/* Scroll de la captura: lo maneja HeroFigure con la Web Animations API (solo transform). */
+.device-scroll { will-change: transform; }
+.device-window { position: relative; }
+/* Barra o botón fijo al pie: queda quieto mientras la página scrollea debajo. */
+.device-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* Teléfono del hero: objeto físico visto de costado. El canto es una cara sólida del acento del sitio. */
+.hero-figure .device-phone {
+  --bezel: 7px;
+  --depth: 26px;
+  --tilt-y: -14deg;
+  width: 100%;
+  height: min(47svh, 111vw);
+  margin-right: 14px;
+  box-shadow: none;
+  transform: rotateX(5deg) rotateY(var(--tilt-y)) rotateZ(-1.5deg);
+  transition: transform .5s cubic-bezier(.2, .7, .2, 1);
+}
+.hero-figure .phone-edge {
+  display: block;
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--object-ink);
+  border-radius: inherit;
+  background: var(--device-accent, var(--object-yellow));
+  pointer-events: none;
+}
+/* Carcasa trasera con la sombra dura, hundida en profundidad. */
+.hero-figure .phone-edge {
+  transform: translateZ(calc(var(--depth) * -1));
+  box-shadow: 6px 6px 0 var(--object-ink);
+}
+/* Canto derecho: cara sólida entre la tapa frontal y la trasera. */
+.hero-figure .phone-side {
+  display: block;
+  position: absolute;
+  left: calc(100% + 2px);
+  top: 8%;
+  bottom: 8%;
+  width: var(--depth);
+  box-sizing: border-box;
+  border: 2px solid var(--object-ink);
+  border-left: 0;
+  background: var(--device-accent, var(--object-yellow));
+  transform-origin: left center;
+  transform: rotateY(90deg);
+  pointer-events: none;
+}
+.hero-figure .phone-buttons::after { display: none; }
+@media (hover: hover) and (min-width: 900px) {
+  .hero-figure:hover .device-phone { transform: rotateX(2deg) rotateY(-8deg) rotateZ(-.5deg); }
+}
+@media (max-width: 899px) {
+  [data-project="floreria-catalogo"] .device-pair {
+    padding-bottom: calc(55% - 15px);
+  }
+}
+@media (max-width: 389px) {
+  .hero { padding-top: 6px; }
+  .hero .h1 { margin-top: 10px; }
+  .hero .role { margin-top: 10px; }
+  .hero .intro { margin-top: 9px; }
+  .hero .now { margin-top: 17px; padding-top: 9px; }
+  .hero .cta-row { margin-top: 16px; }
+  .hero-figure { margin-top: 15px; }
+  .hero-figure figure { gap: 8px; }
+  .hero-figure .device-phone { height: 44svh; }
+  #trabajos { padding-top: 28px; }
+}
+@media (min-width: 900px) {
+  :root { --object-shadow: 6px; }
+  .hero-figure {
+    grid-column: 9 / span 4;
+    width: min(85%, 238px);
+    margin-block: 0;
+  }
+  .hero-figure .device-phone { --tilt-y: -22deg; --bezel: 8px; --depth: 34px; height: auto; margin-right: 24px; }
+  .device-pair { padding-bottom: 100px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-figure figure { transition: none; }
+  .hero-figure .device-phone { transition: none; }
+  .hero-figure:hover .device-phone { transform: rotateX(5deg) rotateY(var(--tilt-y)) rotateZ(-1.5deg); }
+}

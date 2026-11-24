@@ -1,3 +1,4 @@
+import { t } from './i18n/ui';
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { FLOW_ICONS } from './lib/flow';
@@ -24,6 +25,9 @@ const projects = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
   schema: ({ image }) => z.object({
     title: z.string(),
+    subtitle: z.string().optional(),
+    draft: z.boolean().default(false),
+    inGrid: z.boolean().default(true),
     summary: z.string(),
     category: z.array(z.enum(['web', 'sistemas', 'integraciones', 'it', 'academico'])),
     status: z.enum(['en-produccion', 'entregado', 'en-desarrollo', 'demo', 'academico']),
@@ -40,16 +44,33 @@ const projects = defineCollection({
     coverMobile: image().optional(),
     demoUrl: z.string().url().optional(),
     links: z.array(z.object({ label: z.string().min(1), url: z.string().url() })).optional(),
+    // "default" para un solo sitio o la clave del link para cada variante.
+    shots: z.record(z.string(), z.object({
+      waitFor: z.string().min(1).optional(),
+      click: z.string().min(1).optional(),
+      delay: z.number().int().min(0).max(30_000).optional(),
+      hideText: z.array(z.string().min(1)).optional(),
+      // Barra o botón fijo al pie: se oculta en la captura full y se guarda aparte (mobile-full-bar).
+      stickyBottom: z.string().min(1).optional(),
+      css: z.string().optional(),
+      alt: z.object({
+        path: z.string().min(1).optional(),
+        click: z.string().min(1).optional(),
+        waitFor: z.string().min(1).optional(),
+        scrollTo: z.string().min(1).optional(),
+        css: z.string().optional(),
+      }).refine(({ path, scrollTo }) => path || scrollTo, 'Indicá una ruta o un selector de destino.').optional(),
+    })).optional(),
     // Claves que eligen desktop-<clave>.webp / mobile-<clave>.webp en src/assets/projects/<slug>/
     preview: z.object({ desktop: z.string().optional(), mobile: z.string().optional() }).optional(),
     repoUrl: z.string().url().optional(),
     // Esquema "Cómo funciona" para proyectos sin interfaz (se muestra si no hay capturas)
     flow: z.object({
-      title: flowText(24, 14).default('Cómo funciona'),
+      title: flowText(24, 14).default(t().flowTitle),
       steps: z.array(flowStep).min(3).max(4),
       note: flowText(90, 14).optional(),
     }).optional(),
-    year: z.number(),
+    year: z.number().optional(),
     accent: z.string(),
   }),
 });

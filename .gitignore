@@ -5,3 +5,6 @@ dist
 .env.local
 .DS_Store
 .checks/
+
+# Archivos de trabajo del rediseño (auditorías, informes de workers)
+docs/audit/

@@ -1,5 +1,7 @@
 ---
-title: "Sistema de turnos para consultorio de psicología"
+title: "Turnos para consultorio de psicología"
+subtitle: "sistema de gestión de turnos"
+draft: true
 summary: "Sistema de gestión de turnos para consultorio de psicología."
 category: ["sistemas"]
 status: "entregado"

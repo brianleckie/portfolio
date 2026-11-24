@@ -6,6 +6,7 @@ import { site } from './src/config/site.ts';
 // La URL del sitio vive solo en src/config/site.ts (site.url).
 export default defineConfig({
   output: 'static',
+  i18n: { locales: ['es', 'en'], defaultLocale: 'es', routing: { prefixDefaultLocale: false } },
   site: site.url,
   trailingSlash: 'always',
   // CSS inline: sin requests que bloqueen el render (el sitio es una sola página + casos)

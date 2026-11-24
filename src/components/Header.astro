@@ -1,157 +1,116 @@
 ---
-import { whatsappHref } from '../config/site';
+import { caseHref, homeHref, localeOf } from '../i18n/routes';
+import { t } from '../i18n/ui';
+import { site, whatsappHref } from '../config/site';
+import LanguageSelector from './LanguageSelector.astro';
 
-const waHref = whatsappHref();
+interface Props { slug?: string }
+const { slug } = Astro.props;
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const home = homeHref(locale);
+const prefix = slug ? home : '';
+const wa = whatsappHref(undefined, locale);
+const sections = [
+  ['trabajos', ui.editorial.work],
+  ['experiencia', ui.experience],
+  ['servicios', ui.process],
+  ['contacto', ui.contact],
+];
 ---
 
-<header class="site-header">
-  <div class="header-inner">
-    <a href="/" class="wordmark" aria-label="leki. — Brian Leckie, ir al inicio">
-      leki<span class="dot">.</span>
-    </a>
-
-    <nav class="nav-desktop" aria-label="Navegación principal">
-      <a href="/#proyectos">Proyectos</a>
-      <a href="/#servicios">Servicios</a>
-      <a href="/#sobre-mi">Sobre mí</a>
-      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
-        Hablemos ↗
-      </a>
+<header class="hdr">
+  <div class="wrap">
+    <a class="brand" href={slug ? home : '#top'} aria-label={ui.editorial.homeLabel}>{site.wordmark.slice(0, -1)}<span>.</span></a>
+    <nav class="nav" aria-label={ui.primaryNav}><span class="nav-indicator" aria-hidden="true"></span>
+      {sections.map(([id, label]) => <a href={prefix + '#' + id}>{label}</a>)}
     </nav>
-
-    <div class="mobile-right">
-      <a href={waHref} target="_blank" rel="noopener noreferrer" class="btn-hablemos">
-        Hablemos ↗
-      </a>
+    <div class="hdr-r">
+      {site.enableEnglish && <LanguageSelector {locale} alternates={{
+        es: slug ? caseHref(slug, 'es') : homeHref('es'),
+        en: slug ? caseHref(slug, 'en') : homeHref('en'),
+      }} />}
+      {!slug && <a class="hdr-wa" data-header-wa href={wa} target="_blank" rel="noopener" hidden>WhatsApp</a>}
+      <button class="menu-toggle" type="button" aria-controls="mobile-menu" aria-expanded="false" hidden>{ui.editorial.menu}</button>
     </div>
   </div>
-
-  <nav class="nav-mobile" aria-label="Navegación secundaria">
-    <a href="/#proyectos">Proyectos</a>
-    <a href="/#servicios">Servicios</a>
-    <a href="/#sobre-mi">Sobre mí</a>
-  </nav>
 </header>
+<dialog id="mobile-menu" class="mobile-menu" aria-label={ui.editorial.menu}>
+  <div class="wrap">
+    <form method="dialog"><button autofocus type="submit">{ui.editorial.closeMenu}</button></form>
+    <nav aria-label={ui.primaryNav}>
+      {sections.map(([id, label]) => <a href={prefix + '#' + id}>{label}</a>)}
+    </nav>
+    <a class="btn-wa" href={wa} target="_blank" rel="noopener">{ui.whatsappCta}</a>
+  </div>
+</dialog>
 
-<style>
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: var(--color-bg);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+<script>
+  const header = document.querySelector('.hdr');
+  const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+  const menu = document.querySelector<HTMLDialogElement>('#mobile-menu');
+  if (toggle && menu) {
+    toggle.hidden = false;
+    toggle.addEventListener('click', () => {
+      menu.showModal();
+      toggle.setAttribute('aria-expanded', 'true');
+      document.documentElement.classList.add('menu-open');
+    });
+    menu.addEventListener('close', () => {
+      toggle.setAttribute('aria-expanded', 'false');
+      document.documentElement.classList.remove('menu-open');
+      toggle.focus({ preventScroll: true });
+    });
+    menu.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('a')) menu.close();
+    });
+    matchMedia('(min-width: 900px)').addEventListener('change', (event) => {
+      if (event.matches && menu.open) menu.close();
+    });
   }
 
-  .header-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 var(--pad-desktop);
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .wordmark {
-    font-family: 'Satoshi', system-ui, sans-serif;
-    font-weight: 900;
-    font-size: 1.75rem;
-    letter-spacing: -0.03em;
-    text-decoration: none;
-    color: var(--color-text-primary);
-    line-height: 1;
-  }
-
-  .dot {
-    color: var(--color-accent);
-  }
-
-  .nav-desktop {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-  }
-
-  .nav-desktop a {
-    font-size: 0.9375rem;
-    text-decoration: none;
-    color: var(--color-text-secondary);
-    transition: color 0.15s;
-  }
-
-  .nav-desktop a:hover {
-    color: var(--color-text-primary);
-  }
-
-  .btn-hablemos,
-  .nav-desktop a.btn-hablemos {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--color-accent);
-    padding: 0.5rem 1rem;
-    border: 1.5px solid var(--color-accent);
-    border-radius: 8px;
-    transition: background-color 0.15s, color 0.15s;
-  }
-
-  .btn-hablemos:hover,
-  .nav-desktop a.btn-hablemos:hover {
-    background-color: var(--color-accent);
-    color: #fff;
-  }
-
-  .mobile-right {
-    display: none;
-  }
-
-  .nav-mobile {
-    display: none;
-  }
-
-  @media (max-width: 700px) {
-    .header-inner {
-      padding: 0 var(--pad-mobile);
+  const nav = header?.querySelector<HTMLElement>('.nav');
+  const links = Array.from(nav?.querySelectorAll<HTMLAnchorElement>('a[href^="#"]') ?? []);
+  const sections = links.flatMap((link) => {
+    const section = document.getElementById(link.hash.slice(1));
+    return section ? [{ link, section }] : [];
+  });
+  function syncNavigation() {
+    header?.classList.toggle('scrolled', scrollY > 0);
+    const active = sections.slice().reverse().find(({ section }) => section.getBoundingClientRect().top <= innerHeight * .4)?.link;
+    for (const { link } of sections) {
+      if (link === active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
     }
-
-    .nav-desktop {
-      display: none;
+    if (active && nav) {
+      nav.style.setProperty('--indicator-x', active.offsetLeft + 'px');
+      nav.style.setProperty('--indicator-w', active.offsetWidth + 'px');
     }
-
-    .mobile-right {
-      display: flex;
-      align-items: center;
-    }
-
-    .nav-mobile {
-      display: flex;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scroll-snap-type: x mandatory;
-      gap: var(--space-lg);
-      padding: 0.5rem var(--pad-mobile);
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-      scrollbar-width: none;
-    }
-
-    .nav-mobile::-webkit-scrollbar {
-      display: none;
-    }
-
-    .nav-mobile a {
-      scroll-snap-align: start;
-      white-space: nowrap;
-      font-size: 0.875rem;
-      text-decoration: none;
-      color: var(--color-text-secondary);
-      padding: 0.25rem 0;
-      flex-shrink: 0;
-    }
+    nav?.classList.toggle('has-current', Boolean(active));
   }
+  window.addEventListener('scroll', () => header?.classList.toggle('scrolled', scrollY > 0), { passive: true });
+  window.addEventListener('resize', syncNavigation);
+  const sectionObserver = new IntersectionObserver(syncNavigation, { rootMargin: '0px 0px -60% 0px' });
+  sections.forEach(({ section }) => sectionObserver.observe(section));
+  syncNavigation();
 
-  @media (max-width: 1024px) and (min-width: 701px) {
-    .header-inner {
-      padding: 0 var(--pad-tablet);
-    }
+  const headerLink = header?.querySelector('[data-header-wa]');
+  const inlineLinks = document.querySelectorAll('[data-inline-wa]');
+  if (header && headerLink && inlineLinks.length) {
+    let observer: IntersectionObserver | undefined;
+    const observeLinks = () => {
+      observer?.disconnect();
+      const visible = new Set<Element>();
+      const top = header.getBoundingClientRect().height;
+      observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target);
+          else visible.delete(entry.target);
+        }
+        headerLink.toggleAttribute('hidden', visible.size > 0);
+      }, { rootMargin: `-${top}px 0px 0px` });
+      inlineLinks.forEach((link) => observer?.observe(link));
+    };
+    new ResizeObserver(observeLinks).observe(header);
   }
-</style>
+</script>

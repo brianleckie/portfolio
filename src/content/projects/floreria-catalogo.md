@@ -1,10 +1,11 @@
 ---
-title: "Catálogo web para florerías — un producto, dos clientes"
-summary: "Catálogo con fotos y precios, pedido por WhatsApp y panel de gestión de productos — vendido como producto replicable a dos florerías distintas."
+title: "Catálogo web para florerías"
+subtitle: "un producto, dos clientes"
+summary: "Catálogo con fotos y precios, pedido por WhatsApp y panel de gestión de productos, desarrollado para una florería y adaptado después para una segunda."
 category: ["web"]
 status: "entregado"
 featured: true
-order: 1
+order: 2
 clientNamePublic: false
 clientGeneric: "Florerías con sucursales en Paraguay"
 role: "Diseño + desarrollo completo"
@@ -13,7 +14,7 @@ highlights:
   - "Catálogo con fotos, precios y disponibilidad; checkout directo por WhatsApp"
   - "Panel de administración para carga y baja de productos sin tocar código"
   - "Mantenimiento mensual incluido en el precio"
-  - "Producto replicable: desarrollado primero para una florería, después adaptado y vendido a una segunda"
+  - "Desarrollado primero para una florería de Hohenau, después rediseñado y vendido a una segunda"
 links:
   - label: "Rocío Florería"
     url: "https://rociofloreria.vercel.app"
@@ -24,6 +25,22 @@ preview:
   mobile: rocio    # mobile-rocio.webp en el teléfono
 year: 2024
 accent: "#ffb7d5"
+shots:
+  rocio:
+    waitFor: "h1"
+    stickyBottom: ".whatsapp-float"
+    alt:
+      path: "/catalogo"
+      waitFor: 'a[href^="/p/"]'
+      scrollTo: "main .product-card"
+      css: |
+        main .product-card { opacity: 1 !important; transform: none !important; scroll-margin-top: 115px; }
+        @media (max-width: 767px) { main .product-card { scroll-margin-top: 450px; } }
+  ornella:
+    waitFor: "main h1"
+    alt:
+      path: "/catalogo"
+      waitFor: 'a[href^="/p/"]'
 ---
 
 ## Contexto
@@ -40,8 +57,8 @@ Un catálogo web con fotos, precios y estado de disponibilidad. El cliente puede
 
 ## Decisiones técnicas
 
-El stack Vue 3 + Vite permite un build estático ligero, ideal para el hosting barato que maneja el negocio. El panel de administración usa autenticación simple y escribe directamente al JSON de productos para no necesitar un backend complejo.
+El stack Vue 3 + Vite genera un build estático liviano que corre en el hosting barato que usa el negocio. El panel de administración usa autenticación simple y escribe directamente al JSON de productos para no necesitar un backend complejo.
 
 ## Resultado
 
-El catálogo se vendió por primera vez a la florería de Hohenau. Al ver que funcionaba, se rediseñó y se vendió a una segunda florería — demostrando que el producto tiene demanda replicable.
+El catálogo se vendió por primera vez a la florería de Hohenau. Al ver que funcionaba, se rediseñó y se vendió a una segunda florería.

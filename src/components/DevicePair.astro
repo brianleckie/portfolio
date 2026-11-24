@@ -1,0 +1,19 @@
+---
+import type { ImageMetadata } from 'astro';
+import DeviceScreen from './DeviceScreen.astro';
+
+interface Props {
+  desktop?: ImageMetadata;
+  mobile?: ImageMetadata;
+  fullDesktop?: boolean;
+  fullMobile?: boolean;
+  title: string;
+  accent: string;
+}
+const { desktop, mobile, fullDesktop, fullMobile, title, accent } = Astro.props;
+---
+<div class:list={['device-pair', !desktop && 'phone-only', !mobile && 'laptop-only']}
+  style={`--device-accent:${accent}`}>
+  <DeviceScreen image={desktop} {title} device="desktop" full={fullDesktop} />
+  <DeviceScreen image={mobile} {title} device="mobile" full={fullMobile} />
+</div>

@@ -1,0 +1,34 @@
+---
+import { experience } from '../config/experience';
+import { caseHref, localeOf } from '../i18n/routes';
+import { t } from '../i18n/ui';
+
+const locale = localeOf(Astro.currentLocale);
+const ui = t(locale);
+const ed = ui.editorial;
+---
+
+<section class="sec" id="experiencia" aria-labelledby="experience-title">
+  <div class="wrap">
+    <div class="sec-head"><span class="label">{ed.cv}</span><span class="label">{ed.since}</span></div>
+    <h2 class="h2" id="experience-title">{ui.experience}</h2>
+    <ol class="cv" role="list">
+      {experience.map((entry) => {
+        const [title, organization = ed.personal] = entry.title[locale].split(' — ');
+        return (
+          <li>
+            <span class="when"><time datetime={entry.datetime}>{entry.date[locale]}</time>{entry.ongoing && ui.dateOngoing}</span>
+            <span class="what">{title}</span>
+            <span class="org">
+              {entry.external ? <a class="cv-link" href={entry.external} target="_blank" rel="noopener">{organization} ↗</a> :
+                entry.project ? <a class="cv-link" href={caseHref(entry.project, locale)}>{organization} →</a> : organization}
+              {entry.context && <small>{entry.context[locale]}</small>}
+            </span>
+            <p class="det">{entry.description[locale]}</p>
+          </li>
+        );
+      })}
+      <li class="edu"><span class="when">{ed.languageSkills}</span><span class="what">{ui.languages}</span></li>
+    </ol>
+  </div>
+</section>

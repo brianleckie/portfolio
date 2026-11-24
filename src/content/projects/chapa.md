@@ -1,10 +1,12 @@
 ---
-title: "Chapa.com.py — búsqueda semántica de autos"
+title: "Chapa.com.py"
+subtitle: "búsqueda semántica de autos"
+draft: true
 summary: "Búsqueda semántica de autos usados en Paraguay con pgvector."
 category: ["sistemas"]
 status: "en-desarrollo"
 featured: false
-order: 11
+order: 13
 clientNamePublic: false
 clientGeneric: "TODO: cliente o proyecto propio"
 role: "TODO: rol"
